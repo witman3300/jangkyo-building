@@ -826,3 +826,34 @@ body {
   color: #777777;
   background: #f0f0f0;
 }
+
+/* ===== 게시판 상단 고정(공지) ===== */
+.pinned-row {
+  background: #fffaf0;
+}
+
+.pinned-row:hover {
+  background: #fff4e0;
+}
+
+.pinned-row td {
+  border-bottom: 1px solid #f3e6cf;
+}
+
+.pin-flag {
+  display: inline-block;
+  color: #c0392b;
+  font-weight: 700;
+  font-size: 13px;
+  margin-right: 2px;
+}
+
+.pin-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+  font-size: 14px;
+  color: #555555;
+  cursor: pointer;
+}

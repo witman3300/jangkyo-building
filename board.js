@@ -50,25 +50,33 @@ function esc(s) {
 /* ===== 목록 보기 ===== */
 function renderList() {
   const cat = getCat();
-  const posts = loadPosts().filter((p) => (p.cat || "notice") === cat).reverse();
+  const all = loadPosts().filter((p) => (p.cat || "notice") === cat);
+  // 고정글은 항상 상단, 그 다음 일반글(최신순)
+  const pinned = all.filter((p) => p.pinned).reverse();
+  const normal = all.filter((p) => !p.pinned).reverse();
+
+  const rowHtml = (p, numCell, pin) => {
+    const clip = p.files && p.files.length
+      ? `<span class="clip" title="첨부파일 ${p.files.length}개">📎${p.files.length}</span>`
+      : "";
+    const flag = pin ? `<span class="pin-flag">📌 공지</span> ` : "";
+    return `<tr class="${pin ? "pinned-row" : ""}">
+      <td>${numCell}</td>
+      <td class="title">${flag}<a href="#view/${p.id}">${esc(p.title)}</a>${clip}</td>
+      <td>${esc(p.author)}</td>
+      <td>${p.date}</td>
+      <td>${(p.files && p.files.length) || 0}</td>
+    </tr>`;
+  };
+
   let rows;
-  if (posts.length === 0) {
+  if (all.length === 0) {
     rows = `<tr><td colspan="5" class="board-empty">등록된 게시글이 없습니다.</td></tr>`;
   } else {
-    rows = posts
-      .map((p, i) => {
-        const clip = p.files && p.files.length
-          ? `<span class="clip" title="첨부파일 ${p.files.length}개">📎${p.files.length}</span>`
-          : "";
-        return `<tr>
-          <td>${posts.length - i}</td>
-          <td class="title"><a href="#view/${p.id}">${esc(p.title)}</a>${clip}</td>
-          <td>${esc(p.author)}</td>
-          <td>${p.date}</td>
-          <td>${(p.files && p.files.length) || 0}</td>
-        </tr>`;
-      })
-      .join("");
+    const pinnedRows = pinned.map((p) => rowHtml(p, "📌", true)).join("");
+    let n = normal.length;
+    const normalRows = normal.map((p) => rowHtml(p, n--, false)).join("");
+    rows = pinnedRows + normalRows;
   }
 
   document.getElementById("app").innerHTML = `
@@ -110,6 +118,12 @@ function renderWrite() {
         <div class="label">내용</div>
         <div class="field"><textarea id="f-content" placeholder="내용을 입력하세요" required></textarea></div>
       </div>
+      ${(typeof isAdmin === "function" && isAdmin())
+        ? `<div class="write-row">
+            <div class="label">상단 고정</div>
+            <div class="field"><label class="pin-check"><input type="checkbox" id="f-pinned" /> 이 글을 목록 상단에 고정(공지)</label></div>
+          </div>`
+        : ""}
       <div class="btn-row">
         <button type="submit" class="btn btn-primary btn-sm">등록</button>
         <a href="#list" class="btn btn-outline btn-sm">취소</a>
@@ -160,11 +174,13 @@ function submitPost(e) {
 
   const now = new Date();
   const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const pinEl = document.getElementById("f-pinned");
   const post = {
     id: "p" + now.getTime(),
     cat: getCat(),
     title, author, content, date,
     files: pendingFiles.slice(),
+    pinned: !!(pinEl && pinEl.checked),
   };
   const posts = loadPosts();
   posts.push(post);
@@ -191,18 +207,36 @@ function renderView(id) {
         .join("")}</div>`
     : "";
 
+  const admin = typeof isAdmin === "function" && isAdmin();
+  const pinBtn = admin
+    ? `<button type="button" class="btn btn-outline btn-sm" onclick="togglePin('${p.id}')">${p.pinned ? "고정 해제" : "상단 고정"}</button>`
+    : "";
+  const pinTag = p.pinned ? `<span class="pin-flag">📌 공지</span> ` : "";
+
   document.getElementById("app").innerHTML = `
     <div class="board-head"><h1>${CATEGORIES[p.cat || getCat()]}</h1></div>
     <div class="view-head">
-      <h2>${esc(p.title)}</h2>
+      <h2>${pinTag}${esc(p.title)}</h2>
       <div class="view-meta"><span>작성자 ${esc(p.author)}</span><span>${p.date}</span></div>
     </div>
     ${attach}
     <div class="view-body">${esc(p.content)}</div>
     <div class="btn-row">
       <a href="#list" class="btn btn-outline btn-sm">목록</a>
+      ${pinBtn}
       <button type="button" class="btn btn-primary btn-sm" onclick="deletePost('${p.id}')">삭제</button>
     </div>`;
+}
+
+function togglePin(id) {
+  if (!(typeof isAdmin === "function" && isAdmin())) return;
+  const posts = loadPosts();
+  const p = posts.find((x) => x.id === id);
+  if (p) {
+    p.pinned = !p.pinned;
+    savePosts(posts);
+    renderView(id);
+  }
 }
 
 function deletePost(id) {
