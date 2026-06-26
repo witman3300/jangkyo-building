@@ -859,6 +859,231 @@ body {
 }
 
 /* ===================================================================
+   홈 메인 디자인 (3단 패널 + 히어로 파노라마)
+   =================================================================== */
+.home-content {
+  font-family: "Noto Sans KR", "Malgun Gothic", sans-serif;
+}
+
+/* ----- 상단 3단 정보 패널 ----- */
+.home-panels {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.panel {
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-notice {
+  border-left: 3px solid #5b9bd5;
+}
+
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.panel-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333333;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+
+.panel-sub {
+  display: block;
+  font-size: 12px;
+  color: #999999;
+  margin-top: 3px;
+}
+
+.leaf {
+  color: #4caf50;
+}
+
+.view-btn {
+  flex-shrink: 0;
+  background: #eef0f8;
+  color: #6b6f8a;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.view-btn:hover {
+  background: #e2e5f3;
+}
+
+/* NOTICE 게시글 목록 */
+.notice-list {
+  list-style: none;
+}
+
+.notice-list li {
+  position: relative;
+  padding: 9px 0 9px 14px;
+  border-bottom: 1px dashed #eeeeee;
+  font-size: 14px;
+}
+
+.notice-list li:last-child {
+  border-bottom: none;
+}
+
+.notice-list li::before {
+  content: "·";
+  position: absolute;
+  left: 2px;
+  top: 8px;
+  color: #5b9bd5;
+  font-weight: 700;
+}
+
+.notice-list a {
+  display: block;
+  color: #555555;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notice-list a:hover {
+  color: #5b9bd5;
+}
+
+/* 자료실 / 주변환경 썸네일 */
+.thumb {
+  width: 100%;
+  height: 120px;
+  margin-bottom: 14px;
+  background: #f4f6f9;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.info-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.soft-btn {
+  display: block;
+  text-align: center;
+  background: #eef0f8;
+  color: #5a5f7d;
+  padding: 11px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.soft-btn:hover {
+  background: #e2e5f3;
+}
+
+.env-title {
+  font-size: 22px;
+  margin-top: 2px;
+}
+
+/* ----- 하단 히어로 파노라마 ----- */
+.home-hero {
+  position: relative;
+  height: 420px;
+  margin: 24px -40px -40px;          /* .content 패딩 상쇄 → 풀블리드 */
+  width: calc(100% + 80px);
+  overflow: hidden;
+  background: linear-gradient(
+    to bottom,
+    #c8e8f5 0%,
+    #e8f4e8 55%,
+    #4a9c3a 55%,
+    #3d8a2e 100%
+  );
+}
+
+.hero-city {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  height: 180px;
+  opacity: 0.9;
+  z-index: 1;
+}
+
+.balloon {
+  position: absolute;
+  height: 70px;
+  z-index: 2;
+}
+
+.balloon1 { top: 32px; left: 8%; }
+.balloon2 { top: 64px; left: 46%; height: 54px; }
+.balloon3 { top: 22px; right: 12%; }
+
+.hero-children {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  height: 260px;
+  z-index: 3;
+}
+
+.hero-text {
+  position: absolute;
+  left: 40px;
+  bottom: 36px;
+  z-index: 4;
+  color: #ffffff;
+}
+
+.hero-script {
+  font-family: "Dancing Script", cursive;
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-bottom: 12px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.hero-en {
+  font-size: 12px;
+  letter-spacing: 1px;
+  line-height: 1.7;
+  opacity: 0.95;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* ===================================================================
    모바일 / 태블릿 반응형
    =================================================================== */
 
@@ -891,6 +1116,12 @@ body {
 
   .content {
     padding: 28px 22px;
+  }
+
+  /* 히어로 풀블리드 보정 (.content 패딩 22px) */
+  .home-hero {
+    margin: 24px -22px -28px;
+    width: calc(100% + 44px);
   }
 }
 
@@ -1010,6 +1241,46 @@ body {
   .footer-contact span:not(:last-child)::after {
     content: "";
   }
+
+  /* 홈 3단 패널 → 1단 세로 배치 */
+  .home-panels {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  /* 히어로 축소 (.content 패딩 16px) */
+  .home-hero {
+    height: 280px;
+    margin: 18px -16px -22px;
+    width: calc(100% + 32px);
+  }
+
+  .hero-children {
+    height: 180px;
+  }
+
+  .hero-city {
+    height: 120px;
+  }
+
+  .balloon {
+    height: 48px;
+  }
+
+  .hero-text {
+    left: 18px;
+    bottom: 22px;
+  }
+
+  .hero-script {
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
+
+  .hero-en {
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
 }
 
 /* 소형 모바일 (480px) */
@@ -1037,5 +1308,15 @@ body {
 
   .btn-row {
     flex-wrap: wrap;
+  }
+
+  /* 히어로 풀블리드 보정 (.content 패딩 13px) */
+  .home-hero {
+    margin: 16px -13px -18px;
+    width: calc(100% + 26px);
+  }
+
+  .hero-text {
+    left: 13px;
   }
 }
