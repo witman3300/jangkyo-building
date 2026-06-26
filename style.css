@@ -857,3 +857,185 @@ body {
   color: #555555;
   cursor: pointer;
 }
+
+/* ===================================================================
+   모바일 / 태블릿 반응형
+   =================================================================== */
+
+/* 태블릿 이하 (1024px) : 사이드바 + 본문을 세로로 쌓기 */
+@media (max-width: 1024px) {
+  .layout {
+    flex-direction: column;
+  }
+
+  /* 좌측 사이드 메뉴 → 본문 위 가로 메뉴로 전환 */
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #ececec;
+    padding: 10px 16px;
+  }
+
+  .sidebar ul {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .sidebar a {
+    white-space: nowrap;
+    padding: 8px 14px;
+  }
+
+  .content {
+    padding: 28px 22px;
+  }
+}
+
+/* 모바일 (768px) */
+@media (max-width: 768px) {
+  /* 상단 유틸리티 메뉴 : 줄바꿈 + 가운데 정렬 */
+  .topbar-inner {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 8px;
+    height: auto;
+    padding: 8px 14px;
+  }
+
+  /* 메인 네비 : 브랜드 위, 메뉴 아래로 줄바꿈 */
+  .navbar {
+    flex-direction: column;
+    height: auto;
+    gap: 10px;
+    padding: 14px 14px;
+  }
+
+  .navbar .menu {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px;
+    width: 100%;
+  }
+
+  .navbar .menu a {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+
+  /* 슬라이드 이미지 축소 */
+  .slider-track img {
+    height: 110px;
+  }
+
+  /* 본문 여백 축소 */
+  .content {
+    padding: 22px 16px;
+  }
+
+  .content h1 {
+    font-size: 23px;
+  }
+
+  /* 버튼 액션 : 세로로 쌓고 꽉 채우기 */
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions .btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* 게시판 헤더 : 제목 + 버튼 세로 정렬 */
+  .board-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  /* 게시판 표 : 가로 스크롤 + 여백 축소 */
+  .board-table {
+    font-size: 13px;
+  }
+
+  .board-table thead th,
+  .board-table tbody td {
+    padding: 10px 6px;
+  }
+
+  /* 글쓰기 폼 : 라벨/입력을 세로로 */
+  .write-row {
+    flex-direction: column;
+  }
+
+  .write-row .label {
+    width: 100%;
+    padding: 10px 14px 4px;
+  }
+
+  /* 상세 보기 메타 정보 줄바꿈 */
+  .view-meta {
+    flex-wrap: wrap;
+    gap: 4px 16px;
+  }
+
+  /* 카드/폼 영역 풀 너비 */
+  .card,
+  .poll-card,
+  .lock-box {
+    max-width: 100%;
+  }
+
+  /* 관리자 표 가로 스크롤 래퍼가 없으므로 폰트 축소 */
+  .admin-table td,
+  .admin-table th {
+    font-size: 12px;
+    padding: 8px 5px;
+  }
+
+  /* 푸터 여백 축소 */
+  .footer {
+    padding: 20px 16px;
+  }
+
+  .footer-contact {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* 세로 구분선 제거(세로 정렬이므로) */
+  .footer-contact span:not(:last-child)::after {
+    content: "";
+  }
+}
+
+/* 소형 모바일 (480px) */
+@media (max-width: 480px) {
+  .navbar .brand {
+    font-size: 20px;
+  }
+
+  .navbar .menu a {
+    padding: 7px 10px;
+    font-size: 13px;
+  }
+
+  .content {
+    padding: 18px 13px;
+  }
+
+  .content h1 {
+    font-size: 21px;
+  }
+
+  .card {
+    padding: 24px 18px;
+  }
+
+  .btn-row {
+    flex-wrap: wrap;
+  }
+}
