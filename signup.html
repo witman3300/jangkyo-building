@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>회원가입 | 장교빌딩</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- 헤더 -->
+  <header class="header">
+    <div class="topbar">
+      <div class="topbar-inner">
+        <a href="index.html">홈으로</a>
+        <span class="divider">|</span>
+<span id="auth-status">
+          <a href="login.html">로그인</a>
+          <span class="divider">|</span>
+          <a href="signup.html">회원가입</a>
+        </span>        <span class="divider">|</span>
+        <a href="find-account.html">아이디/비번 찾기</a>
+        <span class="divider">|</span>
+        <a href="sitemap.html">사이트맵</a>
+      </div>
+    </div>
+    <nav class="navbar">
+      <a href="index.html" class="brand">장교빌딩</a>
+      <ul class="menu">
+        <li><a href="about.html">장교빌딩 소개</a></li>
+        <li><a href="tenant-info.html">입주안내</a></li>
+        <li><a href="general-info.html">일반안내</a></li>
+        <li><a href="rental-info.html">임대안내</a></li>
+        <li><a href="info.html">정보마당</a></li>
+        <li><a href="board.html">회원게시판</a></li>
+      </ul>
+</nav>
+    <!-- 상단 이미지 슬라이드 (우→좌) -->
+    <div class="slider">
+      <div class="slider-track">
+        <img src="images/slide1.jpg" alt="장교빌딩 풍경 1" />
+        <img src="images/slide2.jpg" alt="장교빌딩 풍경 2" />
+        <img src="images/slide3.jpg" alt="장교빌딩 풍경 3" />
+        <img src="images/slide4.jpg" alt="장교빌딩 풍경 4" />
+        <img src="images/slide5.jpg" alt="장교빌딩 풍경 5" />
+        <img src="images/slide6.jpg" alt="장교빌딩 풍경 6" />
+        <!-- 이음새 없는 반복을 위한 복제본 -->
+        <img src="images/slide1.jpg" alt="" aria-hidden="true" />
+        <img src="images/slide2.jpg" alt="" aria-hidden="true" />
+        <img src="images/slide3.jpg" alt="" aria-hidden="true" />
+        <img src="images/slide4.jpg" alt="" aria-hidden="true" />
+        <img src="images/slide5.jpg" alt="" aria-hidden="true" />
+        <img src="images/slide6.jpg" alt="" aria-hidden="true" />
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+<aside class="sidebar">
+      <ul>
+        <li><a href="board.html?cat=notice">공지사항</a></li>
+        <li><a href="board.html?cat=data">자료실</a></li>
+        <li><a href="board.html?cat=report">결산보고서</a></li>
+        <li><a href="board.html?cat=minutes">월간회의록</a></li>
+        <li><a href="vote.html">투표</a></li>
+      </ul>
+    </aside>
+
+    <main class="content">
+      <form class="card" onsubmit="handleSignup(event)">
+        <h2>회원가입</h2>
+        <p class="subtitle">새 계정을 만드세요</p>
+
+        <div class="form-group">
+          <label for="name">이름</label>
+          <input type="text" id="name" placeholder="홍길동" required />
+        </div>
+
+        <div class="form-group">
+          <label for="userid">아이디</label>
+          <input type="text" id="userid" placeholder="아이디" required />
+        </div>
+
+        <div class="form-group">
+          <label for="email">이메일</label>
+          <input type="email" id="email" placeholder="you@example.com" required />
+        </div>
+
+        <div class="form-group">
+          <label for="password">비밀번호</label>
+          <input type="password" id="password" placeholder="••••••••" required />
+        </div>
+
+        <div class="form-group">
+          <label for="password2">비밀번호 확인</label>
+          <input type="password" id="password2" placeholder="••••••••" required />
+        </div>
+
+        <div class="form-group check-group">
+          <label><input type="checkbox" id="special" /> 특별회원 신청 (관리자 승인 후 공지사항·자료실·결산보고서·월간회의록·회원게시판 이용 가능)</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">가입하기</button>
+
+        <p class="form-footer">
+          이미 계정이 있으신가요? <a href="login.html">로그인</a>
+        </p>
+      </form>
+    </main>
+  </div>
+
+
+
+  <script src="auth.js"></script>
+  <script>
+    function handleSignup(e) {
+      e.preventDefault();
+      const pw = document.getElementById("password").value;
+      const pw2 = document.getElementById("password2").value;
+      if (pw !== pw2) {
+        alert("비밀번호가 일치하지 않습니다.");
+        return;
+      }
+      const user = {
+        id: document.getElementById("userid").value.trim(),
+        pw: pw,
+        name: document.getElementById("name").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        requestedSpecial: document.getElementById("special").checked,
+      };
+      if (!registerUser(user)) {
+        alert("이미 사용 중인 아이디입니다.");
+        return;
+      }
+      alert(user.name + " 님, 회원가입 신청이 완료되었습니다.\n관리자 승인 후 로그인하실 수 있습니다.");
+      window.location.href = "login.html";
+    }
+  </script>
+  <!-- 하단 푸터 -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <p class="footer-addr">(우) 04541 서울특별시 중구 삼일대로 363, 1505 (장교동, 장교빌딩)</p>
+      <p class="footer-contact">
+        <span>TEL. 02-778-4611~3</span>
+        <span>FAX. 02-775-9663</span>
+        <span>MAIL. ksduck1@hanmail.net</span>
+      </p>
+      <p class="footer-copy">COPYRIGHT(C) 2010 JANGKYO BLDG. ALL RIGHT RESERVED.</p>
+    </div>
+  </footer>
+</body>
+</html>

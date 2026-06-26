@@ -1,0 +1,10 @@
+# OS / 편집기
+Thumbs.db
+.DS_Store
+*.swp
+.vscode/
+.idea/
+
+# 임시
+*.tmp
+*.log

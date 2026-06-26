@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>회원관리 | 장교빌딩</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- 헤더 -->
+  <header class="header">
+    <div class="topbar">
+      <div class="topbar-inner">
+        <a href="index.html">홈으로</a>
+        <span class="divider">|</span>
+<span id="auth-status">
+          <a href="login.html">로그인</a>
+          <span class="divider">|</span>
+          <a href="signup.html">회원가입</a>
+        </span>        <span class="divider">|</span>
+        <a href="find-account.html">아이디/비번 찾기</a>
+        <span class="divider">|</span>
+        <a href="sitemap.html">사이트맵</a>
+      </div>
+    </div>
+    <nav class="navbar">
+      <a href="index.html" class="brand">장교빌딩</a>
+      <ul class="menu">
+        <li><a href="about.html">장교빌딩 소개</a></li>
+        <li><a href="tenant-info.html">입주안내</a></li>
+        <li><a href="general-info.html">일반안내</a></li>
+        <li><a href="rental-info.html">임대안내</a></li>
+        <li><a href="info.html">정보마당</a></li>
+        <li><a href="board.html">회원게시판</a></li>
+      </ul>
+</nav>
+    <!-- 상단 이미지 슬라이드 (우→좌) -->
+    <div class="slider">
+      <div class="slider-track">
+        <img src="images/slide1.jpg" alt="장교빌딩 풍경 1" />
+        <img src="images/slide2.jpg" alt="장교빌딩 풍경 2" />
+        <img src="images/slide3.jpg" alt="장교빌딩 풍경 3" />
+        <img src="images/slide4.jpg" alt="장교빌딩 풍경 4" />
+        <img src="images/slide5.jpg" alt="장교빌딩 풍경 5" />
+        <img src="images/slide6.jpg" alt="장교빌딩 풍경 6" />
+        <!-- 이음새 없는 반복을 위한 복제본 -->
+        <img src="images/slide1.jpg" alt="" aria-hidden="true" />
+        <img src="images/slide2.jpg" alt="" aria-hidden="true" />
+        <img src="images/slide3.jpg" alt="" aria-hidden="true" />
+        <img src="images/slide4.jpg" alt="" aria-hidden="true" />
+        <img src="images/slide5.jpg" alt="" aria-hidden="true" />
+        <img src="images/slide6.jpg" alt="" aria-hidden="true" />
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+<aside class="sidebar">
+      <ul>
+        <li><a href="board.html?cat=notice">공지사항</a></li>
+        <li><a href="board.html?cat=data">자료실</a></li>
+        <li><a href="board.html?cat=report">결산보고서</a></li>
+        <li><a href="board.html?cat=minutes">월간회의록</a></li>
+        <li><a href="vote.html">투표</a></li>
+      </ul>
+    </aside>
+
+    <!-- 게시판 본문 (board.js가 렌더링) -->
+    <main class="content">
+      <div id="admin-app"></div>
+    </main>
+  </div>
+  <!-- 하단 푸터 -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <p class="footer-addr">(우) 04541 서울특별시 중구 삼일대로 363, 1505 (장교동, 장교빌딩)</p>
+      <p class="footer-contact">
+        <span>TEL. 02-778-4611~3</span>
+        <span>FAX. 02-775-9663</span>
+        <span>MAIL. ksduck1@hanmail.net</span>
+      </p>
+      <p class="footer-copy">COPYRIGHT(C) 2010 JANGKYO BLDG. ALL RIGHT RESERVED.</p>
+    </div>
+  </footer>
+
+  <script src="auth.js"></script>
+
+  <script src="admin.js"></script>
+</body>
+</html>
