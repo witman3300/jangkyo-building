@@ -1046,3 +1046,18 @@ body {
   .navbar .menu button { font-size: 13px !important; padding: 0 13px !important; height: 44px !important; }
   .side-panel { width: 80vw; max-width: 290px; }
 }
+
+
+/* ═══════════════════════════════
+   기존 sidebar 숨김
+   (회원광장 클릭 시 side-panel로 대체)
+═══════════════════════════════ */
+.sidebar {
+  display: none !important;
+}
+.layout {
+  display: block !important;
+}
+.content {
+  width: 100% !important;
+}
