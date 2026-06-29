@@ -105,13 +105,131 @@ body {
   flex: 1;
 }
 
-/* 좌측 사이드 메뉴 */
+/* 좌측 사이드 메뉴 (오프캔버스 드로어: 평소 숨김, 햄버거로 열기) */
 .sidebar {
-  width: 220px;
-  flex-shrink: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 260px;
+  max-width: 80vw;
+  height: 100%;
+  z-index: 1100;
   background: #fafafa;
   border-right: 1px solid #ececec;
-  padding: 24px 16px;
+  padding: 72px 16px 24px;
+  overflow-y: auto;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
+}
+
+body.sidebar-open .sidebar {
+  transform: translateX(0);
+  box-shadow: 2px 0 18px rgba(0, 0, 0, 0.18);
+}
+
+/* 드로어 닫기(×) 버튼 */
+.sidebar-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  font-size: 26px;
+  line-height: 1;
+  color: #888888;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sidebar-close:hover {
+  background: #f0f0f0;
+  color: #333333;
+}
+
+/* 어두운 배경 오버레이 */
+.sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+body.sidebar-open .sidebar-overlay {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* 햄버거 버튼 (좌상단) */
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hamburger {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 40px;
+  height: 40px;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.hamburger:hover {
+  background: #f2f2f2;
+}
+
+.hamburger span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: #333333;
+  border-radius: 2px;
+}
+
+/* 상단 메뉴 슬라이더 (모바일에서 좌우 화살표 노출) */
+.menu-slider {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.menu-arrow {
+  display: none; /* 데스크톱에서는 숨김 */
+  flex: 0 0 auto;
+  width: 30px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+  color: #555555;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.menu-arrow:hover {
+  background: #f2f2f2;
+}
+
+.menu-arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
 }
 
 .sidebar ul {
@@ -1089,31 +1207,6 @@ body {
 
 /* 태블릿 이하 (1024px) : 사이드바 + 본문을 세로로 쌓기 */
 @media (max-width: 1024px) {
-  .layout {
-    flex-direction: column;
-  }
-
-  /* 좌측 사이드 메뉴 → 본문 위 가로 메뉴로 전환 */
-  .sidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid #ececec;
-    padding: 10px 16px;
-  }
-
-  .sidebar ul {
-    flex-direction: row;
-    flex-wrap: nowrap;
-    gap: 6px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .sidebar a {
-    white-space: nowrap;
-    padding: 8px 14px;
-  }
-
   .content {
     padding: 28px 22px;
   }
@@ -1136,22 +1229,45 @@ body {
     padding: 8px 14px;
   }
 
-  /* 메인 네비 : 브랜드 위, 메뉴 아래로 줄바꿈 */
+  /* 메인 네비 : [좌상단 햄버거+브랜드] 한 줄 / 메뉴는 아래 가로 스크롤 */
   .navbar {
-    flex-direction: column;
+    flex-wrap: wrap;
     height: auto;
-    gap: 10px;
-    padding: 14px 14px;
+    gap: 8px;
+    padding: 12px 14px;
   }
 
-  .navbar .menu {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 2px;
+  .nav-left {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  /* 메뉴 슬라이더 : 화살표 + 가로 스크롤 트랙 */
+  .menu-slider {
     width: 100%;
   }
 
+  .menu-arrow {
+    display: inline-flex;
+  }
+
+  .navbar .menu {
+    flex: 1;
+    min-width: 0;
+    flex-wrap: nowrap;
+    gap: 2px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .navbar .menu::-webkit-scrollbar {
+    display: none;
+  }
+
   .navbar .menu a {
+    white-space: nowrap;
     padding: 8px 12px;
     font-size: 14px;
   }
