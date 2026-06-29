@@ -1058,3 +1058,69 @@ body {
   .layout { display: block !important; }
   .content { width: 100% !important; }
 }
+
+/* ═══════════════════════════════════════════
+   PC: 로고 + 메뉴 한 줄 표시 (769px 이상)
+═══════════════════════════════════════════ */
+@media (min-width: 769px) {
+  /* logobar와 navbar를 하나의 flex 행으로 합침 */
+  .logobar {
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 20px !important;
+    height: 60px !important;
+  }
+  .logobar-inner {
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+  }
+  /* navbar를 logobar 오른쪽에 붙임 */
+  .navbar {
+    position: static !important;
+    flex: 1 !important;
+    box-shadow: none !important;
+    padding: 0 0 0 30px !important;
+    height: 60px !important;
+    background: #1a2744 !important;
+  }
+  .navbar .menu {
+    height: 60px !important;
+  }
+  .navbar .menu a,
+  .navbar .menu button {
+    height: 60px !important;
+    border-bottom: 3px solid transparent !important;
+    font-size: 14px !important;
+  }
+  .navbar .menu a:hover,
+  .navbar .menu button:hover,
+  .navbar .menu a.active,
+  .navbar .menu button[aria-expanded="true"] {
+    border-bottom-color: #c9a84c !important;
+  }
+  /* logobar + navbar 묶음을 flex로 */
+  .header {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .header > .logobar,
+  .header > .navbar {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+  }
+  /* 두 줄을 한 줄로: logobar 안에 navbar를 포함시키는 효과 */
+  .header > .logobar { order: 2; }
+  .header > .topbar  { order: 1; }
+  .header > .navbar  { order: 2; }
+  .header > .slider  { order: 3; }
+
+  /* 실제 한 줄로: logobar에 navbar를 오른쪽 정렬 */
+  .logobar {
+    justify-content: space-between !important;
+  }
+  .navbar {
+    padding: 0 !important;
+    background: transparent !important;
+  }
+}
