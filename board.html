@@ -3,37 +3,52 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>회원게시판 | 장교빌딩</title>
+  <title>회원광장 | 장교빌딩</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <!-- 헤더 -->
   <header class="header">
+    <!-- 로고 + 메뉴 한 줄 -->
+    <div class="headbar">
+      <div class="headbar-logo">
+        <div class="logobar-icon">🏢</div>
+        <div class="logobar-text">
+          <a href="index.html" class="brand">장교빌딩</a>
+          <span class="brand-sub">JANGKYO BUILDING · 서울 을지로2가</span>
+        </div>
+      </div>
+      <nav class="navbar">
+        <ul class="menu">
+          <li><a href="about.html">장교빌딩 소개</a></li>
+          <li><a href="tenant-info.html">입주안내</a></li>
+          <li><a href="general-info.html">일반안내</a></li>
+          <li><a href="rental-info.html">임대안내</a></li>
+          <li><a href="info.html">정보마당</a></li>
+          <li>
+            <button id="board-toggle" aria-expanded="false" aria-controls="side-panel">
+              회원광장 <span class="arrow">▼</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+    <!-- 상단 유틸리티 바 -->
     <div class="topbar">
       <div class="topbar-inner">
         <a href="index.html">홈으로</a>
         <span class="divider">|</span>
-<span id="auth-status">
+        <span id="auth-status">
           <a href="login.html">로그인</a>
           <span class="divider">|</span>
           <a href="signup.html">회원가입</a>
-        </span>        <span class="divider">|</span>
+        </span>
+        <span class="divider">|</span>
         <a href="find-account.html">아이디/비번 찾기</a>
         <span class="divider">|</span>
         <a href="sitemap.html">사이트맵</a>
       </div>
     </div>
-    <nav class="navbar">
-      <a href="index.html" class="brand">장교빌딩</a>
-      <ul class="menu">
-        <li><a href="about.html">장교빌딩 소개</a></li>
-        <li><a href="tenant-info.html">입주안내</a></li>
-        <li><a href="general-info.html">일반안내</a></li>
-        <li><a href="rental-info.html">임대안내</a></li>
-        <li><a href="info.html">정보마당</a></li>
-        <li><a href="board.html" class="active">회원게시판</a></li>
-      </ul>
-</nav>
     <!-- 상단 이미지 슬라이드 (우→좌) -->
     <div class="slider">
       <div class="slider-track">
@@ -43,7 +58,6 @@
         <img src="images/slide4.jpg" alt="장교빌딩 풍경 4" />
         <img src="images/slide5.jpg" alt="장교빌딩 풍경 5" />
         <img src="images/slide6.jpg" alt="장교빌딩 풍경 6" />
-        <!-- 이음새 없는 반복을 위한 복제본 -->
         <img src="images/slide1.jpg" alt="" aria-hidden="true" />
         <img src="images/slide2.jpg" alt="" aria-hidden="true" />
         <img src="images/slide3.jpg" alt="" aria-hidden="true" />
@@ -53,6 +67,29 @@
       </div>
     </div>
   </header>
+
+  <!-- 오버레이 -->
+  <div class="side-overlay" id="side-overlay" aria-hidden="true"></div>
+
+  <!-- 좌측 사이드 패널 -->
+  <aside class="side-panel" id="side-panel" role="navigation" aria-label="회원광장 메뉴">
+    <div class="side-panel__head">
+      <span class="side-panel__title">📋 회원광장</span>
+      <button class="side-panel__close" id="side-close" aria-label="메뉴 닫기">✕</button>
+    </div>
+    <nav class="side-panel__menu">
+      <a href="board.html?cat=notice"><span class="menu-icon">📢</span> 공지사항</a>
+      <a href="board.html?cat=data"><span class="menu-icon">📁</span> 자료실</a>
+      <div class="side-divider"></div>
+      <a href="board.html?cat=report"><span class="menu-icon">📊</span> 결산보고서</a>
+      <a href="board.html?cat=minutes"><span class="menu-icon">📝</span> 월간회의록</a>
+      <div class="side-divider"></div>
+      <a href="vote.html"><span class="menu-icon">🗳️</span> 투표</a>
+    </nav>
+    <div class="side-panel__foot">
+      장교빌딩 관리사무소<br>TEL. 02-778-4611~3
+    </div>
+  </aside>
 
   <div class="layout">
 <aside class="sidebar">
@@ -88,5 +125,40 @@
   <script src="vote.js"></script>
 
   <script src="board.js"></script>
+  <script>
+  (function () {
+    var toggle   = document.getElementById('board-toggle');
+    var panel    = document.getElementById('side-panel');
+    var overlay  = document.getElementById('side-overlay');
+    var closeBtn = document.getElementById('side-close');
+    if (!toggle) return;
+    function openPanel() {
+      panel.classList.add('open');
+      overlay.classList.add('open');
+      toggle.setAttribute('aria-expanded', 'true');
+      closeBtn.focus();
+    }
+    function closePanel() {
+      panel.classList.remove('open');
+      overlay.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.focus();
+    }
+    toggle.addEventListener('click', function () {
+      panel.classList.contains('open') ? closePanel() : openPanel();
+    });
+    closeBtn.addEventListener('click', closePanel);
+    overlay.addEventListener('click', closePanel);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && panel.classList.contains('open')) closePanel();
+    });
+    document.querySelectorAll('.side-panel__menu a').forEach(function (link) {
+      link.addEventListener('click', function () {
+        document.querySelectorAll('.side-panel__menu a').forEach(function (l) { l.classList.remove('active'); });
+        this.classList.add('active');
+      });
+    });
+  })();
+  </script>
 </body>
 </html>
