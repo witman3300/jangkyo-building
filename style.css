@@ -1052,14 +1052,6 @@ body {
    sidebar: PC는 항상 표시 / 모바일은 숨김
 ═══════════════════════════════════════════ */
 
-/* PC (769px 이상): 기존 sidebar 그대로 */
-@media (min-width: 769px) {
-  .sidebar { display: block !important; }
-  .side-panel, .side-overlay { display: none !important; }
-  #board-toggle { pointer-events: none; cursor: default; }
-  #board-toggle .arrow { display: none; }
-}
-
 /* 모바일 (768px 이하): sidebar 숨기고 side-panel 사용 */
 @media (max-width: 768px) {
   .sidebar { display: none !important; }
