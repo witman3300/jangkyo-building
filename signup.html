@@ -49,7 +49,7 @@ nav a:hover{color:var(--accent)}
 .hint{font-size:12px;color:var(--gray);margin-top:5px}
 .hint.err{color:var(--bad);font-weight:700}
 .hint.ok{color:var(--ok);font-weight:700}
-.mtype{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mtype{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .mtype label{border:1.5px solid var(--line);border-radius:8px;padding:16px;cursor:pointer;text-align:center;transition:.15s}
 .mtype label:hover{border-color:var(--accent)}
 .mtype input{display:none}
@@ -106,8 +106,8 @@ footer{background:#0d2136;color:#8ba0b5;font-size:13px;padding:30px 0;text-align
   </div>
 
   <div class="note">
-    <b>안내</b> — 장교빌딩 회원 서비스는 <b>입주자·구분소유자</b>를 위한 것입니다.
-    가입 신청 후 관리사무소의 확인(호실·계약 관계 확인)을 거쳐 승인되며, 구분소유자 권한은 등기부 확인 후 부여됩니다.
+    <b>안내</b> — 회원은 <b>일반회원 · 입주자 · 구분소유자</b> 세 가지로 구분됩니다.
+    일반회원은 가입 즉시 이용 가능하며, 입주자·구분소유자는 관리사무소의 확인(호실·계약·등기 관계) 후 해당 권한이 부여됩니다.
   </div>
 
   <form onsubmit="return submitForm(event)">
@@ -160,7 +160,8 @@ footer{background:#0d2136;color:#8ba0b5;font-size:13px;padding:30px 0;text-align
     <div class="sec-h">회원 구분 <span class="req" style="color:var(--bad)">*</span></div>
     <div class="sec-b">
       <div class="mtype">
-        <label><input type="radio" name="mtype" value="tenant" required><span><b>입주자 (임차인)</b><small>사무실·상가를 임차하여 사용 중</small></span></label>
+        <label><input type="radio" name="mtype" value="general" required><span><b>일반회원</b><small>공지·자료 열람 등 기본 서비스</small></span></label>
+        <label><input type="radio" name="mtype" value="tenant"><span><b>입주자 (임차인)</b><small>사무실·상가를 임차하여 사용 중</small></span></label>
         <label><input type="radio" name="mtype" value="owner"><span><b>구분소유자</b><small>장교빌딩 호실을 소유 (등기 확인)</small></span></label>
       </div>
     </div>
@@ -186,21 +187,22 @@ footer{background:#0d2136;color:#8ba0b5;font-size:13px;padding:30px 0;text-align
       </div>
       <div class="hint" id="pw-h"></div>
       <div class="two">
-        <div class="fld"><label>이름 <span class="req">*</span></label><input placeholder="홍길동" required>
+        <div class="fld"><label>이름 <span class="req">*</span></label><input id="name" placeholder="홍길동" required>
           <div class="hint">공백없이 한글만 입력 가능합니다.</div></div>
-        <div class="fld"><label>호수 <span class="req">*</span></label><input placeholder="예: 1201 / B1-7" required>
+        <div class="fld"><label>호수 <span class="req">*</span></label><input id="unit" placeholder="예: 1201 / B1-7" required>
           <div class="hint">한글·영문·숫자만 (한글 2자, 영문 4자 이상)</div></div>
       </div>
       <div class="two">
-        <div class="fld"><label>휴대전화 <span class="req">*</span></label><input placeholder="010-0000-0000" required></div>
-        <div class="fld"><label>E-mail</label><input type="email" placeholder="name@email.com"></div>
+        <div class="fld"><label>휴대전화 <span class="req">*</span></label><input id="phone" placeholder="010-0000-0000" required></div>
+        <div class="fld"><label>E-mail <span class="req">*</span></label><input id="email" type="email" placeholder="name@email.com" required>
+          <div class="hint">로그인 및 비밀번호 찾기에 사용됩니다.</div></div>
       </div>
       <div class="two">
-        <div class="fld"><label>생년월일</label><input type="date"></div>
+        <div class="fld"><label>생년월일</label><input id="birth" type="date"></div>
         <div class="fld"><label>성별</label>
-          <select><option value="">선택하세요</option><option>남성</option><option>여성</option></select></div>
+          <select id="gender"><option value="">선택하세요</option><option>남성</option><option>여성</option></select></div>
       </div>
-      <div class="fld"><label>회사명 / 상호 (입주자)</label><input placeholder="(주)장교 · 임차인만 입력"></div>
+      <div class="fld"><label>회사명 / 상호 (입주자)</label><input id="company" placeholder="(주)장교 · 임차인만 입력"></div>
     </div>
   </div>
 
@@ -208,9 +210,9 @@ footer{background:#0d2136;color:#8ba0b5;font-size:13px;padding:30px 0;text-align
   <div class="sec">
     <div class="sec-h">수신 설정</div>
     <div class="sec-b">
-      <div class="opt"><label><input type="checkbox" checked> 메일링서비스 — 정보 메일을 받겠습니다.</label></div>
-      <div class="opt"><label><input type="checkbox" checked> SMS 수신 — 휴대폰 문자메시지를 받겠습니다.</label></div>
-      <div class="opt"><label><input type="checkbox"> 정보공개 — 다른 회원이 나의 정보를 볼 수 있도록 합니다.</label></div>
+      <div class="opt"><label><input id="opt-mail" type="checkbox" checked> 메일링서비스 — 정보 메일을 받겠습니다.</label></div>
+      <div class="opt"><label><input id="opt-sms" type="checkbox" checked> SMS 수신 — 휴대폰 문자메시지를 받겠습니다.</label></div>
+      <div class="opt"><label><input id="opt-pub" type="checkbox"> 정보공개 — 다른 회원이 나의 정보를 볼 수 있도록 합니다.</label></div>
       <div class="hint">관리비·공지·관리단 안내 등 중요 알림은 수신 설정과 관계없이 발송될 수 있습니다.</div>
     </div>
   </div>
@@ -243,7 +245,19 @@ footer{background:#0d2136;color:#8ba0b5;font-size:13px;padding:30px 0;text-align
   COPYRIGHT © JANGKYO BLDG. ALL RIGHT RESERVED.
 </div></footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+/* ===== Supabase 설정 ===== */
+/* 대표님 프로젝트 값으로 아래 두 줄을 채우면 실제 회원등록이 작동합니다.
+   값이 비어 있으면 시연(안내창)으로만 동작합니다. */
+var SUPABASE_URL = '';   /* 예: https://xxxxxxxx.supabase.co */
+var SUPABASE_ANON = '';  /* anon(public) 키 — 공개돼도 안전한 키 */
+
+var sb=null;
+if(SUPABASE_URL && SUPABASE_ANON && window.supabase){
+  sb=window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+}
+
 var idChecked=false, capCode='';
 function genCap(){
   capCode=String(Math.floor(1000+Math.random()*9000));
@@ -264,18 +278,75 @@ function checkPw(){
   if(a===b){ h.className='hint ok'; h.textContent='비밀번호가 일치합니다.'; }
   else { h.className='hint err'; h.textContent='비밀번호가 일치하지 않습니다.'; }
 }
-function submitForm(e){
+async function submitForm(e){
   e.preventDefault();
   var ag1=document.querySelector('input[name=ag1]:checked');
   var ag2=document.querySelector('input[name=ag2]:checked');
   if(!ag1||ag1.value!=='y'||!ag2||ag2.value!=='y'){ alert('회원가입약관과 개인정보취급방침에 모두 동의하셔야 가입할 수 있습니다.'); return false; }
+  var mtype=document.querySelector('input[name=mtype]:checked');
+  if(!mtype){ alert('회원 구분을 선택해 주세요.'); return false; }
   if(!idChecked){ alert('아이디 중복확인을 먼저 진행해 주세요.'); return false; }
-  var a=document.getElementById('pw1').value, b=document.getElementById('pw2').value;
-  if(a!==b){ alert('비밀번호가 일치하지 않습니다.'); return false; }
+  var pw=document.getElementById('pw1').value, pw2=document.getElementById('pw2').value;
+  if(pw.length<8){ alert('비밀번호는 8자 이상 입력해 주세요.'); return false; }
+  if(pw!==pw2){ alert('비밀번호가 일치하지 않습니다.'); return false; }
   var cap=document.getElementById('cap-in').value.trim();
   if(cap!==capCode){ alert('자동등록방지 숫자가 일치하지 않습니다.'); genCap(); return false; }
-  alert('가입 신청이 접수되었습니다.\n\n관리사무소의 확인 후 승인되면 로그인하실 수 있습니다.\n(구분소유자는 등기부 확인 절차가 포함됩니다.)');
-  location.href='index.html';
+
+  var data={
+    uid: document.getElementById('uid').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    name: document.getElementById('name').value.trim(),
+    unit: document.getElementById('unit').value.trim(),
+    phone: document.getElementById('phone').value.trim(),
+    birth: document.getElementById('birth').value || null,
+    gender: document.getElementById('gender').value || null,
+    company: document.getElementById('company').value.trim(),
+    mtype: mtype.value,
+    opt_mail: document.getElementById('opt-mail').checked,
+    opt_sms: document.getElementById('opt-sms').checked,
+    opt_pub: document.getElementById('opt-pub').checked
+  };
+
+  /* ===== Supabase 미설정 시: 시연 모드 ===== */
+  if(!sb){
+    alert('[시연 모드] 가입 신청이 확인되었습니다.\n\nSupabase 설정(프로젝트 URL·anon 키)을 입력하면 실제로 회원이 등록됩니다.\n\n입력값:\n· 구분: '+data.mtype+'\n· 아이디: '+data.uid+'\n· 이름: '+data.name);
+    return false;
+  }
+
+  /* ===== 실제 등록 ===== */
+  var btn=e.target.querySelector('button[type=submit]');
+  if(btn){ btn.disabled=true; btn.textContent='등록 중...'; }
+  try{
+    // 1) 인증 계정 생성 (비밀번호는 Supabase가 안전하게 해시 저장)
+    var res=await sb.auth.signUp({
+      email: data.email, password: pw,
+      options:{ data:{ uid:data.uid, name:data.name, mtype:data.mtype } }
+    });
+    if(res.error) throw res.error;
+    var uidAuth = res.data && res.data.user ? res.data.user.id : null;
+
+    // 2) 프로필 정보 저장 (일반회원은 자동승인, 입주자·구분소유자는 승인대기)
+    var status = (data.mtype==='general') ? '승인' : '대기';
+    var ins=await sb.from('members').insert([{
+      auth_id: uidAuth, user_id:data.uid, email:data.email, name:data.name,
+      unit:data.unit, phone:data.phone, birth:data.birth, gender:data.gender,
+      company:data.company, member_type:data.mtype, status:status,
+      opt_mail:data.opt_mail, opt_sms:data.opt_sms, opt_pub:data.opt_pub
+    }]);
+    if(ins.error) throw ins.error;
+
+    if(status==='승인'){
+      alert('회원가입이 완료되었습니다!\n일반회원으로 바로 로그인하실 수 있습니다.');
+    }else{
+      alert('가입 신청이 접수되었습니다.\n관리사무소의 확인(호실·계약·등기) 후 승인되면 로그인하실 수 있습니다.');
+    }
+    location.href='index.html';
+  }catch(err){
+    var m=(err&&err.message)||'알 수 없는 오류';
+    if(/already registered|already been registered/i.test(m)) m='이미 가입된 이메일입니다.';
+    alert('가입 처리 중 오류가 발생했습니다.\n\n'+m);
+    if(btn){ btn.disabled=false; btn.textContent='가입 신청'; }
+  }
   return false;
 }
 genCap();
