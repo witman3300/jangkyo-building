@@ -1364,9 +1364,13 @@ body.sidebar-open .sidebar-overlay {
     gap: 14px;
   }
 
+  .panel {
+    min-height: auto;
+  }
+
   /* 히어로 축소 (.content 패딩 16px) */
   .home-hero {
-    height: 280px;
+    height: 300px;
     margin: 18px -16px -22px;
     width: calc(100% + 32px);
   }
@@ -1386,6 +1390,7 @@ body.sidebar-open .sidebar-overlay {
   .hero-text {
     left: 18px;
     bottom: 22px;
+    padding: 12px 14px;
   }
 
   .hero-script {

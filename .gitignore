@@ -8,3 +8,6 @@ Thumbs.db
 # 임시
 *.tmp
 *.log
+
+# 개인정보 (회원 데이터, git에 올리지 않음)
+members.csv
