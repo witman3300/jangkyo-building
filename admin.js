@@ -49,6 +49,7 @@ function renderAdmin() {
     <div class="board-head">
       <h1>회원관리</h1>
       <span class="pending-count">승인대기 ${pending}명</span>
+      <a href="admin-members.html" class="btn btn-outline btn-sm">실회원 정보 →</a>
     </div>
     <table class="board-table admin-table">
       <thead>
