@@ -17,7 +17,7 @@ a{text-decoration:none;color:inherit}
 .sec{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:20px}
 .sec-h{background:#eef2f6;padding:14px 20px;font-weight:800;font-size:15.5px;color:#33414f;border-bottom:1px solid #d7dee6}
 .sec-b{padding:20px}
-.terms{height:120px;overflow-y:auto;border:1px solid var(--line);border-radius:6px;padding:14px;font-size:12.5px;color:var(--gray);line-height:1.7;background:#fbfcfd}
+.terms{height:120px;overflow-y:auto;border:1px solid var(--line);border-radius:6px;padding:14px;font-size:12.5px;color:var(--gray);line-height:1.7;background:#fbfcfd;white-space:pre-line}
 .agree{margin-top:12px;font-size:14px;font-weight:700}
 .agree label{margin-right:20px;cursor:pointer}
 .agree input{margin-right:5px;vertical-align:middle}
@@ -246,7 +246,7 @@ a{text-decoration:none;color:inherit}
       </div>
       <div class="two">
         <div class="fld"><label>비밀번호 <span class="req">*</span></label>
-          <input id="pw1" type="password" placeholder="영문·숫자 조합 8자 이상" required></div>
+          <input id="pw1" type="password" placeholder="영문 또는 숫자 6자 이상" required></div>
         <div class="fld"><label>비밀번호 확인 <span class="req">*</span></label>
           <input id="pw2" type="password" placeholder="비밀번호 재입력" required onkeyup="checkPw()"></div>
       </div>
@@ -367,7 +367,7 @@ async function submitForm(e){
   if(!mtype){ alert('회원 구분을 선택해 주세요.'); return false; }
   if(!idChecked){ alert('아이디 중복확인을 먼저 진행해 주세요.'); return false; }
   var pw=document.getElementById('pw1').value, pw2=document.getElementById('pw2').value;
-  if(pw.length<8){ alert('비밀번호는 8자 이상 입력해 주세요.'); return false; }
+  if(!/^[A-Za-z0-9]{6,}$/.test(pw)){ alert('비밀번호는 영문 또는 숫자로 6자 이상 입력해 주세요.'); return false; }
   if(pw!==pw2){ alert('비밀번호가 일치하지 않습니다.'); return false; }
   var cap=document.getElementById('cap-in').value.trim();
   if(cap!==capCode){ alert('자동등록방지 숫자가 일치하지 않습니다.'); genCap(); return false; }
