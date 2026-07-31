@@ -245,18 +245,25 @@ footer{background:#0d2136;color:#8ba0b5;font-size:13px;padding:30px 0;text-align
   COPYRIGHT © JANGKYO BLDG. ALL RIGHT RESERVED.
 </div></footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
-/* ===== Supabase 설정 ===== */
-/* 대표님 프로젝트 값으로 아래 두 줄을 채우면 실제 회원등록이 작동합니다.
-   값이 비어 있으면 시연(안내창)으로만 동작합니다. */
-var SUPABASE_URL = '';   /* 예: https://xxxxxxxx.supabase.co */
-var SUPABASE_ANON = '';  /* anon(public) 키 — 공개돼도 안전한 키 */
-
-var sb=null;
-if(SUPABASE_URL && SUPABASE_ANON && window.supabase){
-  sb=window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-}
+/* ===== Firebase 설정 (장교빌딩) ===== */
+var firebaseConfig = {
+  apiKey: "AIzaSyDOL0q9yugEQbyDOsQkdmz4zfh5Qaf0C8U",
+  authDomain: "jangkyo-building.firebaseapp.com",
+  projectId: "jangkyo-building",
+  storageBucket: "jangkyo-building.firebasestorage.app",
+  messagingSenderId: "791708703483",
+  appId: "1:791708703483:web:5433034b25ffd4d3dfee5e"
+};
+var fbReady=false, auth=null, db=null;
+try{
+  firebase.initializeApp(firebaseConfig);
+  auth=firebase.auth(); db=firebase.firestore();
+  fbReady=true;
+}catch(err){ console.error('Firebase init 실패', err); }
 
 var idChecked=false, capCode='';
 function genCap(){
@@ -307,9 +314,9 @@ async function submitForm(e){
     opt_pub: document.getElementById('opt-pub').checked
   };
 
-  /* ===== Supabase 미설정 시: 시연 모드 ===== */
-  if(!sb){
-    alert('[시연 모드] 가입 신청이 확인되었습니다.\n\nSupabase 설정(프로젝트 URL·anon 키)을 입력하면 실제로 회원이 등록됩니다.\n\n입력값:\n· 구분: '+data.mtype+'\n· 아이디: '+data.uid+'\n· 이름: '+data.name);
+  /* ===== Firebase 미준비 시 안내 ===== */
+  if(!fbReady){
+    alert('회원 시스템 연결에 문제가 있습니다. 잠시 후 다시 시도해 주세요.');
     return false;
   }
 
@@ -317,23 +324,19 @@ async function submitForm(e){
   var btn=e.target.querySelector('button[type=submit]');
   if(btn){ btn.disabled=true; btn.textContent='등록 중...'; }
   try{
-    // 1) 인증 계정 생성 (비밀번호는 Supabase가 안전하게 해시 저장)
-    var res=await sb.auth.signUp({
-      email: data.email, password: pw,
-      options:{ data:{ uid:data.uid, name:data.name, mtype:data.mtype } }
-    });
-    if(res.error) throw res.error;
-    var uidAuth = res.data && res.data.user ? res.data.user.id : null;
+    // 1) 인증 계정 생성 (비밀번호는 Firebase가 안전하게 해시 저장)
+    var cred=await auth.createUserWithEmailAndPassword(data.email, pw);
+    var uidAuth = cred.user ? cred.user.uid : null;
 
     // 2) 프로필 정보 저장 (일반회원은 자동승인, 입주자·구분소유자는 승인대기)
     var status = (data.mtype==='general') ? '승인' : '대기';
-    var ins=await sb.from('members').insert([{
+    await db.collection('members').add({
       auth_id: uidAuth, user_id:data.uid, email:data.email, name:data.name,
       unit:data.unit, phone:data.phone, birth:data.birth, gender:data.gender,
       company:data.company, member_type:data.mtype, status:status,
-      opt_mail:data.opt_mail, opt_sms:data.opt_sms, opt_pub:data.opt_pub
-    }]);
-    if(ins.error) throw ins.error;
+      opt_mail:data.opt_mail, opt_sms:data.opt_sms, opt_pub:data.opt_pub,
+      created_at: firebase.firestore.FieldValue.serverTimestamp()
+    });
 
     if(status==='승인'){
       alert('회원가입이 완료되었습니다!\n일반회원으로 바로 로그인하실 수 있습니다.');
@@ -343,7 +346,10 @@ async function submitForm(e){
     location.href='index.html';
   }catch(err){
     var m=(err&&err.message)||'알 수 없는 오류';
-    if(/already registered|already been registered/i.test(m)) m='이미 가입된 이메일입니다.';
+    var c=(err&&err.code)||'';
+    if(c==='auth/email-already-in-use') m='이미 가입된 이메일입니다.';
+    else if(c==='auth/invalid-email') m='이메일 형식이 올바르지 않습니다.';
+    else if(c==='auth/weak-password') m='비밀번호가 너무 약합니다. 6자 이상 입력해 주세요.';
     alert('가입 처리 중 오류가 발생했습니다.\n\n'+m);
     if(btn){ btn.disabled=false; btn.textContent='가입 신청'; }
   }
