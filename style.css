@@ -635,11 +635,17 @@ body.sidebar-open .sidebar-overlay {
 }
 
 /* ===== 상단 이미지 슬라이드 (우→좌 무한 이동) ===== */
+/* 홈 화면에서만 노출, 메뉴 하위 페이지에서는 숨김 */
 .slider {
+  display: none;
   overflow: hidden;
   width: 100%;
   background: #111111;
   border-top: 1px solid #ececec;
+}
+
+body.home .slider {
+  display: block;
 }
 
 .slider-track {
@@ -2054,4 +2060,21 @@ body.sidebar-open .sidebar-overlay {
   .headbar .navbar .menu { height: 44px !important; }
   .headbar .navbar .menu a,
   .headbar .navbar .menu button { height: 44px !important; font-size: 13px !important; padding: 0 12px !important; }
+}
+
+/* ===== 관리자 본문 수정 툴바 ===== */
+.content-edit-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 10px 12px;
+  background: #fff8ea;
+  border: 1px solid #f0dcae;
+  border-radius: 8px;
+}
+
+.content-editable-area.editing {
+  outline: 2px dashed #c9a84c;
+  outline-offset: 8px;
+  border-radius: 6px;
 }

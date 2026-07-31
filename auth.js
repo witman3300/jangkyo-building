@@ -303,3 +303,94 @@ function setupMenuSlider() {
 }
 
 window.addEventListener("DOMContentLoaded", setupMenuSlider);
+
+// ===== 관리자 본문 수정 (백엔드 없이 localStorage에 페이지별로 저장) =====
+function setupContentEdit() {
+  const mainEl = document.querySelector("main.about-body");
+  if (!mainEl) return;
+
+  const pageKey = "jangkyo_content::" + location.pathname.split("/").pop();
+
+  // 본문을 별도 영역으로 감싸서 툴바는 편집 대상에서 제외
+  const area = document.createElement("div");
+  area.className = "content-editable-area";
+  while (mainEl.firstChild) area.appendChild(mainEl.firstChild);
+  mainEl.appendChild(area);
+
+  // 저장된 수정 내용이 있으면 원본 대신 표시 (모든 방문자 공통)
+  const saved = localStorage.getItem(pageKey);
+  if (saved) area.innerHTML = saved;
+
+  if (!isAdmin()) return;
+
+  const toolbar = document.createElement("div");
+  toolbar.className = "content-edit-toolbar";
+
+  const editBtn = document.createElement("button");
+  editBtn.type = "button";
+  editBtn.className = "btn btn-outline btn-sm";
+  editBtn.textContent = "✎ 내용 수정";
+
+  const saveBtn = document.createElement("button");
+  saveBtn.type = "button";
+  saveBtn.className = "btn btn-primary btn-sm";
+  saveBtn.textContent = "💾 저장";
+  saveBtn.style.display = "none";
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.type = "button";
+  cancelBtn.className = "btn btn-outline btn-sm";
+  cancelBtn.textContent = "취소";
+  cancelBtn.style.display = "none";
+
+  const resetBtn = document.createElement("button");
+  resetBtn.type = "button";
+  resetBtn.className = "btn btn-outline btn-sm";
+  resetBtn.textContent = "원본으로 복원";
+  resetBtn.style.display = saved ? "" : "none";
+
+  toolbar.appendChild(editBtn);
+  toolbar.appendChild(saveBtn);
+  toolbar.appendChild(cancelBtn);
+  toolbar.appendChild(resetBtn);
+  mainEl.insertBefore(toolbar, area);
+
+  let originalHTML = null;
+
+  editBtn.addEventListener("click", function () {
+    originalHTML = area.innerHTML;
+    area.contentEditable = "true";
+    area.classList.add("editing");
+    area.focus();
+    editBtn.style.display = "none";
+    saveBtn.style.display = "";
+    cancelBtn.style.display = "";
+  });
+
+  saveBtn.addEventListener("click", function () {
+    area.contentEditable = "false";
+    area.classList.remove("editing");
+    localStorage.setItem(pageKey, area.innerHTML);
+    editBtn.style.display = "";
+    saveBtn.style.display = "none";
+    cancelBtn.style.display = "none";
+    resetBtn.style.display = "";
+  });
+
+  cancelBtn.addEventListener("click", function () {
+    area.innerHTML = originalHTML;
+    area.contentEditable = "false";
+    area.classList.remove("editing");
+    editBtn.style.display = "";
+    saveBtn.style.display = "none";
+    cancelBtn.style.display = "none";
+  });
+
+  resetBtn.addEventListener("click", function () {
+    if (!confirm("수정 내용을 지우고 원래 페이지 내용으로 되돌릴까요?")) return;
+    localStorage.removeItem(pageKey);
+    location.reload();
+  });
+}
+
+window.addEventListener("DOMContentLoaded", setupContentEdit);
