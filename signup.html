@@ -5,26 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>회원가입 | 장교빌딩</title>
 <meta name="description" content="장교빌딩 회원가입 — 입주자·구분소유자 전용 서비스 이용 신청.">
+<link rel="stylesheet" href="style.css" />
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
 :root{--brand:#12395f;--brand2:#1d5183;--accent:#0a84c4;--point:#c9a227;--ink:#1a222c;--gray:#68737f;--line:#e3e7ec;--bg:#f5f7f9;--ok:#1c7a45;--bad:#c0392b}
-body{font-family:'Malgun Gothic','맑은 고딕',-apple-system,'Apple SD Gothic Neo',sans-serif;color:var(--ink);line-height:1.6;background:#fff}
 a{text-decoration:none;color:inherit}
-.wrap{max-width:820px;margin:0 auto;padding:0 20px}
-.wrapw{max-width:1100px;margin:0 auto;padding:0 20px}
-.top{background:var(--brand);color:#b7c9db;font-size:13px}
-.top .wrapw{display:flex;justify-content:space-between;align-items:center;height:36px}
-.top a:hover{color:#fff}
-header{border-bottom:1px solid var(--line)}
-header .wrapw{display:flex;align-items:center;justify-content:space-between;height:68px}
-.logo{font-size:21px;font-weight:800;color:var(--brand);letter-spacing:-1px}
-.logo small{display:block;font-size:9.5px;letter-spacing:1.6px;color:var(--point);font-weight:700}
-nav ul{display:flex;list-style:none;gap:26px;font-weight:700;font-size:15px}
-nav a:hover{color:var(--accent)}
-.hero{background:linear-gradient(rgba(9,28,48,.86),rgba(9,28,48,.9)),repeating-linear-gradient(180deg,#17415f 0 26px,#123449 26px 52px);color:#fff;padding:40px 0}
-.hero h1{font-size:29px;font-weight:800;letter-spacing:-1px}
-.hero .bc{font-size:13.5px;color:#c5d3e1;margin-top:6px}
-.form{padding:36px 0 70px}
+.wrap{max-width:820px;margin:0 auto}
+.form{padding:10px 0 10px}
 .step{display:flex;gap:8px;margin-bottom:26px;font-size:13px}
 .step span{flex:1;text-align:center;padding:9px;border-radius:6px;background:var(--bg);color:var(--gray);font-weight:700;border:1px solid var(--line)}
 .step span.on{background:var(--brand);color:#fff;border-color:var(--brand)}
@@ -70,34 +56,113 @@ nav a:hover{color:var(--accent)}
 .cap-re{width:38px;height:42px;border:1px solid var(--line);background:#fbfcfd;border-radius:6px;cursor:pointer;font-size:18px;color:var(--gray)}
 .cap-re:hover{background:#eef1f5}
 .cap input{padding:11px 13px;border:1px solid var(--line);border-radius:6px;font-size:14.5px;font-family:inherit;background:#fbfcfd}
-footer{background:#0d2136;color:#8ba0b5;font-size:13px;padding:30px 0;text-align:center;line-height:1.9}
-@media(max-width:820px){nav{display:none}.two,.mtype{grid-template-columns:1fr}}
+@media(max-width:820px){.two,.mtype{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<div class="top"><div class="wrapw">
-  <span>장교공영주식회사 · 장교빌딩 관리단</span>
-  <span><a href="index.html">홈으로</a> &nbsp;<a href="login.html">로그인</a></span>
-</div></div>
+  <!-- 헤더 -->
+  <header class="header">
+    <!-- 로고 + 메뉴 한 줄 -->
+    <div class="headbar">
+      <div class="headbar-logo">
+        <div class="logobar-icon">🏢</div>
+        <div class="logobar-text">
+          <a href="index.html" class="brand">장교빌딩</a>
+          <span class="brand-sub">JANGKYO BUILDING · 서울 을지로2가</span>
+        </div>
+      </div>
+      <nav class="navbar">
+        <ul class="menu">
+          <li><a href="about.html">장교빌딩 소개</a></li>
+          <li><a href="tenant-info.html">입주안내</a></li>
+          <li><a href="general-info.html">일반안내</a></li>
+          <li><a href="rental-info.html">임대안내</a></li>
+          <li><a href="info.html">정보마당</a></li>
+          <li>
+            <button id="board-toggle" aria-expanded="false" aria-controls="side-panel">
+              회원광장 <span class="arrow">▼</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+    <!-- 상단 유틸리티 바 -->
+    <div class="topbar">
+      <div class="topbar-inner">
+        <a href="index.html">홈으로</a>
+        <span class="divider">|</span>
+        <span id="auth-status">
+          <a href="login.html">로그인</a>
+          <span class="divider">|</span>
+          <a href="signup.html">회원가입</a>
+        </span>
+        <span class="divider">|</span>
+        <a href="find-account.html">아이디/비번 찾기</a>
+        <span class="divider">|</span>
+        <a href="sitemap.html">사이트맵</a>
+      </div>
+    </div>
+    <!-- 상단 이미지 슬라이드 (우→좌) -->
+    <div class="slider">
+      <div class="slider-track">
+        <img src="images/slide1.jpg" alt="장교빌딩 풍경 1" />
+        <img src="images/slide2.jpg" alt="장교빌딩 풍경 2" />
+        <img src="images/slide3.jpg" alt="장교빌딩 풍경 3" />
+        <img src="images/slide4.jpg" alt="장교빌딩 풍경 4" />
+        <img src="images/slide5.jpg" alt="장교빌딩 풍경 5" />
+        <img src="images/slide6.jpg" alt="장교빌딩 풍경 6" />
+        <img src="images/slide1.jpg" alt="" aria-hidden="true" />
+        <img src="images/slide2.jpg" alt="" aria-hidden="true" />
+        <img src="images/slide3.jpg" alt="" aria-hidden="true" />
+        <img src="images/slide4.jpg" alt="" aria-hidden="true" />
+        <img src="images/slide5.jpg" alt="" aria-hidden="true" />
+        <img src="images/slide6.jpg" alt="" aria-hidden="true" />
+      </div>
+    </div>
+  </header>
 
-<header><div class="wrapw">
-  <a href="index.html" class="logo">장교빌딩<small>JANGKYO BUILDING</small></a>
-  <nav><ul>
-    <li><a href="index.html">홈</a></li>
-    <li><a href="#">빌딩소개</a></li>
-    <li><a href="#">임대안내</a></li>
-    <li><a href="notice.html">정보마당</a></li>
-    <li><a href="#">회원게시판</a></li>
-  </ul></nav>
-</div></header>
+  <!-- 오버레이 -->
+  <div class="side-overlay" id="side-overlay" aria-hidden="true"></div>
 
-<section class="hero"><div class="wrap">
-  <h1>회원가입</h1>
-  <div class="bc">멤버십 &gt; 회원가입 · 가입 확인 후 이용하시기 바랍니다.</div>
-</div></section>
+  <!-- 좌측 사이드 패널 -->
+  <aside class="side-panel" id="side-panel" role="navigation" aria-label="회원광장 메뉴">
+    <div class="side-panel__head">
+      <span class="side-panel__title">📋 회원광장</span>
+      <button class="side-panel__close" id="side-close" aria-label="메뉴 닫기">✕</button>
+    </div>
+    <nav class="side-panel__menu">
+      <a href="board.html?cat=notice"><span class="menu-icon">📢</span> 공지사항</a>
+      <a href="board.html?cat=data"><span class="menu-icon">📁</span> 자료실</a>
+      <div class="side-divider"></div>
+      <a href="board.html?cat=report"><span class="menu-icon">📊</span> 결산보고서</a>
+      <a href="board.html?cat=minutes"><span class="menu-icon">📝</span> 월간회의록</a>
+      <div class="side-divider"></div>
+      <a href="vote.html"><span class="menu-icon">🗳️</span> 투표</a>
+      <a href="rebuild.html"><span class="menu-icon">🏗️</span> 재건축</a>
+    </nav>
+    <div class="side-panel__foot">
+      장교빌딩 관리사무소<br>TEL. 02-778-4611~3
+    </div>
+  </aside>
 
+  <div class="layout">
+<aside class="sidebar">
+      <ul>
+        <li><a href="board.html?cat=notice">공지사항</a></li>
+        <li><a href="board.html?cat=data">자료실</a></li>
+        <li><a href="board.html?cat=report">결산보고서</a></li>
+        <li><a href="board.html?cat=minutes">월간회의록</a></li>
+        <li><a href="vote.html">투표</a></li>
+        <li><a href="rebuild.html">재건축</a></li>
+      </ul>
+    </aside>
+
+    <main class="content">
 <section class="form"><div class="wrap">
+
+  <h1>회원가입</h1>
+  <p class="lead">멤버십 &gt; 회원가입 · 가입 확인 후 이용하시기 바랍니다.</p>
 
   <div class="step">
     <span class="on">1. 약관 동의</span>
@@ -237,14 +302,22 @@ footer{background:#0d2136;color:#8ba0b5;font-size:13px;padding:30px 0;text-align
 
   </form>
 </div></section>
+    </main>
+  </div>
+  <!-- 하단 푸터 -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <p class="footer-addr">(우) 04541 서울특별시 중구 삼일대로 363, 1505 (장교동, 장교빌딩)</p>
+      <p class="footer-contact">
+        <span>TEL. 02-778-4611~3</span>
+        <span>FAX. 02-775-9663</span>
+        <span>MAIL. ksduck1@hanmail.net</span>
+      </p>
+      <p class="footer-copy">COPYRIGHT(C) 2010 JANGKYO BLDG. ALL RIGHT RESERVED.</p>
+    </div>
+  </footer>
 
-<footer><div class="wrapw">
-  장교빌딩 · JANGKYO BUILDING<br>
-  (우) 04541 서울특별시 중구 삼일대로 363, 1505 (장교동, 장교빌딩)<br>
-  TEL 02-778-4611~3 · FAX 02-775-9663 · MAIL ksduck1@hanmail.net<br>
-  COPYRIGHT © JANGKYO BLDG. ALL RIGHT RESERVED.
-</div></footer>
-
+  <script src="auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -356,6 +429,41 @@ async function submitForm(e){
   return false;
 }
 genCap();
+</script>
+<script>
+(function () {
+  var toggle   = document.getElementById('board-toggle');
+  var panel    = document.getElementById('side-panel');
+  var overlay  = document.getElementById('side-overlay');
+  var closeBtn = document.getElementById('side-close');
+  if (!toggle) return;
+  function openPanel() {
+    panel.classList.add('open');
+    overlay.classList.add('open');
+    toggle.setAttribute('aria-expanded', 'true');
+    closeBtn.focus();
+  }
+  function closePanel() {
+    panel.classList.remove('open');
+    overlay.classList.remove('open');
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.focus();
+  }
+  toggle.addEventListener('click', function () {
+    panel.classList.contains('open') ? closePanel() : openPanel();
+  });
+  closeBtn.addEventListener('click', closePanel);
+  overlay.addEventListener('click', closePanel);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && panel.classList.contains('open')) closePanel();
+  });
+  document.querySelectorAll('.side-panel__menu a').forEach(function (link) {
+    link.addEventListener('click', function () {
+      document.querySelectorAll('.side-panel__menu a').forEach(function (l) { l.classList.remove('active'); });
+      this.classList.add('active');
+    });
+  });
+})();
 </script>
 </body>
 </html>

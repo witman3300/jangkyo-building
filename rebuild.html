@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>입주안내 | 장교빌딩</title>
+  <title>재건축 추진현황 | 장교빌딩</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -100,13 +100,13 @@
         <li><a href="board.html?cat=report">결산보고서</a></li>
         <li><a href="board.html?cat=minutes">월간회의록</a></li>
         <li><a href="vote.html">투표</a></li>
-        <li><a href="rebuild.html">재건축</a></li>
+        <li><a href="rebuild.html" class="active">재건축</a></li>
       </ul>
     </aside>
 
+    <!-- 재건축 본문 (rebuild.js가 렌더링) -->
     <main class="content">
-      <h1>입주안내</h1>
-      <p class="lead">입주 절차와 필요 서류를 안내합니다.</p>
+      <div id="rebuild-app"></div>
     </main>
   </div>
   <!-- 하단 푸터 -->
@@ -121,9 +121,10 @@
       <p class="footer-copy">COPYRIGHT(C) 2010 JANGKYO BLDG. ALL RIGHT RESERVED.</p>
     </div>
   </footer>
+
   <script src="auth.js"></script>
 
-
+  <script src="rebuild.js"></script>
   <script>
   (function () {
     var toggle   = document.getElementById('board-toggle');
