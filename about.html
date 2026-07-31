@@ -5,11 +5,49 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>장교빌딩 소개 | 장교빌딩</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ===== 장교빌딩 소개 전용 (이 페이지에만 적용) ===== */
+    .about-wrap{max-width:1100px;margin:0 auto;padding:28px 20px 50px;display:grid;grid-template-columns:230px 1fr;gap:28px;flex:1;width:100%}
+    .about-sub{align-self:start}
+    .about-sub .sub-head{background:#223066;color:#fff;font-size:16px;font-weight:700;padding:15px 18px;border-radius:8px 8px 0 0;letter-spacing:-.3px}
+    .about-sub ul{list-style:none;border:1px solid #e6e8ef;border-top:none;border-radius:0 0 8px 8px;overflow:hidden}
+    .about-sub li a{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;color:#41506a;text-decoration:none;font-size:15px;border-bottom:1px solid #eef0f4;transition:.15s;cursor:pointer}
+    .about-sub li:last-child a{border-bottom:none}
+    .about-sub li a::after{content:"›";color:#b9c0cf;font-size:17px}
+    .about-sub li a:hover{background:#f4f6fb;color:#1a2744;padding-left:22px}
+    .about-sub li a.active{background:#f4f1ea;color:#1a2744;font-weight:700;border-left:3px solid #c9a84c}
+    .about-sub li a.active::after{color:#c9a84c}
+    /* 하단 안내 박스 */
+    .about-aside{margin-top:16px;border:1px solid #e6e8ef;border-radius:8px;padding:18px;background:#fafbfc}
+    .about-aside h4{font-size:14px;color:#1a2744;margin-bottom:6px;font-weight:700}
+    .about-aside p{font-size:12.5px;color:#7a8290;line-height:1.7}
+
+    .about-body{min-width:0}
+    .about-body h1{font-size:27px;color:#1a2744;margin-bottom:6px;letter-spacing:-.5px}
+    .about-body .lead{color:#7a8290;font-size:15px;margin-bottom:26px}
+    .about-sec{margin-bottom:40px;scroll-margin-top:80px}
+    .about-sec h2{font-size:20px;color:#223066;font-weight:700;padding-bottom:10px;border-bottom:2px solid #223066;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+    .about-sec h2 .no{background:#c9a84c;color:#fff;font-size:13px;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+    .about-sec p{color:#48505e;font-size:15px;line-height:1.85;margin-bottom:12px}
+    .info-table{width:100%;border-collapse:collapse;font-size:14.5px;margin:6px 0 8px}
+    .info-table th{background:#f4f6fb;color:#33415a;font-weight:700;text-align:left;padding:12px 14px;border:1px solid #e6e8ef;width:150px;white-space:nowrap}
+    .info-table td{padding:12px 14px;border:1px solid #e6e8ef;color:#48505e}
+    .float-note{background:#fff8ea;border:1px solid #f0dcae;border-radius:8px;padding:13px 16px;font-size:13px;color:#7a6a45;line-height:1.7}
+    .plan-box,.org-box{border:1px dashed #cdd4e0;border-radius:10px;background:#fafbfd;padding:26px;text-align:center;color:#8a92a0;font-size:14px}
+    .org-chart{display:flex;flex-direction:column;align-items:center;gap:0}
+    .org-node{background:#223066;color:#fff;padding:11px 22px;border-radius:8px;font-size:14px;font-weight:600;margin:0 auto}
+    .org-line{width:2px;height:18px;background:#c9c9c9}
+    .org-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+    .org-node.sub{background:#fff;color:#33415a;border:1.5px solid #c9d0dd;font-weight:500}
+    @media (max-width:768px){
+      .about-wrap{grid-template-columns:1fr;gap:18px;padding:20px 14px 36px}
+      .about-sub{order:-1}
+    }
+  </style>
 </head>
 <body>
   <!-- 헤더 -->
   <header class="header">
-    <!-- 로고 + 메뉴 한 줄 -->
     <div class="headbar">
       <div class="headbar-logo">
         <div class="logobar-icon">🏢</div>
@@ -20,7 +58,7 @@
       </div>
       <nav class="navbar">
         <ul class="menu">
-          <li><a href="about.html">장교빌딩 소개</a></li>
+          <li><a href="about.html" class="active">장교빌딩 소개</a></li>
           <li><a href="tenant-info.html">입주안내</a></li>
           <li><a href="general-info.html">일반안내</a></li>
           <li><a href="rental-info.html">임대안내</a></li>
@@ -33,7 +71,6 @@
         </ul>
       </nav>
     </div>
-    <!-- 상단 유틸리티 바 -->
     <div class="topbar">
       <div class="topbar-inner">
         <a href="index.html">홈으로</a>
@@ -49,7 +86,6 @@
         <a href="sitemap.html">사이트맵</a>
       </div>
     </div>
-    <!-- 상단 이미지 슬라이드 (우→좌) -->
     <div class="slider">
       <div class="slider-track">
         <img src="images/slide1.jpg" alt="장교빌딩 풍경 1" />
@@ -71,7 +107,7 @@
   <!-- 오버레이 -->
   <div class="side-overlay" id="side-overlay" aria-hidden="true"></div>
 
-  <!-- 좌측 사이드 패널 -->
+  <!-- 좌측 사이드 패널(회원광장) -->
   <aside class="side-panel" id="side-panel" role="navigation" aria-label="회원광장 메뉴">
     <div class="side-panel__head">
       <span class="side-panel__title">📋 회원광장</span>
@@ -91,22 +127,108 @@
     </div>
   </aside>
 
-  <div class="layout">
-<aside class="sidebar">
+  <!-- ===== 장교빌딩 소개 (서브메뉴 + 본문) ===== -->
+  <div class="about-wrap">
+    <!-- 왼쪽 서브메뉴 -->
+    <aside class="about-sub">
+      <div class="sub-head">장교빌딩 소개</div>
       <ul>
-        <li><a href="board.html?cat=notice">공지사항</a></li>
-        <li><a href="board.html?cat=data">자료실</a></li>
-        <li><a href="board.html?cat=report">결산보고서</a></li>
-        <li><a href="board.html?cat=minutes">월간회의록</a></li>
-        <li><a href="vote.html">투표</a></li>
+        <li><a href="#overview" class="active">장교빌딩 개요</a></li>
+        <li><a href="#history">관리변경 연혁</a></li>
+        <li><a href="#org">조직도</a></li>
+        <li><a href="#floorplan">건물도면</a></li>
+        <li><a href="#location">오시는 길</a></li>
       </ul>
+      <div class="about-aside">
+        <h4>관리사무소</h4>
+        <p>서울특별시 중구 삼일대로 363, 1505<br>
+        TEL. 02-778-4611~3<br>
+        평일 09:00 ~ 18:00</p>
+      </div>
     </aside>
 
-    <main class="content">
+    <!-- 오른쪽 본문 -->
+    <main class="about-body">
       <h1>장교빌딩 소개</h1>
-      <p class="lead">장교빌딩의 위치, 규모, 시설을 소개합니다.</p>
+      <p class="lead">서울 을지로2가의 중심, 행정과 비즈니스가 만나는 장교빌딩입니다.</p>
+
+      <!-- 1. 개요 -->
+      <section class="about-sec" id="overview">
+        <h2><span class="no">1</span> 장교빌딩 개요</h2>
+        <p>장교빌딩은 서울특별시 중구 을지로2가에 위치한 도심 프라임 오피스 빌딩입니다.
+        고용노동부와 서울지방고용노동청이 소재하여, 노무·인사·법무 관련 업종에 최적의 업무 환경을 제공합니다.</p>
+        <table class="info-table">
+          <tr><th>건물명</th><td>장교빌딩 (JANGKYO BUILDING)</td></tr>
+          <tr><th>주소</th><td>서울특별시 중구 삼일대로 363, 1505 (장교동, 장교빌딩)</td></tr>
+          <tr><th>규모</th><td>지상 27층 · 지하 5층</td></tr>
+          <tr><th>교통</th><td>지하철 1·2·3·4·5호선 도보 3~10분</td></tr>
+          <tr><th>주요 입주</th><td>고용노동부·서울지방고용노동청, 노무·법무·세무 법인, 일반 기업</td></tr>
+          <tr><th>관리</th><td>장교공영주식회사 · 장교빌딩 관리단</td></tr>
+        </table>
+        <div class="float-note"><b>경영이념</b> — 밝고 따뜻한 에너지로 늘 함께하는 건물. The Dream of Happiness.</div>
+      </section>
+
+      <!-- 2. 연혁 -->
+      <section class="about-sec" id="history">
+        <h2><span class="no">2</span> 관리변경 연혁</h2>
+        <p>장교빌딩의 관리 주체 변경 및 주요 연혁입니다. (실제 연혁으로 업데이트해 주세요.)</p>
+        <table class="info-table">
+          <tr><th>연도</th><td>주요 내용</td></tr>
+          <tr><th>1988</th><td>장교빌딩 준공</td></tr>
+          <tr><th>0000</th><td>장교공영주식회사 관리 개시</td></tr>
+          <tr><th>0000</th><td>장교빌딩 관리단 정기집회 정례화</td></tr>
+          <tr><th>0000</th><td>지하상가 리뉴얼 및 시설 개선</td></tr>
+        </table>
+      </section>
+
+      <!-- 3. 조직도 -->
+      <section class="about-sec" id="org">
+        <h2><span class="no">3</span> 조직도</h2>
+        <p>장교빌딩 관리 조직 구성입니다. (실제 조직에 맞게 수정해 주세요.)</p>
+        <div class="org-box">
+          <div class="org-chart">
+            <div class="org-node">장교빌딩 관리단</div>
+            <div class="org-line"></div>
+            <div class="org-node">장교공영주식회사 (관리주체)</div>
+            <div class="org-line"></div>
+            <div class="org-row">
+              <div class="org-node sub">관리소장</div>
+              <div class="org-node sub">경리·회계</div>
+              <div class="org-node sub">시설·방재</div>
+              <div class="org-node sub">미화·경비</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. 건물도면 -->
+      <section class="about-sec" id="floorplan">
+        <h2><span class="no">4</span> 건물도면</h2>
+        <p>층별 안내 및 건물 도면입니다. 도면 이미지는 <code>images</code> 폴더에 올린 뒤 연결하겠습니다.</p>
+        <table class="info-table">
+          <tr><th>지상 3~27층</th><td>사무 공간 (임대 사무실)</td></tr>
+          <tr><th>지상 1~2층</th><td>로비 · 은행 · 편의시설</td></tr>
+          <tr><th>지하 1층</th><td>지하상가 (식음·리테일)</td></tr>
+          <tr><th>지하 2~5층</th><td>주차장 · 기계실</td></tr>
+        </table>
+        <div class="plan-box">🏗️ 층별 평면도 이미지 자리 (준비되면 삽입)</div>
+      </section>
+
+      <!-- 5. 오시는 길 -->
+      <section class="about-sec" id="location">
+        <h2><span class="no">5</span> 오시는 길</h2>
+        <table class="info-table">
+          <tr><th>주소</th><td>서울특별시 중구 삼일대로 363, 1505 (장교동, 장교빌딩)</td></tr>
+          <tr><th>지하철</th><td>1·2·3·4·5호선 도보 3~10분<br>을지로3가역(2·3호선) · 종각역(1호선) · 명동역(4호선) · 종로3가역(5호선)</td></tr>
+          <tr><th>버스</th><td>간선버스 정류장 건물 앞 위치</td></tr>
+          <tr><th>주차</th><td>건물 내 부설주차장 이용 (유료)</td></tr>
+          <tr><th>문의</th><td>TEL. 02-778-4611~3 · FAX. 02-775-9663</td></tr>
+        </table>
+        <div class="plan-box">🗺️ 약도·지도 이미지 자리 (준비되면 삽입)</div>
+      </section>
     </main>
   </div>
+
   <!-- 하단 푸터 -->
   <footer class="footer">
     <div class="footer-inner">
@@ -119,42 +241,42 @@
       <p class="footer-copy">COPYRIGHT(C) 2010 JANGKYO BLDG. ALL RIGHT RESERVED.</p>
     </div>
   </footer>
+
   <script src="auth.js"></script>
-
-
   <script>
   (function () {
+    /* 회원광장 사이드 패널 */
     var toggle   = document.getElementById('board-toggle');
     var panel    = document.getElementById('side-panel');
     var overlay  = document.getElementById('side-overlay');
     var closeBtn = document.getElementById('side-close');
-    if (!toggle) return;
-    function openPanel() {
-      panel.classList.add('open');
-      overlay.classList.add('open');
-      toggle.setAttribute('aria-expanded', 'true');
-      closeBtn.focus();
+    if (toggle) {
+      function openPanel(){panel.classList.add('open');overlay.classList.add('open');toggle.setAttribute('aria-expanded','true');closeBtn.focus();}
+      function closePanel(){panel.classList.remove('open');overlay.classList.remove('open');toggle.setAttribute('aria-expanded','false');toggle.focus();}
+      toggle.addEventListener('click',function(){panel.classList.contains('open')?closePanel():openPanel();});
+      closeBtn.addEventListener('click',closePanel);
+      overlay.addEventListener('click',closePanel);
+      document.addEventListener('keydown',function(e){if(e.key==='Escape'&&panel.classList.contains('open'))closePanel();});
     }
-    function closePanel() {
-      panel.classList.remove('open');
-      overlay.classList.remove('open');
-      toggle.setAttribute('aria-expanded', 'false');
-      toggle.focus();
-    }
-    toggle.addEventListener('click', function () {
-      panel.classList.contains('open') ? closePanel() : openPanel();
-    });
-    closeBtn.addEventListener('click', closePanel);
-    overlay.addEventListener('click', closePanel);
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && panel.classList.contains('open')) closePanel();
-    });
-    document.querySelectorAll('.side-panel__menu a').forEach(function (link) {
-      link.addEventListener('click', function () {
-        document.querySelectorAll('.side-panel__menu a').forEach(function (l) { l.classList.remove('active'); });
-        this.classList.add('active');
+
+    /* 서브메뉴: 부드러운 스크롤 + 활성 표시 */
+    var links = document.querySelectorAll('.about-sub a[href^="#"]');
+    links.forEach(function(a){
+      a.addEventListener('click',function(e){
+        e.preventDefault();
+        var t=document.querySelector(a.getAttribute('href'));
+        if(t) window.scrollTo({top:t.getBoundingClientRect().top+window.pageYOffset-76,behavior:'smooth'});
+        links.forEach(function(l){l.classList.remove('active');});
+        a.classList.add('active');
       });
     });
+    /* 스크롤 위치에 따라 서브메뉴 자동 활성화 */
+    var secs = Array.prototype.map.call(document.querySelectorAll('.about-sec'),function(s){return s;});
+    window.addEventListener('scroll',function(){
+      var y=window.pageYOffset+120, cur=secs[0];
+      secs.forEach(function(s){ if(s.offsetTop<=y) cur=s; });
+      if(cur){ links.forEach(function(l){ l.classList.toggle('active', l.getAttribute('href')==='#'+cur.id); }); }
+    },{passive:true});
   })();
   </script>
 </body>
