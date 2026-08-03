@@ -87,9 +87,9 @@
     <aside class="about-sub">
       <div class="sub-head">일반안내</div>
       <ul>
-        <li><a href="#environs" class="active">주변환경</a></li>
-        <li><a href="#rentfee">임대료 조건</a></li>
-        <li><a href="#amenity">관련기관 및 편의시설</a></li>
+        <li><a href="general-info.html" class="active">주변환경</a></li>
+        <li><a href="general-info-rentfee.html">임대료 조건</a></li>
+        <li><a href="general-info-amenity.html">관련기관 및 편의시설</a></li>
       </ul>
       <div class="about-aside"><h4>관리사무소</h4><p>TEL. 02-778-4611~3<br>평일 09:00 ~ 18:00</p></div>
     </aside>
@@ -104,41 +104,6 @@
           <tr><th>도로</th><td>삼일로, 청계천로, 을지로 인접</td></tr>
           <tr><th>교통</th><td>버스(좌석, 일반) 149, 152, 261, 202, 475, 500, 501, 701, 7017, 7021</td></tr>
           <tr><th>지하철</th><td>1호선 종각역 12번 출구 / 2호선 을지로입구 4번 출구<br>2·3호선 을지로3가역 1번 출구 / 4호선 명동역 10번 출구</td></tr>
-        </table>
-      </section>
-
-      <section class="about-sec" id="rentfee">
-        <h2><span class="no">2</span> 임대료 조건</h2>
-        <table class="info-table">
-          <tr><th>1개층 면적</th><td>1,961.30㎡(593.30평)</td></tr>
-          <tr><th>전용율</th><td>50%</td></tr>
-          <tr><th>임대면적</th><td>92평, 44평, 33평, 28평</td></tr>
-          <tr><th>보증금</th><td>550,000원(평당)</td></tr>
-          <tr><th>관리비</th><td>20,000원(평당), 실비정산</td></tr>
-          <tr><th>월세</th><td>55,000원(평당)</td></tr>
-        </table>
-        <div class="float-note">지하상가는 협의 조정</div>
-      </section>
-
-      <section class="about-sec" id="amenity">
-        <h2><span class="no">3</span> 관련기관 및 편의시설</h2>
-        <table class="info-table">
-          <tr><th>을지로주민센터</th><td>2264-0756</td></tr>
-          <tr><th>남대문세무서</th><td>2260-0200</td></tr>
-          <tr><th>남대문경찰서</th><td>2096-8385</td></tr>
-          <tr><th>중부소방서</th><td>2234-0119</td></tr>
-          <tr><th>서울 중구청</th><td>2260-1114</td></tr>
-          <tr><th>서울 시청</th><td>731-6822</td></tr>
-          <tr><th>중앙전화국</th><td>100</td></tr>
-          <tr><th>예스코(가스)</th><td>730-1723~5</td></tr>
-          <tr><th>중앙케이블</th><td>753-6781</td></tr>
-          <tr><th>엘리베이터(OTIS)</th><td>080-780-7000</td></tr>
-          <tr><th>한전중부지점</th><td>762-5252</td></tr>
-          <tr><th>한국전기안전공사</th><td>710-8500</td></tr>
-          <tr><th>서울고용노동청</th><td>2250-5825</td></tr>
-          <tr><th>우리은행 한화센터지점</th><td>729-5600</td></tr>
-          <tr><th>국민은행 을지로입구</th><td>774-2161</td></tr>
-          <tr><th>기업은행 본점</th><td>729-6144</td></tr>
         </table>
       </section>
     </main>
@@ -163,10 +128,6 @@
       closeBtn.addEventListener('click',cl);overlay.addEventListener('click',cl);
       document.addEventListener('keydown',function(e){if(e.key==='Escape'&&panel.classList.contains('open'))cl();});
     }
-    var links=document.querySelectorAll('.about-sub a[href^="#"]');
-    links.forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();var t=document.querySelector(a.getAttribute('href'));if(t)window.scrollTo({top:t.getBoundingClientRect().top+window.pageYOffset-76,behavior:'smooth'});links.forEach(function(l){l.classList.remove('active');});a.classList.add('active');});});
-    var secs=Array.prototype.slice.call(document.querySelectorAll('.about-sec'));
-    window.addEventListener('scroll',function(){var y=window.pageYOffset+120,cur=secs[0];secs.forEach(function(s){if(s.offsetTop<=y)cur=s;});if(cur)links.forEach(function(l){l.classList.toggle('active',l.getAttribute('href')==='#'+cur.id);});},{passive:true});
   })();
   </script>
 </body>

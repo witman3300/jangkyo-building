@@ -37,8 +37,12 @@
     .org-chart{display:flex;flex-direction:column;align-items:center;gap:0}
     .org-node{background:#223066;color:#fff;padding:11px 22px;border-radius:8px;font-size:14px;font-weight:600;margin:0 auto}
     .org-line{width:2px;height:18px;background:#c9c9c9}
-    .org-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+    .org-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
     .org-node.sub{background:#fff;color:#33415a;border:1.5px solid #c9d0dd;font-weight:500}
+    .org-col{display:flex;flex-direction:column;align-items:center;gap:0}
+    .org-line.small{height:12px}
+    .org-subrow{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+    .org-node.leaf{background:#f4f6fb;color:#41506a;border:1px solid #e6e8ef;font-size:12.5px;padding:6px 14px;font-weight:500;margin:0}
     @media (max-width:768px){
       .about-wrap{grid-template-columns:1fr;gap:18px;padding:20px 14px 36px}
       .about-sub{order:-1}
@@ -163,10 +167,32 @@
             <div class="org-node">장교공영주식회사 (관리주체)</div>
             <div class="org-line"></div>
             <div class="org-row">
-              <div class="org-node sub">관리소장</div>
-              <div class="org-node sub">경리·회계</div>
-              <div class="org-node sub">시설·방재</div>
-              <div class="org-node sub">미화·경비</div>
+              <div class="org-col">
+                <div class="org-node sub">관리소장</div>
+              </div>
+              <div class="org-col">
+                <div class="org-node sub">경리·회계</div>
+              </div>
+              <div class="org-col">
+                <div class="org-node sub">기계과</div>
+                <div class="org-line small"></div>
+                <div class="org-subrow">
+                  <div class="org-node leaf">기계실</div>
+                  <div class="org-node leaf">바스실</div>
+                  <div class="org-node leaf">영선실</div>
+                </div>
+              </div>
+              <div class="org-col">
+                <div class="org-node sub">전기과</div>
+                <div class="org-line small"></div>
+                <div class="org-subrow">
+                  <div class="org-node leaf">전기실</div>
+                  <div class="org-node leaf">방재실</div>
+                </div>
+              </div>
+              <div class="org-col">
+                <div class="org-node sub">미화·경비</div>
+              </div>
             </div>
           </div>
         </div>

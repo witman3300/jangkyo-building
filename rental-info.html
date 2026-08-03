@@ -91,10 +91,10 @@
     <aside class="about-sub">
       <div class="sub-head">임대안내</div>
       <ul>
-        <li><a href="#vacancy" class="active">공실 현황</a></li>
-        <li><a href="#terms">임대 조건</a></li>
-        <li><a href="#process">계약 절차</a></li>
-        <li><a href="#contact">임대 문의</a></li>
+        <li><a href="rental-info.html" class="active">공실 현황</a></li>
+        <li><a href="rental-info-terms.html">임대 조건</a></li>
+        <li><a href="rental-info-process.html">계약 절차</a></li>
+        <li><a href="rental-info-contact.html">임대 문의</a></li>
       </ul>
       <div class="about-aside"><h4>임대 문의</h4><p>관리사무소<br>TEL. 02-778-4611~3<br>평일 09:00 ~ 18:00</p></div>
     </aside>
@@ -115,34 +115,6 @@
             <tr><td>B1</td><td>33.0㎡ (10평)</td><td>지하상가</td><td><span class="pill p-ok">즉시 입주</span></td></tr>
           </tbody>
         </table>
-      </section>
-
-      <section class="about-sec" id="terms">
-        <h2><span class="no">2</span> 임대 조건</h2>
-        <table class="info-table">
-          <tr><th style="width:150px">보증금·임대료</th><td>호실·면적·계약 조건에 따라 상이 (문의 시 견적 안내)</td></tr>
-          <tr><th>관리비</th><td>전용면적 기준 부과 (공용관리비 + 사용료)</td></tr>
-          <tr><th>계약 기간</th><td>기본 1년, 장기 계약 시 조건 협의 가능</td></tr>
-          <tr><th>이용 불가 업종</th><td>현장 영업 필수 업종(음식점·숙박 등) 일부 제한</td></tr>
-        </table>
-        <div class="float-note">보증금·임대료는 시장 상황에 따라 변동될 수 있습니다. 최신 조건은 관리사무소로 확인해 주세요.</div>
-      </section>
-
-      <section class="about-sec" id="process">
-        <h2><span class="no">3</span> 계약 절차</h2>
-        <p>① 문의·상담 → ② 현장 확인 → ③ 조건 협의 → ④ 서류 제출 → ⑤ 계약 체결 → ⑥ 입주<br>
-        자세한 입주 준비는 <a href="tenant-info.html" style="color:#223066;font-weight:700">입주안내</a>를 참고해 주세요.</p>
-      </section>
-
-      <section class="about-sec" id="contact">
-        <h2><span class="no">4</span> 임대 문의</h2>
-        <table class="info-table">
-          <tr><th style="width:150px">전화</th><td>02-778-4611~3</td></tr>
-          <tr><th>팩스</th><td>02-775-9663</td></tr>
-          <tr><th>이메일</th><td>ksduck1@hanmail.net</td></tr>
-          <tr><th>주소</th><td>서울특별시 중구 삼일대로 363, 1505 (장교동, 장교빌딩)</td></tr>
-        </table>
-        <a class="cta" href="tel:0277846113">📞 전화 문의하기</a>
       </section>
     </main>
   </div>
@@ -166,10 +138,6 @@
       closeBtn.addEventListener('click',cl);overlay.addEventListener('click',cl);
       document.addEventListener('keydown',function(e){if(e.key==='Escape'&&panel.classList.contains('open'))cl();});
     }
-    var links=document.querySelectorAll('.about-sub a[href^="#"]');
-    links.forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();var t=document.querySelector(a.getAttribute('href'));if(t)window.scrollTo({top:t.getBoundingClientRect().top+window.pageYOffset-76,behavior:'smooth'});links.forEach(function(l){l.classList.remove('active');});a.classList.add('active');});});
-    var secs=Array.prototype.slice.call(document.querySelectorAll('.about-sec'));
-    window.addEventListener('scroll',function(){var y=window.pageYOffset+120,cur=secs[0];secs.forEach(function(s){if(s.offsetTop<=y)cur=s;});if(cur)links.forEach(function(l){l.classList.toggle('active',l.getAttribute('href')==='#'+cur.id);});},{passive:true});
   })();
   </script>
 </body>
