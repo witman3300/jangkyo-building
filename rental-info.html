@@ -34,7 +34,7 @@
     .float-note{background:#fff8ea;border:1px solid #f0dcae;border-radius:8px;padding:13px 16px;font-size:13px;color:#7a6a45;line-height:1.7}
     .cta{display:inline-block;margin-top:6px;background:#223066;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 22px;border-radius:8px}
     .cta:hover{background:#2c3f80}
-    .vacancy-add-btn{margin-bottom:12px}
+    .vacancy-add-btn{margin-left:auto}
     .vacancy-add-form{display:none;grid-template-columns:repeat(4,1fr);gap:12px 14px;align-items:end;background:#f9fafc;border:1px solid #e6e8ef;border-radius:8px;padding:16px;margin-bottom:16px}
     .vacancy-add-form.show{display:grid}
     .vacancy-add-form .form-group{margin-bottom:0}
@@ -51,7 +51,7 @@
         <div class="logobar-icon">🏢</div>
         <div class="logobar-text">
           <a href="index.html" class="brand">장교빌딩</a>
-          <span class="brand-sub">JANGKYO BUILDING · 서울 을지로2가</span>
+          <span class="brand-sub">JANGKYO BUILDING</span>
         </div>
       </div>
       <nav class="navbar">
@@ -155,14 +155,18 @@
       var tbody = table && table.querySelector('tbody');
       if (!tbody) return;
 
-      // auth.js의 본문 수정 캐시(localStorage)에 이전에 저장된 버튼/폼이 남아있으면 제거 후 새로 만든다 (중복 방지)
-      section.querySelectorAll('.vacancy-add-btn, .vacancy-add-form').forEach(function (el) { el.remove(); });
+      // auth.js의 본문 수정 캐시(localStorage)에 이전에 저장된 폼이 남아있으면 제거 후 새로 만든다 (중복 방지)
+      section.querySelectorAll('.vacancy-add-form').forEach(function (el) { el.remove(); });
+
+      // 관리자에게만 뜨는 content-edit-toolbar(저장/취소가 있는 줄)의 맨 오른쪽에 버튼을 붙인다
+      var toolbar = document.querySelector('.content-edit-toolbar');
+      if (!toolbar) return;
 
       var addBtn = document.createElement('button');
       addBtn.type = 'button';
       addBtn.className = 'btn btn-outline btn-sm vacancy-add-btn';
       addBtn.textContent = '+ 공실 추가';
-      addBtn.style.display = 'none';
+      toolbar.appendChild(addBtn);
 
       var form = document.createElement('form');
       form.className = 'vacancy-add-form';
@@ -180,18 +184,31 @@
           '<button type="button" class="btn btn-outline btn-sm va-cancel">취소</button>' +
         '</div>';
 
-      table.parentNode.insertBefore(addBtn, table);
       table.parentNode.insertBefore(form, table);
-
-      if (typeof isAdmin === 'function' && isAdmin()) addBtn.style.display = '';
 
       function saveVacancyContent() {
         var area = document.querySelector('main.about-body .content-editable-area');
         if (area) localStorage.setItem('jangkyo_content::' + location.pathname.split('/').pop(), area.innerHTML);
       }
 
+      // "12F" → 12, "B1" → -1 처럼 층 표기를 숫자로 바꿔 내림차순 정렬 기준으로 쓴다
+      function floorValue(text) {
+        var s = text.trim().toUpperCase();
+        var basement = s.match(/^B\s*(\d+(?:\.\d+)?)/);
+        if (basement) return -parseFloat(basement[1]);
+        var num = s.match(/-?\d+(?:\.\d+)?/);
+        return num ? parseFloat(num[0]) : -Infinity;
+      }
+
+      function sortVacancyRows() {
+        var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+        rows.sort(function (a, b) {
+          return floorValue(b.children[0].textContent) - floorValue(a.children[0].textContent);
+        });
+        rows.forEach(function (r) { tbody.appendChild(r); });
+      }
+
       addBtn.addEventListener('click', function () {
-        addBtn.style.display = 'none';
         form.classList.add('show');
         form.querySelector('.va-floor').focus();
       });
@@ -199,7 +216,6 @@
       form.querySelector('.va-cancel').addEventListener('click', function () {
         form.reset();
         form.classList.remove('show');
-        addBtn.style.display = '';
       });
 
       form.addEventListener('submit', function (e) {
@@ -223,12 +239,12 @@
         statusTd.appendChild(pill);
         tr.appendChild(statusTd);
         tbody.appendChild(tr);
+        sortVacancyRows();
 
         saveVacancyContent();
 
         form.reset();
         form.classList.remove('show');
-        addBtn.style.display = '';
       });
     }
 
