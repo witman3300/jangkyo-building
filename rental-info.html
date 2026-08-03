@@ -34,6 +34,13 @@
     .float-note{background:#fff8ea;border:1px solid #f0dcae;border-radius:8px;padding:13px 16px;font-size:13px;color:#7a6a45;line-height:1.7}
     .cta{display:inline-block;margin-top:6px;background:#223066;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 22px;border-radius:8px}
     .cta:hover{background:#2c3f80}
+    .vacancy-add-btn{margin-bottom:12px}
+    .vacancy-add-form{display:none;grid-template-columns:repeat(4,1fr);gap:12px 14px;align-items:end;background:#f9fafc;border:1px solid #e6e8ef;border-radius:8px;padding:16px;margin-bottom:16px}
+    .vacancy-add-form.show{display:grid}
+    .vacancy-add-form .form-group{margin-bottom:0}
+    .vacancy-add-form select{width:100%;padding:12px 14px;border:1px solid #dddddd;border-radius:10px;font-size:15px}
+    .vacancy-add-actions{grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end}
+    @media (max-width:768px){.vacancy-add-form{grid-template-columns:1fr 1fr}}
     @media (max-width:768px){.about-wrap{grid-template-columns:1fr;gap:18px;padding:20px 14px 36px}.about-sub{order:-1}}
   </style>
 </head>
@@ -138,6 +145,94 @@
       closeBtn.addEventListener('click',cl);overlay.addEventListener('click',cl);
       document.addEventListener('keydown',function(e){if(e.key==='Escape'&&panel.classList.contains('open'))cl();});
     }
+  })();
+  </script>
+  <script>
+  (function () {
+    function init() {
+      var section = document.getElementById('vacancy');
+      var table = section && section.querySelector('.info-table');
+      var tbody = table && table.querySelector('tbody');
+      if (!tbody) return;
+
+      // auth.js의 본문 수정 캐시(localStorage)에 이전에 저장된 버튼/폼이 남아있으면 제거 후 새로 만든다 (중복 방지)
+      section.querySelectorAll('.vacancy-add-btn, .vacancy-add-form').forEach(function (el) { el.remove(); });
+
+      var addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'btn btn-outline btn-sm vacancy-add-btn';
+      addBtn.textContent = '+ 공실 추가';
+      addBtn.style.display = 'none';
+
+      var form = document.createElement('form');
+      form.className = 'vacancy-add-form';
+      form.innerHTML =
+        '<div class="form-group"><label>층</label><input type="text" class="va-floor" placeholder="예: 5F" required /></div>' +
+        '<div class="form-group"><label>전용면적</label><input type="text" class="va-area" placeholder="예: 100.0㎡ (30평)" required /></div>' +
+        '<div class="form-group"><label>용도 추천</label><input type="text" class="va-use" placeholder="예: 일반 사무실" required /></div>' +
+        '<div class="form-group"><label>상태</label><select class="va-status">' +
+          '<option value="p-ok">즉시 입주</option>' +
+          '<option value="p-wait">협의 중</option>' +
+          '<option value="p-gray">계약 완료</option>' +
+        '</select></div>' +
+        '<div class="vacancy-add-actions">' +
+          '<button type="submit" class="btn btn-primary btn-sm">추가</button>' +
+          '<button type="button" class="btn btn-outline btn-sm va-cancel">취소</button>' +
+        '</div>';
+
+      table.parentNode.insertBefore(addBtn, table);
+      table.parentNode.insertBefore(form, table);
+
+      if (typeof isAdmin === 'function' && isAdmin()) addBtn.style.display = '';
+
+      function saveVacancyContent() {
+        var area = document.querySelector('main.about-body .content-editable-area');
+        if (area) localStorage.setItem('jangkyo_content::' + location.pathname.split('/').pop(), area.innerHTML);
+      }
+
+      addBtn.addEventListener('click', function () {
+        addBtn.style.display = 'none';
+        form.classList.add('show');
+        form.querySelector('.va-floor').focus();
+      });
+
+      form.querySelector('.va-cancel').addEventListener('click', function () {
+        form.reset();
+        form.classList.remove('show');
+        addBtn.style.display = '';
+      });
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var floor = form.querySelector('.va-floor').value.trim();
+        var areaVal = form.querySelector('.va-area').value.trim();
+        var use = form.querySelector('.va-use').value.trim();
+        var statusSel = form.querySelector('.va-status');
+        if (!floor || !areaVal || !use) return;
+
+        var tr = document.createElement('tr');
+        [floor, areaVal, use].forEach(function (v) {
+          var td = document.createElement('td');
+          td.textContent = v;
+          tr.appendChild(td);
+        });
+        var statusTd = document.createElement('td');
+        var pill = document.createElement('span');
+        pill.className = 'pill ' + statusSel.value;
+        pill.textContent = statusSel.options[statusSel.selectedIndex].text;
+        statusTd.appendChild(pill);
+        tr.appendChild(statusTd);
+        tbody.appendChild(tr);
+
+        saveVacancyContent();
+
+        form.reset();
+        form.classList.remove('show');
+        addBtn.style.display = '';
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
   })();
   </script>
 </body>
