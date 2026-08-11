@@ -25,11 +25,7 @@
           <li><a href="general-info.html">일반안내</a></li>
           <li><a href="rental-info.html">임대안내</a></li>
           <li><a href="info.html">정보마당</a></li>
-          <li>
-            <button id="board-toggle" aria-expanded="false" aria-controls="side-panel">
-              회원광장 <span class="arrow">▼</span>
-            </button>
-          </li>
+          <li><a href="board.html">회원광장</a></li>
         </ul>
       </nav>
     </div>
@@ -68,30 +64,6 @@
     </div>
   </header>
 
-  <!-- 오버레이 -->
-  <div class="side-overlay" id="side-overlay" aria-hidden="true"></div>
-
-  <!-- 좌측 사이드 패널 -->
-  <aside class="side-panel" id="side-panel" role="navigation" aria-label="회원광장 메뉴">
-    <div class="side-panel__head">
-      <span class="side-panel__title">📋 회원광장</span>
-      <button class="side-panel__close" id="side-close" aria-label="메뉴 닫기">✕</button>
-    </div>
-    <nav class="side-panel__menu">
-      <a href="board.html?cat=notice"><span class="menu-icon">📢</span> 공지사항</a>
-      <a href="board.html?cat=data"><span class="menu-icon">📁</span> 자료실</a>
-      <div class="side-divider"></div>
-      <a href="board.html?cat=report"><span class="menu-icon">📊</span> 결산보고서</a>
-      <a href="board.html?cat=minutes"><span class="menu-icon">📝</span> 월간회의록</a>
-      <div class="side-divider"></div>
-      <a href="vote.html"><span class="menu-icon">🗳️</span> 투표</a>
-      <a href="rebuild.html"><span class="menu-icon">🏗️</span> 재건축</a>
-    </nav>
-    <div class="side-panel__foot">
-      장교빌딩 관리사무소<br>TEL. 02-778-4611~3
-    </div>
-  </aside>
-
   <div class="layout">
 <aside class="sidebar">
       <ul>
@@ -100,7 +72,6 @@
         <li><a href="board.html?cat=report">결산보고서</a></li>
         <li><a href="board.html?cat=minutes">월간회의록</a></li>
         <li><a href="vote.html">투표</a></li>
-        <li><a href="rebuild.html">재건축</a></li>
       </ul>
     </aside>
 
@@ -134,8 +105,6 @@
     </main>
   </div>
 
-
-
   <script src="auth.js"></script>
   <script>
     function handleLogin(e) {
@@ -168,40 +137,5 @@
       <p class="footer-copy">COPYRIGHT(C) 2010 JANGKYO BLDG. ALL RIGHT RESERVED.</p>
     </div>
   </footer>
-  <script>
-  (function () {
-    var toggle   = document.getElementById('board-toggle');
-    var panel    = document.getElementById('side-panel');
-    var overlay  = document.getElementById('side-overlay');
-    var closeBtn = document.getElementById('side-close');
-    if (!toggle) return;
-    function openPanel() {
-      panel.classList.add('open');
-      overlay.classList.add('open');
-      toggle.setAttribute('aria-expanded', 'true');
-      closeBtn.focus();
-    }
-    function closePanel() {
-      panel.classList.remove('open');
-      overlay.classList.remove('open');
-      toggle.setAttribute('aria-expanded', 'false');
-      toggle.focus();
-    }
-    toggle.addEventListener('click', function () {
-      panel.classList.contains('open') ? closePanel() : openPanel();
-    });
-    closeBtn.addEventListener('click', closePanel);
-    overlay.addEventListener('click', closePanel);
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && panel.classList.contains('open')) closePanel();
-    });
-    document.querySelectorAll('.side-panel__menu a').forEach(function (link) {
-      link.addEventListener('click', function () {
-        document.querySelectorAll('.side-panel__menu a').forEach(function (l) { l.classList.remove('active'); });
-        this.classList.add('active');
-      });
-    });
-  })();
-  </script>
 </body>
 </html>

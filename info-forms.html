@@ -26,6 +26,9 @@
     .about-sec h2{font-size:20px;color:#223066;font-weight:700;padding-bottom:10px;border-bottom:2px solid #223066;margin-bottom:16px;display:flex;align-items:center;gap:8px}
     .about-sec h2 .no{background:#c9a84c;color:#fff;font-size:13px;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
     .about-sec p{color:#48505e;font-size:15px;line-height:1.85;margin-bottom:12px}
+    .info-table{width:100%;border-collapse:collapse;font-size:14.5px;margin:6px 0 8px}
+    .info-table th{background:#f4f6fb;color:#33415a;font-weight:700;text-align:left;padding:12px 14px;border:1px solid #e6e8ef;width:150px;white-space:nowrap}
+    .info-table td{padding:12px 14px;border:1px solid #e6e8ef;color:#48505e}
     .link-list{list-style:none;border-top:2px solid #223066}
     .link-list li a{display:flex;justify-content:space-between;align-items:center;padding:14px 6px;border-bottom:1px solid #eef0f4;color:#41506a;text-decoration:none;font-size:15px}
     .link-list li a:hover{color:#223066;background:#fafbfc}
@@ -38,6 +41,18 @@
     .faq-item.open .mk{transform:rotate(45deg)}
     .faq-a{display:none;padding:0 18px 16px;color:#5a6472;font-size:14.5px;line-height:1.75}
     .faq-item.open .faq-a{display:block}
+    .link-list li.with-upload{display:flex;align-items:center;gap:10px}
+    .link-list li.with-upload a{border-bottom:none;flex:1}
+    .form-upload-btn{background:#fff;border:1px solid #dddddd;border-radius:6px;font-size:12px;padding:5px 10px;color:#41506a;cursor:pointer;white-space:nowrap}
+    .form-upload-btn:hover{background:#f4f6fb;border-color:#c9c9c9}
+    .form-delete-btn{background:#fff;border:1px solid #f0c9c9;border-radius:6px;font-size:12px;padding:5px 10px;color:#c0392b;cursor:pointer;white-space:nowrap}
+    .form-delete-btn:hover{background:#fdf0f0;border-color:#e0a0a0}
+    .forms-add-btn{margin-left:auto}
+    .forms-add-form{display:none;grid-template-columns:1fr 1fr;gap:12px 14px;align-items:end;background:#f9fafc;border:1px solid #e6e8ef;border-radius:8px;padding:16px;margin-bottom:16px}
+    .forms-add-form.show{display:grid}
+    .forms-add-form .form-group{margin-bottom:0}
+    .forms-add-actions{grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end}
+    @media (max-width:768px){.forms-add-form{grid-template-columns:1fr}}
     @media (max-width:768px){.about-wrap{grid-template-columns:1fr;gap:18px;padding:20px 14px 36px}.about-sub{order:-1}}
   </style>
 </head>
@@ -58,7 +73,7 @@
           <li><a href="general-info.html">일반안내</a></li>
           <li><a href="rental-info.html">임대안내</a></li>
           <li><a href="info.html" class="active">정보마당</a></li>
-          <li><button id="board-toggle" aria-expanded="false" aria-controls="side-panel">회원광장 <span class="arrow">▼</span></button></li>
+          <li><a href="board.html">회원광장</a></li>
         </ul>
       </nav>
     </div>
@@ -75,22 +90,6 @@
     </div></div>
   </header>
 
-  <div class="side-overlay" id="side-overlay" aria-hidden="true"></div>
-  <aside class="side-panel" id="side-panel" role="navigation" aria-label="회원광장 메뉴">
-    <div class="side-panel__head"><span class="side-panel__title">📋 회원광장</span><button class="side-panel__close" id="side-close" aria-label="메뉴 닫기">✕</button></div>
-    <nav class="side-panel__menu">
-      <a href="board.html?cat=notice"><span class="menu-icon">📢</span> 공지사항</a>
-      <a href="board.html?cat=data"><span class="menu-icon">📁</span> 자료실</a>
-      <div class="side-divider"></div>
-      <a href="board.html?cat=report"><span class="menu-icon">📊</span> 결산보고서</a>
-      <a href="board.html?cat=minutes"><span class="menu-icon">📝</span> 월간회의록</a>
-      <div class="side-divider"></div>
-      <a href="vote.html"><span class="menu-icon">🗳️</span> 투표</a>
-      <a href="rebuild.html"><span class="menu-icon">🏗️</span> 재건축</a>
-    </nav>
-    <div class="side-panel__foot">장교빌딩 관리사무소<br>TEL. 02-778-4611~3</div>
-  </aside>
-
   <div class="about-wrap">
     <aside class="about-sub">
       <div class="sub-head">정보마당</div>
@@ -99,6 +98,7 @@
         <li><a href="info-data.html">자료실</a></li>
         <li><a href="info-forms.html" class="active">서식 다운로드</a></li>
         <li><a href="info-faq.html">자주 묻는 질문</a></li>
+        <li><a href="info-fee.html">관리비 부과내역</a></li>
       </ul>
       <div class="about-aside"><h4>관리사무소</h4><p>TEL. 02-778-4611~3<br>평일 09:00 ~ 18:00</p></div>
     </aside>
@@ -116,6 +116,29 @@
           <li><a href="#">시설 이용·민원 접수서 <span class="go">HWP</span></a></li>
         </ul>
       </section>
+
+      <section class="about-sec" id="amenity">
+        <h2><span class="no">4</span> 관련기관 및 편의시설</h2>
+        <p>장교빌딩 주변 관련기관 및 편의시설 연락처를 안내합니다.</p>
+        <table class="info-table">
+          <tr><th>을지로주민센터</th><td>2264-0756</td></tr>
+          <tr><th>남대문세무서</th><td>2260-0200</td></tr>
+          <tr><th>남대문경찰서</th><td>2096-8385</td></tr>
+          <tr><th>중부소방서</th><td>2234-0119</td></tr>
+          <tr><th>서울 중구청</th><td>2260-1114</td></tr>
+          <tr><th>서울 시청</th><td>731-6822</td></tr>
+          <tr><th>중앙전화국</th><td>100</td></tr>
+          <tr><th>예스코(가스)</th><td>730-1723~5</td></tr>
+          <tr><th>중앙케이블</th><td>753-6781</td></tr>
+          <tr><th>엘리베이터(OTIS)</th><td>080-780-7000</td></tr>
+          <tr><th>한전중부지점</th><td>762-5252</td></tr>
+          <tr><th>한국전기안전공사</th><td>710-8500</td></tr>
+          <tr><th>서울고용노동청</th><td>2250-5825</td></tr>
+          <tr><th>우리은행 한화센터지점</th><td>729-5600</td></tr>
+          <tr><th>국민은행 을지로입구</th><td>774-2161</td></tr>
+          <tr><th>기업은행 본점</th><td>729-6144</td></tr>
+        </table>
+      </section>
     </main>
   </div>
 
@@ -130,14 +153,143 @@
   <script src="auth.js"></script>
   <script>
   (function () {
-    var toggle=document.getElementById('board-toggle'),panel=document.getElementById('side-panel'),overlay=document.getElementById('side-overlay'),closeBtn=document.getElementById('side-close');
-    if(toggle){
-      function op(){panel.classList.add('open');overlay.classList.add('open');toggle.setAttribute('aria-expanded','true');closeBtn.focus();}
-      function cl(){panel.classList.remove('open');overlay.classList.remove('open');toggle.setAttribute('aria-expanded','false');toggle.focus();}
-      toggle.addEventListener('click',function(){panel.classList.contains('open')?cl():op();});
-      closeBtn.addEventListener('click',cl);overlay.addEventListener('click',cl);
-      document.addEventListener('keydown',function(e){if(e.key==='Escape'&&panel.classList.contains('open'))cl();});
+    var MAX_SIZE = 2 * 1024 * 1024; // localStorage에 저장되므로 2MB로 제한
+
+    function init() {
+      var section = document.getElementById('forms');
+      var list = section && section.querySelector('.link-list');
+      if (!list) return;
+
+      // auth.js의 본문 수정 캐시에 이전에 저장된 업로드 컨트롤/폼이 남아있으면 제거 후 새로 만든다 (중복 방지)
+      list.querySelectorAll('.form-upload-btn, .form-upload-input').forEach(function (el) { el.remove(); });
+      section.querySelectorAll('.forms-add-form').forEach(function (el) { el.remove(); });
+
+      // 관리자에게만 뜨는 content-edit-toolbar(저장/취소가 있는 줄)의 맨 오른쪽에 버튼을 붙인다
+      var toolbar = document.querySelector('.content-edit-toolbar');
+      if (!toolbar) return;
+
+      function extLabel(filename) {
+        var m = filename.match(/\.([a-zA-Z0-9]+)$/);
+        return m ? m[1].toUpperCase() : 'FILE';
+      }
+
+      function readAsDataURL(file, cb) {
+        var reader = new FileReader();
+        reader.onload = function () { cb(reader.result); };
+        reader.readAsDataURL(file);
+      }
+
+      function saveFormsContent() {
+        var area = document.querySelector('main.about-body .content-editable-area');
+        if (area) localStorage.setItem('jangkyo_content::' + location.pathname.split('/').pop(), area.innerHTML);
+      }
+
+      // li에 "업로드" 버튼을 붙여, 클릭 시 실제 파일로 링크를 교체할 수 있게 한다
+      function attachUploadControl(li, a) {
+        li.classList.add('with-upload');
+
+        var fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.className = 'form-upload-input';
+        fileInput.style.display = 'none';
+
+        var uploadBtn = document.createElement('button');
+        uploadBtn.type = 'button';
+        uploadBtn.className = 'form-upload-btn';
+        uploadBtn.textContent = '업로드';
+
+        uploadBtn.addEventListener('click', function () { fileInput.click(); });
+        fileInput.addEventListener('change', function () {
+          var file = fileInput.files[0];
+          if (!file) return;
+          if (file.size > MAX_SIZE) { alert('2MB 이하 파일만 업로드할 수 있습니다.'); return; }
+          readAsDataURL(file, function (dataUrl) {
+            a.href = dataUrl;
+            a.setAttribute('download', file.name);
+            var go = a.querySelector('.go');
+            if (!go) { go = document.createElement('span'); go.className = 'go'; a.appendChild(go); }
+            go.textContent = extLabel(file.name);
+            saveFormsContent();
+          });
+        });
+
+        var deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'form-delete-btn';
+        deleteBtn.textContent = '삭제';
+        deleteBtn.addEventListener('click', function () {
+          if (!confirm('이 서식을 삭제하시겠습니까?')) return;
+          li.remove();
+          saveFormsContent();
+        });
+
+        li.appendChild(uploadBtn);
+        li.appendChild(deleteBtn);
+        li.appendChild(fileInput);
+      }
+
+      list.querySelectorAll('li').forEach(function (li) {
+        var a = li.querySelector('a');
+        if (a) attachUploadControl(li, a);
+      });
+
+      var addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'btn btn-outline btn-sm forms-add-btn';
+      addBtn.textContent = '+ 서식 추가';
+      toolbar.appendChild(addBtn);
+
+      var form = document.createElement('form');
+      form.className = 'forms-add-form';
+      form.innerHTML =
+        '<div class="form-group"><label>서식 이름</label><input type="text" class="fa-name" placeholder="예: 입주 신청서" required /></div>' +
+        '<div class="form-group"><label>파일</label><input type="file" class="fa-file" required /></div>' +
+        '<div class="forms-add-actions">' +
+          '<button type="submit" class="btn btn-primary btn-sm">추가</button>' +
+          '<button type="button" class="btn btn-outline btn-sm fa-cancel">취소</button>' +
+        '</div>';
+      list.parentNode.insertBefore(form, list);
+
+      addBtn.addEventListener('click', function () {
+        form.classList.add('show');
+        form.querySelector('.fa-name').focus();
+      });
+
+      form.querySelector('.fa-cancel').addEventListener('click', function () {
+        form.reset();
+        form.classList.remove('show');
+      });
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var name = form.querySelector('.fa-name').value.trim();
+        var file = form.querySelector('.fa-file').files[0];
+        if (!name || !file) return;
+        if (file.size > MAX_SIZE) { alert('2MB 이하 파일만 업로드할 수 있습니다.'); return; }
+
+        readAsDataURL(file, function (dataUrl) {
+          var li = document.createElement('li');
+          var a = document.createElement('a');
+          a.href = dataUrl;
+          a.setAttribute('download', file.name);
+          a.appendChild(document.createTextNode(name + ' '));
+          var go = document.createElement('span');
+          go.className = 'go';
+          go.textContent = extLabel(file.name);
+          a.appendChild(go);
+          li.appendChild(a);
+          attachUploadControl(li, a);
+          list.appendChild(li);
+
+          saveFormsContent();
+
+          form.reset();
+          form.classList.remove('show');
+        });
+      });
     }
+
+    window.addEventListener('DOMContentLoaded', init);
   })();
   </script>
 </body>

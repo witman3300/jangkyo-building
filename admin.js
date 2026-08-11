@@ -62,7 +62,7 @@ function renderAdmin() {
       <tbody>${rows}</tbody>
     </table>
     <p class="admin-note">신규 가입자는 <strong>승인대기</strong> 상태이며, 승인 전에는 로그인할 수 없습니다.
-    등급을 <strong>특별회원(구분소유자)</strong>으로 부여하면 공지사항·자료실·결산보고서·월간회의록·회원게시판·재건축 추진현황을 이용할 수 있습니다.</p>`;
+    등급을 <strong>특별회원(구분소유자)</strong>으로 부여하면 공지사항·자료실·결산보고서·월간회의록·회원게시판을 이용할 수 있습니다.</p>`;
 }
 
 function onApprove(id, approved) {

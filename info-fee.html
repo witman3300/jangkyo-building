@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>임대료 조건 | 장교빌딩</title>
+  <title>관리비 부과내역 | 장교빌딩</title>
   <link rel="stylesheet" href="style.css" />
   <style>
     .about-wrap{max-width:1100px;margin:0 auto;padding:28px 20px 50px;display:grid;grid-template-columns:230px 1fr;gap:28px;flex:1;width:100%}
@@ -26,10 +26,13 @@
     .about-sec h2{font-size:20px;color:#223066;font-weight:700;padding-bottom:10px;border-bottom:2px solid #223066;margin-bottom:16px;display:flex;align-items:center;gap:8px}
     .about-sec h2 .no{background:#c9a84c;color:#fff;font-size:13px;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
     .about-sec p{color:#48505e;font-size:15px;line-height:1.85;margin-bottom:12px}
-    .info-table{width:100%;border-collapse:collapse;font-size:14.5px;margin:6px 0 8px}
-    .info-table th{background:#f4f6fb;color:#33415a;font-weight:700;text-align:left;padding:12px 14px;border:1px solid #e6e8ef;width:150px;white-space:nowrap}
-    .info-table td{padding:12px 14px;border:1px solid #e6e8ef;color:#48505e}
-    .float-note{background:#fff8ea;border:1px solid #f0dcae;border-radius:8px;padding:13px 16px;font-size:13px;color:#7a6a45;line-height:1.7}
+    .link-list{list-style:none;border-top:2px solid #223066}
+    .link-list li a{display:flex;justify-content:space-between;align-items:center;padding:14px 6px;border-bottom:1px solid #eef0f4;color:#41506a;text-decoration:none;font-size:15px}
+    .link-list li a:hover{color:#223066;background:#fafbfc}
+    .link-list .go{color:#c9a84c;font-size:13px;font-weight:700}
+    .cta{display:inline-block;margin-top:8px;background:#223066;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 22px;border-radius:8px}
+    .cta:hover{background:#2c3f80}
+    .empty-note{color:#7a8290;font-size:14px;padding:14px 6px}
     @media (max-width:768px){.about-wrap{grid-template-columns:1fr;gap:18px;padding:20px 14px 36px}.about-sub{order:-1}}
   </style>
 </head>
@@ -47,10 +50,10 @@
         <ul class="menu">
           <li><a href="about.html">장교빌딩 소개</a></li>
           <li><a href="tenant-info.html">입주안내</a></li>
-          <li><a href="general-info.html" class="active">일반안내</a></li>
+          <li><a href="general-info.html">일반안내</a></li>
           <li><a href="rental-info.html">임대안내</a></li>
-          <li><a href="info.html">정보마당</a></li>
-          <li><button id="board-toggle" aria-expanded="false" aria-controls="side-panel">회원광장 <span class="arrow">▼</span></button></li>
+          <li><a href="info.html" class="active">정보마당</a></li>
+          <li><a href="board.html">회원광장</a></li>
         </ul>
       </nav>
     </div>
@@ -67,48 +70,28 @@
     </div></div>
   </header>
 
-  <div class="side-overlay" id="side-overlay" aria-hidden="true"></div>
-  <aside class="side-panel" id="side-panel" role="navigation" aria-label="회원광장 메뉴">
-    <div class="side-panel__head"><span class="side-panel__title">📋 회원광장</span><button class="side-panel__close" id="side-close" aria-label="메뉴 닫기">✕</button></div>
-    <nav class="side-panel__menu">
-      <a href="board.html?cat=notice"><span class="menu-icon">📢</span> 공지사항</a>
-      <a href="board.html?cat=data"><span class="menu-icon">📁</span> 자료실</a>
-      <div class="side-divider"></div>
-      <a href="board.html?cat=report"><span class="menu-icon">📊</span> 결산보고서</a>
-      <a href="board.html?cat=minutes"><span class="menu-icon">📝</span> 월간회의록</a>
-      <div class="side-divider"></div>
-      <a href="vote.html"><span class="menu-icon">🗳️</span> 투표</a>
-      <a href="rebuild.html"><span class="menu-icon">🏗️</span> 재건축</a>
-    </nav>
-    <div class="side-panel__foot">장교빌딩 관리사무소<br>TEL. 02-778-4611~3</div>
-  </aside>
-
   <div class="about-wrap">
     <aside class="about-sub">
-      <div class="sub-head">일반안내</div>
+      <div class="sub-head">정보마당</div>
       <ul>
-        <li><a href="general-info.html">주변환경</a></li>
-        <li><a href="general-info-rentfee.html" class="active">임대료 조건</a></li>
-        <li><a href="general-info-amenity.html">관련기관 및 편의시설</a></li>
+        <li><a href="info.html">공지사항</a></li>
+        <li><a href="info-data.html">자료실</a></li>
+        <li><a href="info-forms.html">서식 다운로드</a></li>
+        <li><a href="info-faq.html">자주 묻는 질문</a></li>
+        <li><a href="info-fee.html" class="active">관리비 부과내역</a></li>
       </ul>
       <div class="about-aside"><h4>관리사무소</h4><p>TEL. 02-778-4611~3<br>평일 09:00 ~ 18:00</p></div>
     </aside>
 
     <main class="about-body">
-      <h1>임대료 조건</h1>
-      <p class="lead">장교빌딩 임대 면적과 보증금·임대료 조건을 안내합니다.</p>
+      <h1>관리비 부과내역</h1>
+      <p class="lead">매월 게시되는 관리비 부과내역 공지를 모아 안내합니다.</p>
 
-      <section class="about-sec" id="rentfee">
-        <h2><span class="no">2</span> 임대료 조건</h2>
-        <table class="info-table">
-          <tr><th>1개층 면적</th><td>1,961.30㎡(593.30평)</td></tr>
-          <tr><th>전용율</th><td>50%</td></tr>
-          <tr><th>임대면적</th><td>92평, 44평, 33평, 28평</td></tr>
-          <tr><th>보증금</th><td>550,000원(평당)</td></tr>
-          <tr><th>관리비</th><td>20,000원(평당), 실비정산</td></tr>
-          <tr><th>월세</th><td>55,000원(평당)</td></tr>
-        </table>
-        <div class="float-note">지하상가는 협의 조정</div>
+      <section class="about-sec" id="fee">
+        <h2><span class="no">5</span> 관리비 부과내역</h2>
+        <p>공지사항 중 관리비 부과내역만 모아 보여줍니다. 상세 내역과 첨부문서는 각 게시글에서 확인하실 수 있습니다.</p>
+        <ul class="link-list" id="feeRows"></ul>
+        <a class="cta" href="notice.html">📢 공지사항 전체보기</a>
       </section>
     </main>
   </div>
@@ -122,16 +105,29 @@
   </footer>
 
   <script src="auth.js"></script>
+  <script src="notices-data.js"></script>
   <script>
   (function () {
-    var toggle=document.getElementById('board-toggle'),panel=document.getElementById('side-panel'),overlay=document.getElementById('side-overlay'),closeBtn=document.getElementById('side-close');
-    if(toggle){
-      function op(){panel.classList.add('open');overlay.classList.add('open');toggle.setAttribute('aria-expanded','true');closeBtn.focus();}
-      function cl(){panel.classList.remove('open');overlay.classList.remove('open');toggle.setAttribute('aria-expanded','false');toggle.focus();}
-      toggle.addEventListener('click',function(){panel.classList.contains('open')?cl():op();});
-      closeBtn.addEventListener('click',cl);overlay.addEventListener('click',cl);
-      document.addEventListener('keydown',function(e){if(e.key==='Escape'&&panel.classList.contains('open'))cl();});
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
     }
+    var list = document.getElementById('feeRows');
+    if (!list || typeof NOTICES === 'undefined') return;
+
+    var rows = NOTICES.filter(function (p) { return p.title.indexOf('관리비') !== -1; })
+      .sort(function (a, b) { return b.no - a.no; });
+
+    if (!rows.length) {
+      list.innerHTML = '<li class="empty-note">등록된 관리비 부과내역이 없습니다.</li>';
+      return;
+    }
+
+    list.innerHTML = rows.map(function (p) {
+      return '<li><a href="notice-view.html?id=' + p.id + '">' + esc(p.title)
+        + ' <span class="go">' + p.date + '</span></a></li>';
+    }).join('');
   })();
   </script>
 </body>
