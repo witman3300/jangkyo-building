@@ -248,7 +248,7 @@ function deletePost(id) {
 /* 현재 카테고리에 해당하는 사이드바 메뉴 활성화 */
 function highlightSidebar() {
   const cat = getCat();
-  document.querySelectorAll(".sidebar a").forEach((a) => {
+  document.querySelectorAll(".about-sub a").forEach((a) => {
     a.classList.toggle("active", a.getAttribute("href") === "board.html?cat=" + cat);
   });
 }
