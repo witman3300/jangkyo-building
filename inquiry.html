@@ -3,8 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>아이디/비번 찾기 | 장교빌딩</title>
+  <title>1:1 문의 | 장교빌딩</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    .about-wrap{max-width:1100px;margin:0 auto;padding:28px 20px 50px;display:grid;grid-template-columns:230px 1fr;gap:28px;flex:1;width:100%}
+    .about-sub{align-self:start}
+    .about-sub .sub-head{background:#223066;color:#fff;font-size:16px;font-weight:700;padding:15px 18px;border-radius:8px 8px 0 0;letter-spacing:-.3px}
+    .about-sub ul{list-style:none;border:1px solid #e6e8ef;border-top:none;border-radius:0 0 8px 8px;overflow:hidden}
+    .about-sub li a{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;color:#41506a;text-decoration:none;font-size:15px;border-bottom:1px solid #eef0f4;transition:.15s;cursor:pointer}
+    .about-sub li:last-child a{border-bottom:none}
+    .about-sub li a::after{content:"›";color:#b9c0cf;font-size:17px}
+    .about-sub li a:hover{background:#f4f6fb;color:#1a2744;padding-left:22px}
+    .about-sub li a.active{background:#f4f1ea;color:#1a2744;font-weight:700;border-left:3px solid #c9a84c}
+    .about-sub li a.active::after{color:#c9a84c}
+    .about-aside{margin-top:16px;border:1px solid #e6e8ef;border-radius:8px;padding:18px;background:#fafbfc}
+    .about-aside h4{font-size:14px;color:#1a2744;margin-bottom:6px;font-weight:700}
+    .about-aside p{font-size:12.5px;color:#7a8290;line-height:1.7}
+    .about-body{min-width:0}
+    .inq-meta{font-size:12px;color:#9aa3b5;margin-bottom:10px}
+    .inq-answer{margin-top:10px;padding:12px 14px;background:#f4f6fb;border-left:3px solid #4f7cff;border-radius:4px;font-size:14px;line-height:1.7;color:#41506a}
+    @media (max-width:768px){.about-wrap{grid-template-columns:1fr;gap:18px;padding:20px 14px 36px}.about-sub{order:-1}}
+  </style>
 </head>
 <body>
   <!-- 헤더 -->
@@ -44,7 +63,6 @@
         <a href="sitemap.html">사이트맵</a>
       </div>
     </div>
-    <!-- 상단 이미지 슬라이드 (우→좌) -->
     <!-- 상단 이미지 슬라이드 (5장, 자동 전환) -->
     <div class="hero-slider" id="heroSlider">
       <div class="hero-slider-track">
@@ -64,21 +82,23 @@
     </div>
   </header>
 
-  <div class="layout">
-<aside class="sidebar">
+  <div class="about-wrap">
+    <aside class="about-sub">
+      <div class="sub-head">회원광장</div>
       <ul>
         <li><a href="board.html?cat=notice">공지사항</a></li>
         <li><a href="board.html?cat=data">자료실</a></li>
         <li><a href="board.html?cat=report">결산보고서</a></li>
         <li><a href="board.html?cat=minutes">월간회의록</a></li>
-        <li><a href="inquiry.html">1:1 문의</a></li>
+        <li><a href="inquiry.html" class="active">1:1 문의</a></li>
         <li><a href="vote.html">투표</a></li>
       </ul>
+      <div class="about-aside"><h4>관리사무소</h4><p>TEL. 02-778-4611~3<br>평일 09:00 ~ 18:00</p></div>
     </aside>
 
-    <main class="content">
-      <h1>아이디 / 비밀번호 찾기</h1>
-      <p class="lead">가입 시 등록한 이메일로 정보를 확인하실 수 있습니다.</p>
+    <!-- 1:1 문의 본문 (inquiry.js가 렌더링) -->
+    <main class="about-body content">
+      <div id="inquiry-app"></div>
     </main>
   </div>
   <!-- 하단 푸터 -->
@@ -93,8 +113,10 @@
       <p class="footer-copy">COPYRIGHT(C) 2010 JANGKYO BLDG. ALL RIGHT RESERVED.</p>
     </div>
   </footer>
+
   <script src="auth.js"></script>
 
+  <script src="inquiry.js"></script>
   <script src="home-slider.js"></script>
 </body>
 </html>
