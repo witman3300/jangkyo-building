@@ -394,3 +394,40 @@ function setupContentEdit() {
 }
 
 window.addEventListener("DOMContentLoaded", setupContentEdit);
+
+// ===== PWA: 모바일 홈 화면 설치 지원 =====
+// 모든 페이지가 auth.js를 로드하므로, 여기서 한 번만 매니페스트/아이콘을 주입한다.
+function setupPWA() {
+  const head = document.head;
+
+  const addLink = (rel, href, extra) => {
+    if (document.querySelector(`link[rel="${rel}"]`)) return;
+    const l = document.createElement("link");
+    l.rel = rel;
+    l.href = href;
+    if (extra) Object.assign(l, extra);
+    head.appendChild(l);
+  };
+  const addMeta = (name, content) => {
+    if (document.querySelector(`meta[name="${name}"]`)) return;
+    const m = document.createElement("meta");
+    m.name = name;
+    m.content = content;
+    head.appendChild(m);
+  };
+
+  addLink("manifest", "manifest.json");
+  addLink("icon", "icons/favicon-32.png");
+  addLink("apple-touch-icon", "icons/apple-touch-icon.png");
+  addMeta("theme-color", "#1a2744");
+  addMeta("mobile-web-app-capable", "yes");
+  addMeta("apple-mobile-web-app-capable", "yes");
+  addMeta("apple-mobile-web-app-status-bar-style", "black-translucent");
+  addMeta("apple-mobile-web-app-title", "장교빌딩");
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
+}
+
+window.addEventListener("DOMContentLoaded", setupPWA);
