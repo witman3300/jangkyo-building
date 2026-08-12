@@ -65,10 +65,23 @@
         <span class="divider">|</span><a href="find-account.html">아이디/비번 찾기</a><span class="divider">|</span><a href="sitemap.html">사이트맵</a>
       </div>
     </div>
-    <div class="slider"><div class="slider-track">
-      <img src="images/slide1.jpg" alt="장교빌딩 풍경 1" /><img src="images/slide2.jpg" alt="장교빌딩 풍경 2" /><img src="images/slide3.jpg" alt="장교빌딩 풍경 3" /><img src="images/slide4.jpg" alt="장교빌딩 풍경 4" /><img src="images/slide5.jpg" alt="장교빌딩 풍경 5" /><img src="images/slide6.jpg" alt="장교빌딩 풍경 6" />
-      <img src="images/slide1.jpg" alt="" aria-hidden="true" /><img src="images/slide2.jpg" alt="" aria-hidden="true" /><img src="images/slide3.jpg" alt="" aria-hidden="true" /><img src="images/slide4.jpg" alt="" aria-hidden="true" /><img src="images/slide5.jpg" alt="" aria-hidden="true" /><img src="images/slide6.jpg" alt="" aria-hidden="true" />
-    </div></div>
+    <!-- 상단 이미지 슬라이드 (5장, 자동 전환) -->
+    <div class="hero-slider" id="heroSlider">
+      <div class="hero-slider-track">
+        <div class="hero-slide"><img src="images/slide1.jpg" alt="장교빌딩 풍경 1" /></div>
+        <div class="hero-slide"><img src="images/slide2.jpg" alt="장교빌딩 풍경 2" /></div>
+        <div class="hero-slide"><img src="images/slide3.jpg" alt="장교빌딩 풍경 3" /></div>
+        <div class="hero-slide"><img src="images/slide4.jpg" alt="장교빌딩 풍경 4" /></div>
+        <div class="hero-slide"><img src="images/slide5.jpg" alt="장교빌딩 풍경 5" /></div>
+      </div>
+      <div class="hero-slider-dots">
+        <button type="button" class="hero-dot is-active" data-index="0" aria-label="1번째 사진 보기"></button>
+        <button type="button" class="hero-dot" data-index="1" aria-label="2번째 사진 보기"></button>
+        <button type="button" class="hero-dot" data-index="2" aria-label="3번째 사진 보기"></button>
+        <button type="button" class="hero-dot" data-index="3" aria-label="4번째 사진 보기"></button>
+        <button type="button" class="hero-dot" data-index="4" aria-label="5번째 사진 보기"></button>
+      </div>
+    </div>
   </header>
 
   <div class="about-wrap">
@@ -108,5 +121,6 @@
   </footer>
 
   <script src="auth.js"></script>
+  <script src="home-slider.js"></script>
 </body>
 </html>
