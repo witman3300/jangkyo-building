@@ -18,6 +18,12 @@ body {
   min-height: 100vh;
 }
 
+/* 고정된 헤더(로고바 60px + 유틸리티바 37px) 높이만큼 본문을 밀어냄.
+   브로드시트 홈(home.html, body.page-home)은 별도의 고정 헤더가 없으므로 제외 */
+body:not(.page-home) {
+  padding-top: 97px;
+}
+
 /* ===== 헤더 ===== */
 .header {
   background: #ffffff;
@@ -1465,6 +1471,11 @@ body.sidebar-open .sidebar-overlay {
 .topbar {
   background: #1a2744 !important;
   border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  position: fixed;
+  top: 60px;
+  left: 0;
+  right: 0;
+  z-index: 900;
 }
 .topbar-inner {
   justify-content: flex-end !important;
@@ -1733,6 +1744,11 @@ body.sidebar-open .sidebar-overlay {
   padding: 0 20px;
   height: 60px;
   box-shadow: 0 3px 10px rgba(0,0,0,0.18);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 901;
 }
 .headbar-logo {
   display: flex;
@@ -1810,9 +1826,18 @@ body.sidebar-open .sidebar-overlay {
     width: 100%;
     background: #1a2744;
     padding: 10px 16px 8px;
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 902;
   }
 
-  .topbar { order: 2; }
+  .topbar {
+    order: 2;
+    top: 58px; /* .headbar-logo 실제 높이(10+40+8)만큼 아래에서 고정 */
+    z-index: 901;
+  }
 
   .headbar .navbar {
     order: 3;
@@ -1820,12 +1845,21 @@ body.sidebar-open .sidebar-overlay {
     height: 44px !important;
     background: #1a2744 !important;
     padding: 0 16px !important;
+    position: fixed !important;
+    top: 95px !important; /* 58px(로고) + 37px(유틸리티 줄) */
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 900 !important;
   }
   .headbar .navbar .menu { height: 44px !important; }
   .headbar .navbar .menu a,
   .headbar .navbar .menu button { height: 44px !important; font-size: 13px !important; padding: 0 12px !important; }
 
   .hero-slider { order: 4; }
+
+  body:not(.page-home) {
+    padding-top: 139px; /* 로고(58) + 유틸리티(37) + 메뉴(44) */
+  }
 }
 
 /* ===== 관리자 본문 수정 툴바 ===== */
