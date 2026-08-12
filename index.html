@@ -6,159 +6,156 @@
   <title>장교빌딩</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,500;0,600;0,700;0,900;1,400;1,600&family=Noto+Serif+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
-<body class="home">
-  <!-- 헤더 -->
-  <header class="header">
-    <!-- 로고 + 메뉴 한 줄 -->
-    <div class="headbar">
-      <div class="headbar-logo">
-        <div class="logobar-icon">🏢</div>
-        <div class="logobar-text">
-          <a href="index.html" class="brand">장교빌딩</a>
-          <span class="brand-sub">JANGKYO BUILDING</span>
-        </div>
+<body class="page-home">
+
+  <!-- 좌측 고정 세로 섹션 내비게이션 -->
+  <nav class="secnav" aria-label="섹션 이동">
+    <div class="secnav-rail" aria-hidden="true"></div>
+    <div class="secnav-body">
+      <div class="secnav-track">
+        <button type="button" class="secnav-btn is-active" data-target="section-hero" data-label="HOME">
+          <span class="secnav-num">01</span>
+          <span class="secnav-tick" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="secnav-btn" data-target="section-notice" data-label="NOTICE">
+          <span class="secnav-num">02</span>
+          <span class="secnav-tick" aria-hidden="true"></span>
+        </button>
       </div>
-      <nav class="navbar">
-        <ul class="menu">
-          <li><a href="about.html">장교빌딩 소개</a></li>
+      <div class="secnav-indicator" aria-hidden="true">
+        <span class="secnav-indicator-line"></span>
+        <span class="secnav-label">HOME</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 헤더 -->
+  <header class="bs-header">
+    <div class="bs-header-inner">
+      <a href="index.html" class="bs-brand">
+        <span class="bs-brand-kr">장교빌딩</span>
+        <span class="bs-brand-en">JANGKYO BUILDING</span>
+      </a>
+      <nav class="bs-nav" aria-label="주 메뉴">
+        <ul>
+          <li><a href="about.html">소개</a></li>
           <li><a href="tenant-info.html">입주안내</a></li>
           <li><a href="rental-info.html">임대안내</a></li>
           <li><a href="info.html">정보마당</a></li>
           <li><a href="board.html">회원광장</a></li>
         </ul>
-      </nav>
-    </div>
-    <!-- 상단 유틸리티 바 -->
-    <div class="topbar">
-      <div class="topbar-inner">
-        <a href="index.html">홈으로</a>
-        <span class="divider">|</span>
-        <span id="auth-status">
+        <span id="auth-status" class="bs-auth">
           <a href="login.html">로그인</a>
-          <span class="divider">|</span>
-          <a href="signup.html">회원가입</a>
         </span>
-        <span class="divider">|</span>
-        <a href="find-account.html">아이디/비번 찾기</a>
-        <span class="divider">|</span>
-        <a href="sitemap.html">사이트맵</a>
-      </div>
-    </div>
-    <!-- 상단 이미지 슬라이드 (우→좌) -->
-    <div class="slider">
-      <div class="slider-track">
-        <img src="images/slide1.jpg" alt="장교빌딩 풍경 1" />
-        <img src="images/slide2.jpg" alt="장교빌딩 풍경 2" />
-        <img src="images/slide3.jpg" alt="장교빌딩 풍경 3" />
-        <img src="images/slide4.jpg" alt="장교빌딩 풍경 4" />
-        <img src="images/slide5.jpg" alt="장교빌딩 풍경 5" />
-        <img src="images/slide6.jpg" alt="장교빌딩 풍경 6" />
-        <img src="images/slide1.jpg" alt="" aria-hidden="true" />
-        <img src="images/slide2.jpg" alt="" aria-hidden="true" />
-        <img src="images/slide3.jpg" alt="" aria-hidden="true" />
-        <img src="images/slide4.jpg" alt="" aria-hidden="true" />
-        <img src="images/slide5.jpg" alt="" aria-hidden="true" />
-        <img src="images/slide6.jpg" alt="" aria-hidden="true" />
-      </div>
+      </nav>
     </div>
   </header>
 
-  <div class="layout">
-    <!-- 좌측 사이드 메뉴 -->
-<aside class="sidebar">
-      <ul>
-        <li><a href="board.html?cat=notice">공지사항</a></li>
-        <li><a href="board.html?cat=data">자료실</a></li>
-        <li><a href="board.html?cat=report">결산보고서</a></li>
-        <li><a href="board.html?cat=minutes">월간회의록</a></li>
-        <li><a href="vote.html">투표</a></li>
-      </ul>
-    </aside>
+  <main class="bs-main">
+    <!-- 히어로 슬라이드쇼 -->
+    <section class="bs-hero" id="section-hero" data-secnav-theme="dark">
+      <div class="bs-hero-slides">
+        <div class="bs-hero-slide is-active"><img src="images/KakaoTalk_20260812_101010054_10.jpg" alt="장교빌딩 파사드 전경" /></div>
+        <div class="bs-hero-slide"><img src="images/KakaoTalk_20260812_101010054_17.jpg" alt="장교빌딩에서 내려다본 도심 전망" /></div>
+        <div class="bs-hero-slide"><img src="images/KakaoTalk_20260812_101010054_11.jpg" alt="장교빌딩 입구 캐노피" /></div>
+        <div class="bs-hero-slide"><img src="images/KakaoTalk_20260812_101010054_09.jpg" alt="장교빌딩 옥외 조형물 광장" /></div>
+        <div class="bs-hero-slide"><img src="images/KakaoTalk_20260812_101010054_03.jpg" alt="장교빌딩 로비 조형물" /></div>
+      </div>
+      <div class="bs-hero-scrim" aria-hidden="true"></div>
+      <div class="bs-hero-content">
+        <p class="bs-hero-caption">SEOUL · JUNG-GU · SAMIL-DAERO 363</p>
+        <h1 class="bs-hero-headline">도심의 중심,<br />신뢰로 지켜온 공간</h1>
+        <p class="bs-hero-sub">을지로입구역 도보 1분, 서울 도심업무지구 한복판에서 오랜 시간 자리를 지켜온 오피스 빌딩입니다.</p>
+        <div class="bs-hero-actions">
+          <a href="rental-info.html" class="bs-btn bs-btn-primary">임대안내</a>
+          <a href="tenant-info.html" class="bs-btn bs-btn-secondary">입주안내</a>
+        </div>
+      </div>
+    </section>
 
-    <!-- 본문 -->
-    <main class="content home-content">
-      <!-- 상단 3단 정보 패널 -->
-      <section class="home-panels">
-        <!-- 박스 1: NOTICE -->
-        <div class="panel panel-notice">
-          <div class="panel-head">
-            <div class="panel-heading">
-              <h2 class="panel-title">NOTICE</h2>
-              <span class="panel-sub">THE JANG NOTICE</span>
-            </div>
-            <a href="board.html?cat=notice" class="view-btn">VIEW+</a>
+    <!-- 본문 2단 그리드 -->
+    <section class="bs-content-section" id="section-notice">
+      <div class="bs-grid">
+        <div class="bs-col-notice">
+          <div class="bs-col-head">
+            <h2>공지사항</h2>
+            <a href="board.html?cat=notice" class="bs-more">전체 보기 →</a>
           </div>
-          <ul class="notice-list">
-            <li><a href="board.html?cat=notice">2026년 5월 관리비 부과내역</a></li>
-            <li><a href="board.html?cat=notice">지하상가 일괄매각 추진업무 종결 통보</a></li>
-            <li><a href="board.html?cat=notice">2025년도 장교공영주식회사 재무제표</a></li>
-            <li><a href="board.html?cat=notice">2025년도 장교빌딩 관리단 정기집회</a></li>
+          <ul class="bs-notice-list">
+            <li>
+              <a href="board.html?cat=notice">
+                <span class="bs-notice-tag">NEW</span>
+                <span class="bs-notice-title">2026년 5월 관리비 부과내역</span>
+                <span class="bs-notice-date">05.10</span>
+              </a>
+            </li>
+            <li>
+              <a href="board.html?cat=notice">
+                <span class="bs-notice-title">지하상가 일괄매각 추진업무 종결 통보</span>
+                <span class="bs-notice-date">04.22</span>
+              </a>
+            </li>
+            <li>
+              <a href="board.html?cat=notice">
+                <span class="bs-notice-title">2025년도 장교공영주식회사 재무제표 공고</span>
+                <span class="bs-notice-date">03.15</span>
+              </a>
+            </li>
+            <li>
+              <a href="board.html?cat=notice">
+                <span class="bs-notice-title">2025년도 장교빌딩 관리단 정기집회 개최 안내</span>
+                <span class="bs-notice-date">02.27</span>
+              </a>
+            </li>
+            <li>
+              <a href="board.html?cat=notice">
+                <span class="bs-notice-title">승강기 정기점검 안내</span>
+                <span class="bs-notice-date">02.05</span>
+              </a>
+            </li>
           </ul>
         </div>
 
-        <!-- 박스 2: Information -->
-        <div class="panel panel-info">
-          <div class="panel-head">
-            <div class="panel-heading">
-              <h2 class="panel-title"><span class="leaf" aria-hidden="true">&#127807;</span> Infomation</h2>
-              <span class="panel-sub">장교빌딩 자료실입니다 (문서자료 다운로드)</span>
-            </div>
+        <div class="bs-col-side">
+          <div class="bs-side-block">
+            <h3>자료실</h3>
+            <ul class="bs-side-list">
+              <li><a href="files/관리규약.hwp" download>관리규약</a></li>
+              <li><a href="files/관리규정.hwp" download>관리규정</a></li>
+              <li><a href="board.html?cat=report">결산보고서</a></li>
+              <li><a href="board.html?cat=minutes">월간회의록</a></li>
+            </ul>
           </div>
-          <div class="thumb info-thumb">
-            <img src="images/info-thumb.jpg" alt="자료실 안내" onerror="this.style.display='none'" />
-          </div>
-          <div class="info-btns">
-            <a href="files/관리규약.hwp" class="soft-btn" download>관리규약</a>
-            <a href="files/관리규정.hwp" class="soft-btn" download>관리규정</a>
-            <a href="board.html?cat=report" class="soft-btn">결산보고서</a>
-          </div>
-        </div>
 
-        <!-- 박스 3: 주변환경 -->
-        <div class="panel panel-env">
-          <div class="panel-head">
-            <div class="panel-heading">
-              <span class="panel-sub">장교빌딩 주변환경을 소개합니다</span>
-              <h2 class="panel-title env-title">주변환경</h2>
-            </div>
-            <a href="about-location.html" class="view-btn">VIEW &gt;</a>
+          <div class="bs-side-block">
+            <h3>투표</h3>
+            <p class="bs-side-text">진행 중인 관리단 안건에 참여해 의견을 남겨주세요.</p>
+            <a href="vote.html" class="bs-more">투표 참여 →</a>
           </div>
-          <div class="thumb env-thumb">
-            <img src="images/env-thumb.jpg" alt="주변환경 소개" onerror="this.style.display='none'" />
-          </div>
-        </div>
-      </section>
 
-      <!-- 하단 히어로 파노라마 -->
-      <section class="home-hero">
-        <img class="balloon balloon1" src="images/balloon1.png" alt="" aria-hidden="true" onerror="this.style.display='none'" />
-        <img class="balloon balloon2" src="images/balloon2.png" alt="" aria-hidden="true" onerror="this.style.display='none'" />
-        <img class="balloon balloon3" src="images/balloon3.png" alt="" aria-hidden="true" onerror="this.style.display='none'" />
-        <img class="hero-city" src="images/cityscape.png" alt="" aria-hidden="true" onerror="this.style.display='none'" />
-        <img class="hero-children" src="images/hero-children.png" alt="장교빌딩 캐릭터" onerror="this.style.display='none'" />
-        <div class="hero-text">
-          <p class="hero-script">The Dream of Happiness</p>
-          <p class="hero-en">THE ENERGY WITH BRIGHTNESS AND WARMNESS OF LOVE</p>
-          <p class="hero-en">WE WILL ALWAYS ACCOMPANY YOU WITH THE ENERGY OF HAPPINESS</p>
+          <div class="bs-side-block">
+            <h3>연락처</h3>
+            <p class="bs-side-text">
+              서울 중구 삼일대로 363<br />
+              TEL. 02-778-4611~3<br />
+              FAX. 02-775-9663
+            </p>
+          </div>
         </div>
-      </section>
-    </main>
-  </div>
-  <!-- 하단 푸터 -->
-  <footer class="footer">
-    <div class="footer-inner">
-      <p class="footer-addr">(우) 04541 서울특별시 중구 삼일대로 363, 1505 (장교동, 장교빌딩)</p>
-      <p class="footer-contact">
-        <span>TEL. 02-778-4611~3</span>
-        <span>FAX. 02-775-9663</span>
-        <span>MAIL. ksduck1@hanmail.net</span>
-      </p>
-      <p class="footer-copy">COPYRIGHT(C) 2010 JANGKYO BLDG. ALL RIGHT RESERVED.</p>
-    </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 푸터 -->
+  <footer class="bs-footer">
+    <p>&copy; 2026 JANGKYO BUILDING</p>
   </footer>
+
   <script src="auth.js"></script>
+  <script src="home-hero.js"></script>
+  <script src="secnav.js"></script>
 </body>
 </html>
