@@ -5,6 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>사이트맵 | 장교빌딩</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    .sitemap-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:36px 28px;margin-top:8px}
+    .sitemap-col h2{font-size:16px;color:#1a2744;padding-bottom:10px;border-bottom:2px solid #223066;margin-bottom:12px}
+    .sitemap-col h2 a{color:inherit;text-decoration:none}
+    .sitemap-col h2 a:hover{text-decoration:underline}
+    .sitemap-col ul{list-style:none}
+    .sitemap-col li{margin-bottom:2px}
+    .sitemap-col li a{display:flex;align-items:center;flex-wrap:wrap;gap:6px;color:#41506a;text-decoration:none;font-size:14.5px;padding:7px 0}
+    .sitemap-col li a:hover{color:#1a2744;text-decoration:underline}
+    .sitemap-tag{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;line-height:1.5;white-space:nowrap}
+    .sitemap-tag.special{background:#fdf3df;color:#96751f}
+    .sitemap-tag.login{background:#eef1f8;color:#4a5568}
+    .sitemap-tag.admin{background:#fdeaea;color:#c0392b}
+  </style>
 </head>
 <body>
   <!-- 헤더 -->
@@ -78,7 +92,80 @@
 
     <main class="content">
       <h1>사이트맵</h1>
-      <p class="lead">전체 메뉴 구조입니다.</p>
+      <p class="lead">장교빌딩 웹사이트의 전체 메뉴 구조입니다.</p>
+
+      <div class="sitemap-grid">
+        <div class="sitemap-col">
+          <h2><a href="about.html">장교빌딩 소개</a></h2>
+          <ul>
+            <li><a href="about.html">장교빌딩 개요</a></li>
+            <li><a href="about-history.html">관리변경 연혁</a></li>
+            <li><a href="about-org.html">조직도</a></li>
+            <li><a href="about-floorplan.html">건물도면</a></li>
+            <li><a href="about-location.html">오시는 길</a></li>
+          </ul>
+        </div>
+
+        <div class="sitemap-col">
+          <h2><a href="tenant-info.html">입주안내</a></h2>
+          <ul>
+            <li><a href="tenant-info.html">입주 절차</a></li>
+            <li><a href="tenant-info-docs.html">필요 서류</a></li>
+            <li><a href="tenant-info-fee.html">관리비 안내</a></li>
+            <li><a href="tenant-info-notice.html">입주 시 유의사항</a></li>
+          </ul>
+        </div>
+
+        <div class="sitemap-col">
+          <h2><a href="rental-info.html">임대안내</a></h2>
+          <ul>
+            <li><a href="rental-info.html">공실 현황</a></li>
+            <li><a href="rental-info-terms.html">임대 조건</a></li>
+            <li><a href="rental-info-process.html">계약 절차</a></li>
+            <li><a href="rental-info-contact.html">임대 문의</a></li>
+          </ul>
+        </div>
+
+        <div class="sitemap-col">
+          <h2><a href="info.html">정보마당</a></h2>
+          <ul>
+            <li><a href="info.html">공지사항</a></li>
+            <li><a href="info-data.html">자료실</a></li>
+            <li><a href="info-forms.html">서식 다운로드</a></li>
+            <li><a href="info-faq.html">자주 묻는 질문</a></li>
+            <li><a href="info-fee.html">관리비 부과내역</a></li>
+          </ul>
+        </div>
+
+        <div class="sitemap-col">
+          <h2><a href="board.html">회원광장</a></h2>
+          <ul>
+            <li><a href="board.html?cat=notice">공지사항 <span class="sitemap-tag special">특별회원</span></a></li>
+            <li><a href="board.html?cat=data">자료실 <span class="sitemap-tag special">특별회원</span></a></li>
+            <li><a href="board.html?cat=report">결산보고서 <span class="sitemap-tag special">특별회원</span></a></li>
+            <li><a href="board.html?cat=minutes">월간회의록 <span class="sitemap-tag special">특별회원</span></a></li>
+            <li><a href="inquiry.html">1:1 문의 <span class="sitemap-tag login">로그인</span></a></li>
+            <li><a href="vote.html">투표 <span class="sitemap-tag login">로그인</span></a></li>
+          </ul>
+        </div>
+
+        <div class="sitemap-col">
+          <h2>계정</h2>
+          <ul>
+            <li><a href="login.html">로그인</a></li>
+            <li><a href="signup.html">회원가입</a></li>
+            <li><a href="find-account.html">아이디/비밀번호 찾기</a></li>
+          </ul>
+        </div>
+
+        <div class="sitemap-col">
+          <h2>관리자</h2>
+          <ul>
+            <li><a href="admin.html">회원관리 <span class="sitemap-tag admin">관리자</span></a></li>
+            <li><a href="admin-members.html">실회원 정보 <span class="sitemap-tag admin">관리자</span></a></li>
+          </ul>
+        </div>
+      </div>
     </main>
   </div>
   <!-- 하단 푸터 -->
