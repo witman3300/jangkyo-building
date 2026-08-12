@@ -1797,18 +1797,35 @@ body.sidebar-open .sidebar-overlay {
   border-bottom-color: #c9a84c !important;
 }
 
-/* 모바일: 세로로 분리 */
+/* 모바일: 로고 → 유틸리티 줄(홈으로 등) → 메뉴 줄(장교빌딩 소개 등) → 히어로 순서로 재배치 */
 @media (max-width: 768px) {
-  .headbar {
-    flex-direction: column;
-    height: auto;
-    padding: 10px 16px 0;
+  .header { display: flex; flex-direction: column; }
+
+  /* headbar 박스 자체는 렌더링에서 빠지고, 내부의 로고/메뉴가 .header의 개별 flex 아이템이 됨 */
+  .headbar { display: contents; }
+
+  .headbar-logo {
+    order: 1;
+    margin-right: 0;
+    width: 100%;
+    background: #1a2744;
+    padding: 10px 16px 8px;
   }
-  .headbar-logo { margin-right: 0; margin-bottom: 4px; width: 100%; }
-  .headbar .navbar { width: 100%; height: 44px !important; }
+
+  .topbar { order: 2; }
+
+  .headbar .navbar {
+    order: 3;
+    width: 100%;
+    height: 44px !important;
+    background: #1a2744 !important;
+    padding: 0 16px !important;
+  }
   .headbar .navbar .menu { height: 44px !important; }
   .headbar .navbar .menu a,
   .headbar .navbar .menu button { height: 44px !important; font-size: 13px !important; padding: 0 12px !important; }
+
+  .hero-slider { order: 4; }
 }
 
 /* ===== 관리자 본문 수정 툴바 ===== */
