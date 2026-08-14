@@ -693,6 +693,41 @@ body.sidebar-open .sidebar-overlay {
   background: #ffffff;
 }
 
+/* ===== 토스트 메시지 (alert() 대체) ===== */
+#toast-container {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  align-items: center;
+  pointer-events: none;
+}
+
+.toast {
+  background: #1a2744;
+  color: #ffffff;
+  padding: 13px 22px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-line;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  max-width: min(90vw, 420px);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 /* ===== 특별회원 접근 제어 ===== */
 .lock-box {
   max-width: 460px;

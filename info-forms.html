@@ -213,7 +213,7 @@
         fileInput.addEventListener('change', function () {
           var file = fileInput.files[0];
           if (!file) return;
-          if (file.size > MAX_SIZE) { alert('2MB 이하 파일만 업로드할 수 있습니다.'); return; }
+          if (file.size > MAX_SIZE) { showToast('2MB 이하 파일만 업로드할 수 있습니다.'); return; }
           readAsDataURL(file, function (dataUrl) {
             a.href = dataUrl;
             a.setAttribute('download', file.name);
@@ -276,7 +276,7 @@
         var name = form.querySelector('.fa-name').value.trim();
         var file = form.querySelector('.fa-file').files[0];
         if (!name || !file) return;
-        if (file.size > MAX_SIZE) { alert('2MB 이하 파일만 업로드할 수 있습니다.'); return; }
+        if (file.size > MAX_SIZE) { showToast('2MB 이하 파일만 업로드할 수 있습니다.'); return; }
 
         readAsDataURL(file, function (dataUrl) {
           var li = document.createElement('li');

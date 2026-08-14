@@ -116,15 +116,17 @@
       const res = loginUser(id, pw);
       if (!res.ok) {
         if (res.reason === "pending") {
-          alert("아직 관리자 승인 대기 중인 계정입니다. 승인 후 이용해 주세요.");
+          showToast("아직 관리자 승인 대기 중인 계정입니다. 승인 후 이용해 주세요.");
         } else {
-          alert("아이디 또는 비밀번호가 올바르지 않습니다.");
+          showToast("아이디 또는 비밀번호가 올바르지 않습니다.");
         }
         return;
       }
       const s = res.session;
-      alert(s.name + " 님, 로그인되었습니다. (" + gradeLabel(s.grade) + ")");
-      location.href = s.grade === "admin" ? "admin.html" : "index.html";
+      showToast(s.name + " 님, 로그인되었습니다. (" + gradeLabel(s.grade) + ")");
+      setTimeout(function () {
+        location.href = s.grade === "admin" ? "admin.html" : "index.html";
+      }, 900);
     }
   </script>
   <!-- 하단 푸터 -->

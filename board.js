@@ -146,7 +146,7 @@ function onPickFiles(e) {
   if (remaining === 0) return;
   files.forEach((file) => {
     if (file.size > MAX_FILE_MB * 1024 * 1024) {
-      alert(`"${file.name}" 은(는) ${MAX_FILE_MB}MB를 초과하여 제외됩니다.`);
+      showToast(`"${file.name}" 은(는) ${MAX_FILE_MB}MB를 초과하여 제외됩니다.`);
       remaining--;
       return;
     }
@@ -187,7 +187,7 @@ function submitPost(e) {
   try {
     savePosts(posts);
   } catch (err) {
-    alert("저장 공간이 부족합니다. 첨부파일 용량을 줄여주세요.");
+    showToast("저장 공간이 부족합니다. 첨부파일 용량을 줄여주세요.");
     return;
   }
   location.hash = "#view/" + post.id;

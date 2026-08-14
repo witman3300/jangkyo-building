@@ -235,16 +235,16 @@ function createPoll() {
     .map((i) => i.value.trim())
     .filter((v) => v);
   if (!q) {
-    alert("투표 주제를 입력해 주세요.");
+    showToast("투표 주제를 입력해 주세요.");
     return;
   }
   if (opts.length < 2) {
-    alert("선택 항목을 2개 이상 입력해 주세요.");
+    showToast("선택 항목을 2개 이상 입력해 주세요.");
     return;
   }
   const deadlineRaw = document.getElementById("new-deadline").value;
   if (deadlineRaw && new Date(deadlineRaw).getTime() <= Date.now()) {
-    alert("마감일시는 현재 시각 이후로 지정해 주세요.");
+    showToast("마감일시는 현재 시각 이후로 지정해 주세요.");
     return;
   }
   const polls = loadPolls();
@@ -258,7 +258,7 @@ function createPoll() {
     deadline: deadlineRaw || null,
   });
   savePolls(polls);
-  alert("새 투표가 등록되었습니다.");
+  showToast("새 투표가 등록되었습니다.");
   renderVote();
 }
 
@@ -287,30 +287,30 @@ function submitVote(e, id) {
   e.preventDefault();
   const sess = getSession();
   if (!sess) {
-    alert("로그인이 필요합니다.");
+    showToast("로그인이 필요합니다.");
     return;
   }
   const polls = loadPolls();
   const poll = polls.find((x) => x.id === id);
   if (!poll || isClosed(poll)) {
-    alert("마감되었거나 존재하지 않는 투표입니다.");
+    showToast("마감되었거나 존재하지 않는 투표입니다.");
     renderVote();
     return;
   }
   if (poll.voters.includes(sess.id)) {
-    alert("이미 투표하셨습니다.");
+    showToast("이미 투표하셨습니다.");
     renderVote();
     return;
   }
   const sel = document.querySelector(`input[name="poll-${id}"]:checked`);
   if (!sel) {
-    alert("항목을 선택해 주세요.");
+    showToast("항목을 선택해 주세요.");
     return;
   }
   poll.counts[Number(sel.value)]++;
   poll.voters.push(sess.id);
   savePolls(polls);
-  alert("투표가 완료되었습니다. 감사합니다!");
+  showToast("투표가 완료되었습니다. 감사합니다!");
   renderVote();
 }
 

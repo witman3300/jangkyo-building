@@ -335,15 +335,15 @@ async function submitForm(e){
   e.preventDefault();
   var ag1=document.querySelector('input[name=ag1]:checked');
   var ag2=document.querySelector('input[name=ag2]:checked');
-  if(!ag1||ag1.value!=='y'||!ag2||ag2.value!=='y'){ alert('회원가입약관과 개인정보취급방침에 모두 동의하셔야 가입할 수 있습니다.'); return false; }
+  if(!ag1||ag1.value!=='y'||!ag2||ag2.value!=='y'){ showToast('회원가입약관과 개인정보취급방침에 모두 동의하셔야 가입할 수 있습니다.'); return false; }
   var mtype=document.querySelector('input[name=mtype]:checked');
-  if(!mtype){ alert('회원 구분을 선택해 주세요.'); return false; }
-  if(!idChecked){ alert('아이디 중복확인을 먼저 진행해 주세요.'); return false; }
+  if(!mtype){ showToast('회원 구분을 선택해 주세요.'); return false; }
+  if(!idChecked){ showToast('아이디 중복확인을 먼저 진행해 주세요.'); return false; }
   var pw=document.getElementById('pw1').value, pw2=document.getElementById('pw2').value;
-  if(!/^[A-Za-z0-9]{6,}$/.test(pw)){ alert('비밀번호는 영문 또는 숫자로 6자 이상 입력해 주세요.'); return false; }
-  if(pw!==pw2){ alert('비밀번호가 일치하지 않습니다.'); return false; }
+  if(!/^[A-Za-z0-9]{6,}$/.test(pw)){ showToast('비밀번호는 영문 또는 숫자로 6자 이상 입력해 주세요.'); return false; }
+  if(pw!==pw2){ showToast('비밀번호가 일치하지 않습니다.'); return false; }
   var cap=document.getElementById('cap-in').value.trim();
-  if(cap!==capCode){ alert('자동등록방지 숫자가 일치하지 않습니다.'); genCap(); return false; }
+  if(cap!==capCode){ showToast('자동등록방지 숫자가 일치하지 않습니다.'); genCap(); return false; }
 
   var data={
     uid: document.getElementById('uid').value.trim(),
@@ -362,7 +362,7 @@ async function submitForm(e){
 
   /* ===== Firebase 미준비 시 안내 ===== */
   if(!fbReady){
-    alert('회원 시스템 연결에 문제가 있습니다. 잠시 후 다시 시도해 주세요.');
+    showToast('회원 시스템 연결에 문제가 있습니다. 잠시 후 다시 시도해 주세요.');
     return false;
   }
 
@@ -385,18 +385,18 @@ async function submitForm(e){
     });
 
     if(status==='승인'){
-      alert('회원가입이 완료되었습니다!\n일반회원으로 바로 로그인하실 수 있습니다.');
+      showToast('회원가입이 완료되었습니다!\n일반회원으로 바로 로그인하실 수 있습니다.');
     }else{
-      alert('가입 신청이 접수되었습니다.\n관리사무소의 확인(호실·계약·등기) 후 승인되면 로그인하실 수 있습니다.');
+      showToast('가입 신청이 접수되었습니다.\n관리사무소의 확인(호실·계약·등기) 후 승인되면 로그인하실 수 있습니다.');
     }
-    location.href='index.html';
+    setTimeout(function(){ location.href='index.html'; }, 1400);
   }catch(err){
     var m=(err&&err.message)||'알 수 없는 오류';
     var c=(err&&err.code)||'';
     if(c==='auth/email-already-in-use') m='이미 가입된 이메일입니다.';
     else if(c==='auth/invalid-email') m='이메일 형식이 올바르지 않습니다.';
     else if(c==='auth/weak-password') m='비밀번호가 너무 약합니다. 6자 이상 입력해 주세요.';
-    alert('가입 처리 중 오류가 발생했습니다.\n\n'+m);
+    showToast('가입 처리 중 오류가 발생했습니다.\n\n'+m);
     if(btn){ btn.disabled=false; btn.textContent='가입 신청'; }
   }
   return false;

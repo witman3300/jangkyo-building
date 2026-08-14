@@ -114,7 +114,7 @@ function renderInquiryCard(q, sess, admin) {
 function submitInquiry() {
   const sess = getSession();
   if (!sess) {
-    alert("로그인이 필요합니다.");
+    showToast("로그인이 필요합니다.");
     return;
   }
   const titleEl = document.getElementById("inq-title");
@@ -122,7 +122,7 @@ function submitInquiry() {
   const title = titleEl.value.trim();
   const content = contentEl.value.trim();
   if (!title || !content) {
-    alert("제목과 내용을 모두 입력해 주세요.");
+    showToast("제목과 내용을 모두 입력해 주세요.");
     return;
   }
   const list = loadInquiries();
@@ -137,7 +137,7 @@ function submitInquiry() {
     answerDate: null,
   });
   saveInquiries(list);
-  alert("문의가 등록되었습니다. 답변까지 조금 기다려 주세요.");
+  showToast("문의가 등록되었습니다. 답변까지 조금 기다려 주세요.");
   renderInquiry();
 }
 
@@ -147,7 +147,7 @@ function answerInquiry(id) {
   const ta = document.getElementById("ans-" + id);
   const answer = ta.value.trim();
   if (!answer) {
-    alert("답변 내용을 입력해 주세요.");
+    showToast("답변 내용을 입력해 주세요.");
     return;
   }
   const list = loadInquiries();
@@ -156,7 +156,7 @@ function answerInquiry(id) {
     q.answer = answer;
     q.answerDate = todayStr();
     saveInquiries(list);
-    alert("답변이 등록되었습니다.");
+    showToast("답변이 등록되었습니다.");
     renderInquiry();
   }
 }

@@ -122,6 +122,26 @@ function adminDeleteUser(id) {
   saveUsers(getUsers().filter((x) => x.id !== id));
 }
 
+// ===== 토스트 메시지 (alert() 대체용, 모든 페이지 공통) =====
+function showToast(message, duration) {
+  duration = duration || 2800;
+  let container = document.getElementById("toast-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toast-container";
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.textContent = message;
+  container.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add("show"));
+  setTimeout(() => {
+    toast.classList.remove("show");
+    toast.addEventListener("transitionend", () => toast.remove(), { once: true });
+  }, duration);
+}
+
 function escAuth(s) {
   return String(s).replace(/[&<>"]/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;",
