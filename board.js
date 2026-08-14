@@ -52,9 +52,12 @@ function esc(s) {
   })[c]);
 }
 
-/* ===== 공지사항 목록 (실제 관리단 공지, notices-data.js 원본을 그대로 표시) ===== */
+/* ===== 공지사항 목록 (실제 관리단 공지, notices-data.js 원본을 그대로 표시) =====
+   관리비 관련 공지(제목에 "관리비" 포함)는 board-fee.html(관리비 부과내역)로 이전되어 여기서는 제외한다. */
 function renderNoticeList() {
-  const sorted = (typeof NOTICES !== "undefined" ? NOTICES.slice() : []).sort((a, b) => b.no - a.no);
+  const sorted = (typeof NOTICES !== "undefined" ? NOTICES.slice() : [])
+    .filter((p) => p.title.indexOf("관리비") === -1)
+    .sort((a, b) => b.no - a.no);
   const latestNo = sorted.length ? sorted[0].no : 0;
 
   const rows = sorted.length === 0
