@@ -34,6 +34,8 @@
     .info-table td{padding:12px 14px;border:1px solid #e6e8ef;color:#48505e}
     .float-note{background:#fff8ea;border:1px solid #f0dcae;border-radius:8px;padding:13px 16px;font-size:13px;color:#7a6a45;line-height:1.7}
     .plan-box,.org-box{border:1px dashed #cdd4e0;border-radius:10px;background:#fafbfd;padding:26px;text-align:center;color:#8a92a0;font-size:14px}
+    .map-embed{margin:6px 0 14px}
+    .map-embed iframe{display:block}
     .naver-map-card{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;border:1px solid #e6e8ef;border-radius:10px;background:linear-gradient(135deg,#f4f6fb,#fafbfd);padding:24px 26px}
     .naver-map-card__badge{display:inline-block;background:#03c75a;color:#fff;font-size:11px;font-weight:700;letter-spacing:.5px;padding:3px 8px;border-radius:4px;margin-bottom:8px}
     .naver-map-card__addr{color:#33415a;font-size:14.5px;line-height:1.6}
@@ -140,6 +142,12 @@
           <tr><th>주차</th><td>건물 내 부설주차장 이용 (유료)</td></tr>
           <tr><th>문의</th><td>TEL. 02-778-4611~3 · FAX. 02-775-9663</td></tr>
         </table>
+        <div class="map-embed">
+          <iframe
+            src="https://www.openstreetmap.org/export/embed.html?bbox=126.9830%2C37.5642%2C126.9910%2C37.5702&layer=mapnik&marker=37.5672%2C126.9870"
+            width="100%" height="360" style="border:1px solid #e6e8ef;border-radius:10px" loading="lazy"
+            title="장교빌딩 위치 지도"></iframe>
+        </div>
         <div class="naver-map-card">
           <div class="naver-map-card__info">
             <span class="naver-map-card__badge">NAVER</span>
