@@ -30,8 +30,6 @@
     .link-list li a{display:flex;justify-content:space-between;align-items:center;padding:14px 6px;border-bottom:1px solid #eef0f4;color:#41506a;text-decoration:none;font-size:15px}
     .link-list li a:hover{color:#223066;background:#fafbfc}
     .link-list .go{color:#c9a84c;font-size:13px;font-weight:700}
-    .cta{display:inline-block;margin-top:8px;background:#223066;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 22px;border-radius:8px}
-    .cta:hover{background:#2c3f80}
     .empty-note{color:#7a8290;font-size:14px;padding:14px 6px}
     @media (max-width:768px){.about-wrap{grid-template-columns:1fr;gap:18px;padding:20px 14px 36px}.about-sub{order:-1}}
   </style>
@@ -51,8 +49,8 @@
           <li><a href="about.html">장교빌딩 소개</a></li>
           <li><a href="tenant-info.html">입주안내</a></li>
           <li><a href="rental-info.html">임대안내</a></li>
-          <li><a href="info.html" class="active">정보마당</a></li>
-          <li><a href="board.html">회원광장</a></li>
+          <li><a href="info.html">정보마당</a></li>
+          <li><a href="board.html" class="active">회원광장</a></li>
         </ul>
       </nav>
     </div>
@@ -84,26 +82,27 @@
 
   <div class="about-wrap">
     <aside class="about-sub">
-      <div class="sub-head">정보마당</div>
+      <div class="sub-head">회원광장</div>
       <ul>
-        <li><a href="info.html">공지사항</a></li>
-        <li><a href="info-data.html">자료실</a></li>
-        <li><a href="info-forms.html">서식 다운로드</a></li>
-        <li><a href="info-faq.html">자주 묻는 질문</a></li>
-        <li><a href="info-fee.html" class="active">관리비 부과내역</a></li>
+        <li><a href="board.html?cat=notice">공지사항</a></li>
+        <li><a href="board.html?cat=data">자료실</a></li>
+        <li><a href="board.html?cat=report">결산보고서</a></li>
+        <li><a href="board.html?cat=minutes">월간회의록</a></li>
+        <li><a href="board-fee.html" class="active">관리비 부과내역</a></li>
+        <li><a href="inquiry.html">1:1 문의</a></li>
+        <li><a href="vote.html">투표</a></li>
       </ul>
       <div class="about-aside"><h4>관리사무소</h4><p>TEL. 02-778-4611~3<br>평일 09:00 ~ 18:00</p></div>
     </aside>
 
-    <main class="about-body">
+    <main class="about-body" id="feeApp">
       <h1>관리비 부과내역</h1>
       <p class="lead">매월 게시되는 관리비 부과내역 공지를 모아 안내합니다.</p>
 
       <section class="about-sec" id="fee">
-        <h2><span class="no">5</span> 관리비 부과내역</h2>
+        <h2><span class="no">1</span> 관리비 부과내역</h2>
         <p>공지사항 중 관리비 부과내역만 모아 보여줍니다. 상세 내역과 첨부문서는 각 게시글에서 확인하실 수 있습니다.</p>
         <ul class="link-list" id="feeRows"></ul>
-        <a class="cta" href="notice.html">📢 공지사항 전체보기</a>
       </section>
     </main>
   </div>
@@ -120,6 +119,11 @@
   <script src="notices-data.js"></script>
   <script>
   (function () {
+    if (!(typeof isSpecial === "function" && isSpecial())) {
+      if (typeof guardSpecial === "function") guardSpecial("feeApp");
+      return;
+    }
+
     function esc(s) {
       return String(s).replace(/[&<>"']/g, function (c) {
         return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
