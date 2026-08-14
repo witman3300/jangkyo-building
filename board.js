@@ -47,6 +47,39 @@ function esc(s) {
   })[c]);
 }
 
+/* ===== 공지사항 목록 (실제 관리단 공지, notices-data.js 원본을 그대로 표시) ===== */
+function renderNoticeList() {
+  const sorted = (typeof NOTICES !== "undefined" ? NOTICES.slice() : []).sort((a, b) => b.no - a.no);
+  const latestNo = sorted.length ? sorted[0].no : 0;
+
+  const rows = sorted.length === 0
+    ? `<tr><td colspan="5" class="board-empty">등록된 공지사항이 없습니다.</td></tr>`
+    : sorted.map((p) => {
+        const isNew = p.no === latestNo;
+        const hasFile = p.imgCount > 0;
+        const flag = isNew ? `<span class="pin-flag">NEW</span> ` : "";
+        const clip = hasFile ? `<span class="clip" title="첨부파일">📎</span>` : "";
+        return `<tr>
+          <td>${p.no}</td>
+          <td class="title">${flag}<a href="notice-view.html?id=${p.id}">${esc(p.title)}</a>${clip}</td>
+          <td>관리자</td>
+          <td>${p.date}</td>
+          <td>${hasFile ? 1 : 0}</td>
+        </tr>`;
+      }).join("");
+
+  document.getElementById("app").innerHTML = `
+    <div class="board-head">
+      <h1>${CATEGORIES.notice}</h1>
+    </div>
+    <table class="board-table">
+      <thead>
+        <tr><th width="60">번호</th><th>제목</th><th width="100">작성자</th><th width="110">작성일</th><th width="70">첨부</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
 /* ===== 목록 보기 ===== */
 function renderList() {
   const cat = getCat();
@@ -253,8 +286,8 @@ function highlightSidebar() {
   });
 }
 
-// 특별회원 전용 카테고리 (공지사항·자료실·결산보고서·월간회의록·회원게시판)
-const PROTECTED_CATS = ["notice", "data", "report", "minutes"];
+// 특별회원 전용 카테고리 (자료실·결산보고서·월간회의록). 공지사항은 정보마당에서 이전된 공개 게시판.
+const PROTECTED_CATS = ["data", "report", "minutes"];
 
 /* ===== 해시 라우터 ===== */
 function route() {
@@ -263,6 +296,8 @@ function route() {
   if (PROTECTED_CATS.includes(getCat()) && typeof isSpecial === "function" && !isSpecial()) {
     return guardSpecial("app");
   }
+  // 공지사항은 실제 관리단 공지(notices-data.js)를 그대로 보여주는 읽기 전용 게시판
+  if (getCat() === "notice") return renderNoticeList();
   const hash = location.hash || "#list";
   if (hash === "#write") return renderWrite();
   if (hash.startsWith("#view/")) return renderView(hash.slice(6));
