@@ -106,14 +106,8 @@
 
       <section class="about-sec" id="notice">
         <h2><span class="no">1</span> 공지사항</h2>
-        <p>관리비 부과내역, 재무제표, 관리단 정기집회 등 빌딩 공지사항입니다.</p>
-        <ul class="link-list">
-          <li><a href="notice.html">2026年 6月 관리비 부과내역 <span class="go">바로가기 ›</span></a></li>
-          <li><a href="notice.html">지하상가 일괄매각 추진업무 종결 통보 <span class="go">바로가기 ›</span></a></li>
-          <li><a href="notice.html">2025년도 장교공영주식회사 재무제표 <span class="go">바로가기 ›</span></a></li>
-          <li><a href="notice.html">2025년도 장교빌딩 관리단 정기집회 <span class="go">바로가기 ›</span></a></li>
-        </ul>
-        <a class="cta" href="notice.html">📢 공지사항 전체보기 (36건)</a>
+        <p>관리비 부과내역, 재무제표, 관리단 정기집회 등 빌딩 공지사항입니다. (전체 <span id="noticeCount">0</span>건)</p>
+        <ul class="link-list" id="noticeFullList"></ul>
       </section>
     </main>
   </div>
@@ -127,6 +121,27 @@
   </footer>
 
   <script src="auth.js"></script>
+  <script src="notices-data.js"></script>
+  <script>
+    (function () {
+      var listEl = document.getElementById('noticeFullList');
+      var countEl = document.getElementById('noticeCount');
+      if (!listEl || typeof NOTICES === 'undefined') return;
+
+      function esc(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+
+      var sorted = NOTICES.slice().sort(function (a, b) { return b.no - a.no; });
+      countEl.textContent = sorted.length;
+      listEl.innerHTML = sorted.map(function (p) {
+        return '<li><a href="notice-view.html?id=' + p.id + '">' + esc(p.title)
+          + ' <span class="go">' + p.date + '</span></a></li>';
+      }).join('');
+    })();
+  </script>
   <script src="home-slider.js"></script>
 </body>
 </html>
