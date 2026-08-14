@@ -471,6 +471,45 @@ body.sidebar-open .sidebar-overlay {
   text-align: left;
 }
 
+/* 실회원 명단 등 긴 표에서 스크롤해도 헤더 행이 고정되도록 */
+.sticky-table-wrap {
+  max-height: 640px;
+  overflow-y: auto;
+  border: 1px solid #eeeeee;
+}
+
+.sticky-table-wrap table.board-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.sticky-table-wrap table.board-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  box-shadow: 0 1px 0 #dddddd;
+}
+
+.sticky-table-wrap table.board-table tbody td {
+  border-bottom: 1px solid #eeeeee;
+}
+
+.grade-select {
+  padding: 5px 8px;
+  border: 1px solid #dddddd;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.join-date-input {
+  width: 100px;
+  padding: 5px 6px;
+  border: 1px solid #dddddd;
+  border-radius: 6px;
+  font-size: 13px;
+  text-align: center;
+}
+
 .board-table tbody tr:hover {
   background: #fafafa;
 }

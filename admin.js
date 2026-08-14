@@ -1,6 +1,9 @@
 // admin.js - 관리자 회원관리 (실회원 명단 + 사이트 로그인 계정 승인/등급부여/삭제). auth.js 이후 로드 필요.
 
 const REAL_MEMBER_HIDDEN_KEY = "jangkyo_real_members_hidden";
+// 실회원 명단에는 등급/승인/가입일 정보가 원본 CSV에 없으므로, 관리자가 이 화면에서 직접 기록하는
+// 브라우저 로컬 메모(참고용)로 관리한다. 사이트 로그인 계정(아래 "사이트 로그인 계정" 표)과는 별개다.
+const REAL_MEMBER_META_KEY = "jangkyo_real_members_meta";
 
 function escM(s) {
   return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({
@@ -14,6 +17,26 @@ function getHiddenRealMemberIds() {
   } catch (e) {
     return new Set();
   }
+}
+
+function getRealMemberMetaMap() {
+  try {
+    return JSON.parse(localStorage.getItem(REAL_MEMBER_META_KEY)) || {};
+  } catch (e) {
+    return {};
+  }
+}
+
+// 기본값: 이미 존재하는 실회원 수입 데이터이므로 승인됨/일반회원으로 시작한다.
+function getRealMemberMeta(id) {
+  const map = getRealMemberMetaMap();
+  return Object.assign({ grade: "normal", approved: true, joinDate: "" }, map[id]);
+}
+
+function setRealMemberMeta(id, patch) {
+  const map = getRealMemberMetaMap();
+  map[id] = Object.assign({}, getRealMemberMeta(id), patch);
+  localStorage.setItem(REAL_MEMBER_META_KEY, JSON.stringify(map));
 }
 
 function realMemberRows(q) {
@@ -33,24 +56,54 @@ function renderRealMemberTable() {
   const rows = realMemberRows(q);
   document.getElementById("real-member-count").textContent = `총 ${rows.length}명`;
   document.getElementById("real-member-table-wrap").innerHTML = `
-    <table class="board-table admin-table">
-      <thead>
-        <tr><th width="50">#</th><th>아이디</th><th>이름</th><th>호수(별명)</th><th width="80">포인트</th><th width="100">최종접속</th><th width="110">관리</th></tr>
-      </thead>
-      <tbody>${
-        rows.length
-          ? rows.map((m, i) => `<tr>
-              <td>${i + 1}</td>
-              <td>${escM(m.id)}</td>
-              <td>${escM(m.name)}</td>
-              <td>${escM(m.unit)}</td>
-              <td>${escM(m.points)}</td>
-              <td>${escM(m.last)}</td>
-              <td class="act"><button type="button" class="mini danger" onclick="hideRealMember('${escM(m.id)}')">목록에서 제거</button></td>
-            </tr>`).join("")
-          : `<tr><td colspan="7" class="board-empty">검색 결과가 없습니다.</td></tr>`
-      }</tbody>
-    </table>`;
+    <div class="sticky-table-wrap">
+      <table class="board-table admin-table">
+        <thead>
+          <tr>
+            <th width="50">#</th><th>아이디</th><th>이름</th><th>호수(별명)</th>
+            <th width="120">가입년월일</th><th width="110">회원등급</th>
+            <th width="110">신규회원 승인</th><th width="110">관리</th>
+          </tr>
+        </thead>
+        <tbody>${
+          rows.length
+            ? rows.map((m, i) => {
+                const meta = getRealMemberMeta(m.id);
+                const gradeSel = `<select class="grade-select" onchange="onRealMemberGrade('${escM(m.id)}', this.value)">
+                  <option value="normal" ${meta.grade === "normal" ? "selected" : ""}>일반회원</option>
+                  <option value="special" ${meta.grade === "special" ? "selected" : ""}>특별회원</option>
+                </select>`;
+                const approveBtn = meta.approved
+                  ? `<span class="badge ok">승인됨</span> <button type="button" class="mini" onclick="onRealMemberApprove('${escM(m.id)}', false)">취소</button>`
+                  : `<span class="badge wait">승인대기</span> <button type="button" class="mini primary" onclick="onRealMemberApprove('${escM(m.id)}', true)">승인</button>`;
+                return `<tr>
+                  <td>${i + 1}</td>
+                  <td>${escM(m.id)}</td>
+                  <td>${escM(m.name)}</td>
+                  <td>${escM(m.unit)}</td>
+                  <td><input type="text" class="join-date-input" placeholder="YYYY-MM-DD" value="${escM(meta.joinDate)}" onchange="onRealMemberJoinDate('${escM(m.id)}', this.value)"></td>
+                  <td>${gradeSel}</td>
+                  <td class="act">${approveBtn}</td>
+                  <td class="act"><button type="button" class="mini danger" onclick="hideRealMember('${escM(m.id)}')">목록에서 제거</button></td>
+                </tr>`;
+              }).join("")
+            : `<tr><td colspan="8" class="board-empty">검색 결과가 없습니다.</td></tr>`
+        }</tbody>
+      </table>
+    </div>`;
+}
+
+function onRealMemberGrade(id, grade) {
+  setRealMemberMeta(id, { grade });
+}
+
+function onRealMemberApprove(id, approved) {
+  setRealMemberMeta(id, { approved });
+  renderRealMemberTable();
+}
+
+function onRealMemberJoinDate(id, joinDate) {
+  setRealMemberMeta(id, { joinDate: joinDate.trim() });
 }
 
 function hideRealMember(id) {
@@ -111,7 +164,7 @@ function renderAdmin() {
       <h1>회원관리</h1>
       <span class="pending-count" id="real-member-count">불러오는 중...</span>
     </div>
-    <p class="admin-note">jangkyo.co.kr 관리자 페이지에서 가져온 실회원 명단입니다 (기준일 2026-08-14). "제거"는 이 브라우저 화면에서만 숨겨지며 실제 명단에는 영향이 없습니다.</p>
+    <p class="admin-note">jangkyo.co.kr 관리자 페이지에서 가져온 실회원 명단입니다 (기준일 2026-08-14). 가입년월일·회원등급·신규회원 승인 값은 원본에 없어 이 화면에서 직접 기록하는 참고용 메모이며(이 브라우저에만 저장), "제거"와 마찬가지로 실제 명단·사이트 로그인 계정에는 영향을 주지 않습니다.</p>
     <div class="write-row" style="margin:16px 0;">
       <div class="field"><input type="text" id="real-member-search" placeholder="아이디·이름·호수 검색" oninput="renderRealMemberTable()"></div>
     </div>
