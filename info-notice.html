@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>자주 묻는 질문 | 장교빌딩</title>
+  <title>공지사항 | 장교빌딩</title>
   <link rel="stylesheet" href="style.css" />
   <style>
     .about-wrap{max-width:1100px;margin:0 auto;padding:28px 20px 50px;display:grid;grid-template-columns:230px 1fr;gap:28px;flex:1;width:100%}
@@ -20,24 +20,6 @@
     .about-aside h4{font-size:14px;color:#1a2744;margin-bottom:6px;font-weight:700}
     .about-aside p{font-size:12.5px;color:#7a8290;line-height:1.7}
     .about-body{min-width:0}
-    .about-body h1{font-size:27px;color:#1a2744;margin-bottom:6px;letter-spacing:-.5px}
-    .about-body .lead{color:#7a8290;font-size:15px;margin-bottom:26px}
-    .about-sec{margin-bottom:40px;scroll-margin-top:80px}
-    .about-sec h2{font-size:20px;color:#223066;font-weight:700;padding-bottom:10px;border-bottom:2px solid #223066;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-    .about-sec h2 .no{background:#c9a84c;color:#fff;font-size:13px;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
-    .about-sec p{color:#48505e;font-size:15px;line-height:1.85;margin-bottom:12px}
-    .link-list{list-style:none;border-top:2px solid #223066}
-    .link-list li a{display:flex;justify-content:space-between;align-items:center;padding:14px 6px;border-bottom:1px solid #eef0f4;color:#41506a;text-decoration:none;font-size:15px}
-    .link-list li a:hover{color:#223066;background:#fafbfc}
-    .link-list .go{color:#c9a84c;font-size:13px;font-weight:700}
-    .cta{display:inline-block;margin-top:8px;background:#223066;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 22px;border-radius:8px}
-    .cta:hover{background:#2c3f80}
-    .faq-item{border:1px solid #e6e8ef;border-radius:8px;margin-bottom:10px;overflow:hidden}
-    .faq-q{padding:15px 18px;font-weight:700;font-size:15.5px;color:#33415a;cursor:pointer;display:flex;justify-content:space-between;gap:12px}
-    .faq-q .mk{color:#c9a84c;font-size:19px}
-    .faq-item.open .mk{transform:rotate(45deg)}
-    .faq-a{display:none;padding:0 18px 16px;color:#5a6472;font-size:14.5px;line-height:1.75}
-    .faq-item.open .faq-a{display:block}
     @media (max-width:768px){.about-wrap{grid-template-columns:1fr;gap:18px;padding:20px 14px 36px}.about-sub{order:-1}}
   </style>
 </head>
@@ -91,25 +73,17 @@
     <aside class="about-sub">
       <div class="sub-head">정보마당</div>
       <ul>
-        <li><a href="info-notice.html">공지사항</a></li>
+        <li><a href="info-notice.html" class="active">공지사항</a></li>
         <li><a href="info.html">자료실</a></li>
         <li><a href="info-forms.html">서식 다운로드</a></li>
-        <li><a href="info-faq.html" class="active">자주 묻는 질문</a></li>
+        <li><a href="info-faq.html">자주 묻는 질문</a></li>
       </ul>
       <div class="about-aside"><h4>관리사무소</h4><p>TEL. 02-778-4611~3<br>평일 09:00 ~ 18:00</p></div>
     </aside>
 
-    <main class="about-body">
-      <h1>자주 묻는 질문</h1>
-      <p class="lead">입주민들이 자주 문의하시는 질문을 모았습니다.</p>
-
-      <section class="about-sec" id="faq">
-        <h2><span class="no">4</span> 자주 묻는 질문</h2>
-        <div class="faq-item open"><div class="faq-q">관리비 고지서는 어디서 확인하나요?<span class="mk">+</span></div><div class="faq-a">정보마당 공지사항에 매월 관리비 부과내역이 게시됩니다. 회원 로그인 후 첨부문서를 확인·다운로드하실 수 있습니다.</div></div>
-        <div class="faq-item"><div class="faq-q">회의실은 어떻게 예약하나요?<span class="mk">+</span></div><div class="faq-a">관리사무소(02-778-4611~3)로 문의하시면 예약제로 이용하실 수 있습니다.</div></div>
-        <div class="faq-item"><div class="faq-q">주차는 어떻게 이용하나요?<span class="mk">+</span></div><div class="faq-a">건물 내 부설주차장을 유료로 이용하실 수 있습니다. 자세한 사항은 일반안내 &gt; 주차 안내를 참고해 주세요.</div></div>
-        <div class="faq-item"><div class="faq-q">임대 문의는 어디로 하나요?<span class="mk">+</span></div><div class="faq-a">임대안내 페이지를 참고하시거나 관리사무소로 직접 연락 주시면 공실 현황과 조건을 안내해 드립니다.</div></div>
-      </section>
+    <!-- 게시판 본문 (board.js가 렌더링) -->
+    <main class="about-body content">
+      <div id="app"></div>
     </main>
   </div>
 
@@ -122,6 +96,8 @@
   </footer>
 
   <script src="auth.js"></script>
+  <script>window.BOARD_CAT = "info";</script>
+  <script src="board.js"></script>
   <script src="home-slider.js"></script>
 </body>
 </html>

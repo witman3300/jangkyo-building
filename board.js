@@ -5,14 +5,19 @@ const STORE_KEY = "jangkyo_board_posts";
 const MAX_FILE_MB = 3; // localStorage 용량 한계로 첨부 1개당 권장 최대 크기
 
 // 게시판 카테고리 (사이드바 4종 + 메인 메뉴 2종)
+// info: 정보마당 공지사항 게시판(info-notice.html). 실제 관리단 공지(notice, notices-data.js)와는 별개의,
+// 관리자가 이 사이트에서 직접 자료를 올리는 게시판이다.
 const CATEGORIES = {
   notice: "공지사항",
   data: "자료실",
   report: "결산보고서",
   minutes: "월간회의록",
   rental: "임대안내",
-  info: "정보마당",
+  info: "공지사항",
 };
+
+// 글쓰기를 관리자만 할 수 있는 카테고리 (열람은 공개)
+const ADMIN_WRITE_CATS = ["info"];
 
 // 현재 카테고리: 페이지가 지정한 window.BOARD_CAT 우선, 없으면 ?cat=, 기본 notice
 function getCat() {
@@ -112,10 +117,13 @@ function renderList() {
     rows = pinnedRows + normalRows;
   }
 
+  const canWrite = !ADMIN_WRITE_CATS.includes(cat) || (typeof isAdmin === "function" && isAdmin());
+  const writeBtn = canWrite ? `<a href="#write" class="btn btn-primary btn-sm">글쓰기</a>` : "";
+
   document.getElementById("app").innerHTML = `
     <div class="board-head">
       <h1>${CATEGORIES[cat]}</h1>
-      <a href="#write" class="btn btn-primary btn-sm">글쓰기</a>
+      ${writeBtn}
     </div>
     <table class="board-table">
       <thead>
@@ -281,8 +289,11 @@ function deletePost(id) {
 /* 현재 카테고리에 해당하는 사이드바 메뉴 활성화 */
 function highlightSidebar() {
   const cat = getCat();
+  const currentPage = location.pathname.split("/").pop();
   document.querySelectorAll(".about-sub a").forEach((a) => {
-    a.classList.toggle("active", a.getAttribute("href") === "board.html?cat=" + cat);
+    const href = a.getAttribute("href");
+    // board.html?cat=X 형태의 링크, 또는(예: info-notice.html처럼) 카테고리 전용 페이지 자기 자신 링크 둘 다 인식
+    a.classList.toggle("active", href === "board.html?cat=" + cat || href === currentPage);
   });
 }
 
@@ -299,7 +310,14 @@ function route() {
   // 공지사항은 실제 관리단 공지(notices-data.js)를 그대로 보여주는 읽기 전용 게시판
   if (getCat() === "notice") return renderNoticeList();
   const hash = location.hash || "#list";
-  if (hash === "#write") return renderWrite();
+  if (hash === "#write") {
+    // 관리자 전용 글쓰기 카테고리는 관리자가 아니면 목록으로 되돌린다
+    if (ADMIN_WRITE_CATS.includes(getCat()) && !(typeof isAdmin === "function" && isAdmin())) {
+      location.hash = "#list";
+      return renderList();
+    }
+    return renderWrite();
+  }
   if (hash.startsWith("#view/")) return renderView(hash.slice(6));
   return renderList();
 }
