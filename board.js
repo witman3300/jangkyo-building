@@ -114,6 +114,32 @@ function renderReportList() {
     </table>`;
 }
 
+/* ===== 월간회의록 목록 (관리자가 minutes-data.js를 직접 수정해 등록하는 정적 게시판) =====
+   상세 내용은 minutes-view.html에서 본다. */
+function renderMinutesList() {
+  const sorted = (typeof MINUTES !== "undefined" ? MINUTES.slice() : []).sort((a, b) => b.no - a.no);
+
+  const rows = sorted.length === 0
+    ? `<tr><td colspan="4" class="board-empty">등록된 월간회의록이 없습니다.</td></tr>`
+    : sorted.map((p) => `<tr>
+        <td>${p.no}</td>
+        <td class="title"><a href="minutes-view.html?id=${p.id}">${esc(p.title)}</a></td>
+        <td>관리자</td>
+        <td>${p.date}</td>
+      </tr>`).join("");
+
+  document.getElementById("app").innerHTML = `
+    <div class="board-head">
+      <h1>${CATEGORIES.minutes}</h1>
+    </div>
+    <table class="board-table">
+      <thead>
+        <tr><th width="60">번호</th><th>제목</th><th width="100">작성자</th><th width="110">작성일</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
 /* ===== 목록 보기 ===== */
 function renderList() {
   const cat = getCat();
@@ -340,6 +366,8 @@ function route() {
   if (getCat() === "notice") return renderNoticeList();
   // 결산보고서는 reports-data.js를 그대로 보여주는 읽기 전용 게시판
   if (getCat() === "report") return renderReportList();
+  // 월간회의록은 minutes-data.js를 그대로 보여주는 읽기 전용 게시판
+  if (getCat() === "minutes") return renderMinutesList();
   const hash = location.hash || "#list";
   if (hash === "#write") {
     // 관리자 전용 글쓰기 카테고리는 관리자가 아니면 목록으로 되돌린다
