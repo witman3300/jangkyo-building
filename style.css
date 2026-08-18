@@ -505,10 +505,15 @@ body.sidebar-open .sidebar-overlay {
 .join-date-input {
   width: 100px;
   padding: 5px 6px;
-  border: 1px solid #dddddd;
-  border-radius: 6px;
+  border: none;
+  background: transparent;
   font-size: 13px;
   text-align: center;
+}
+
+.join-date-input:focus {
+  outline: none;
+  border-bottom: 1px solid #999999;
 }
 
 .board-table tbody tr:hover {
