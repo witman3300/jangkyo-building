@@ -67,7 +67,7 @@ function renderRealMemberTable() {
         <thead>
           <tr>
             <th width="36">#</th><th width="90">아이디</th><th width="84">이름</th><th width="90">호수(별명)</th>
-            <th width="100">가입년월일</th><th width="100">최근 로그인</th><th width="92">회원등급</th>
+            <th width="100">가입년월일</th><th width="100">최근 로그인</th><th width="76">게시글수</th><th width="92">회원등급</th>
             <th width="132">신규회원 승인</th><th width="110">관리</th>
           </tr>
         </thead>
@@ -89,12 +89,13 @@ function renderRealMemberTable() {
                   <td>${escM(m.unit)}</td>
                   <td><input type="text" class="join-date-input" placeholder="YYYY-MM-DD" value="${escM(meta.joinDate)}" onchange="onRealMemberJoinDate('${escM(m.id)}', this.value)"></td>
                   <td><input type="text" class="join-date-input" placeholder="YYYY-MM-DD" value="${escM(meta.lastLogin)}" onchange="onRealMemberLastLogin('${escM(m.id)}', this.value)"></td>
+                  <td>${m.postCount || 0}</td>
                   <td>${gradeSel}</td>
                   <td class="act">${approveBtn}</td>
                   <td class="act"><button type="button" class="mini danger" onclick="hideRealMember('${escM(m.id)}')">목록에서 제거</button></td>
                 </tr>`;
               }).join("")
-            : `<tr><td colspan="9" class="board-empty">검색 결과가 없습니다.</td></tr>`
+            : `<tr><td colspan="10" class="board-empty">검색 결과가 없습니다.</td></tr>`
         }</tbody>
       </table>
     </div>`;
@@ -175,7 +176,7 @@ function renderAdmin() {
       <h1>회원관리</h1>
       <span class="pending-count" id="real-member-count">불러오는 중...</span>
     </div>
-    <p class="admin-note">jangkyo.co.kr 관리자 페이지에서 가져온 실회원 명단입니다 (기준일 2026-08-18). 가입년월일·최근 로그인은 원본 관리자 페이지의 실제 값이며, 직접 수정하면 그 값이 우선 저장됩니다(이 브라우저에만 저장). 회원등급·신규회원 승인 값은 원본에 없어 이 화면에서 직접 기록하는 참고용 메모이며, "제거"와 마찬가지로 실제 명단·사이트 로그인 계정에는 영향을 주지 않습니다.</p>
+    <p class="admin-note">jangkyo.co.kr 관리자 페이지에서 가져온 실회원 명단입니다 (기준일 2026-08-18). 가입년월일·최근 로그인·게시글수는 원본 사이트의 실제 값입니다(게시글수는 자료실·임대안내·회원게시판·공지사항·결산보고서 5개 게시판 전수 확인 결과이며, admin 외 회원은 작성 이력이 없어 0건). 가입년월일·최근 로그인은 직접 수정하면 그 값이 우선 저장됩니다(이 브라우저에만 저장). 회원등급·신규회원 승인 값은 원본에 없어 이 화면에서 직접 기록하는 참고용 메모이며, "제거"와 마찬가지로 실제 명단·사이트 로그인 계정에는 영향을 주지 않습니다.</p>
     <div class="write-row" style="margin:16px 0;">
       <div class="field"><input type="text" id="real-member-search" placeholder="아이디·이름·호수 검색" oninput="renderRealMemberTable()"></div>
     </div>
