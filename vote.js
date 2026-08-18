@@ -112,6 +112,10 @@ function renderVote() {
   announceClosedPolls(); // 마감된 투표 결과를 공지사항에 자동 게시
   const app = document.getElementById("vote-app");
   if (!app) return; // 투표 페이지가 아니면 공지 처리만 하고 종료
+  if (typeof isSpecial === "function" && !isSpecial()) {
+    guardSpecial("vote-app");
+    return;
+  }
   const polls = loadPolls();
   const admin = typeof isAdmin === "function" && isAdmin();
   const sess = typeof getSession === "function" ? getSession() : null;

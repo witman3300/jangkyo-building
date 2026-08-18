@@ -30,20 +30,12 @@ function renderInquiry() {
   const app = document.getElementById("inquiry-app");
   if (!app) return;
 
-  const sess = typeof getSession === "function" ? getSession() : null;
-  if (!sess) {
-    app.innerHTML = `<div class="board-head"><h1>1:1 문의</h1></div>
-      <div class="lock-box">
-        <div class="lock-icon">🔒</div>
-        <h2>로그인이 필요합니다</h2>
-        <p>1:1 문의는 로그인한 회원만 작성하고 확인할 수 있습니다.</p>
-        <div class="btn-row">
-          <a href="login.html" class="btn btn-primary btn-sm">로그인</a>
-          <a href="signup.html" class="btn btn-outline btn-sm">회원가입</a>
-        </div>
-      </div>`;
+  if (typeof isSpecial === "function" && !isSpecial()) {
+    guardSpecial("inquiry-app");
     return;
   }
+  const sess = typeof getSession === "function" ? getSession() : null;
+  if (!sess) return;
 
   const admin = typeof isAdmin === "function" && isAdmin();
   const all = loadInquiries();

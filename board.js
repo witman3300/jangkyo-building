@@ -352,8 +352,8 @@ function highlightSidebar() {
   });
 }
 
-// 특별회원 전용 카테고리 (자료실·결산보고서·월간회의록). 공지사항은 정보마당에서 이전된 공개 게시판.
-const PROTECTED_CATS = ["data", "report", "minutes"];
+// 특별회원 전용 카테고리 (공지사항·자료실·결산보고서·월간회의록)
+const PROTECTED_CATS = ["notice", "data", "report", "minutes"];
 
 /* ===== 해시 라우터 ===== */
 function route() {
