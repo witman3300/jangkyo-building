@@ -4,9 +4,11 @@
 const STORE_KEY = "jangkyo_board_posts";
 const MAX_FILE_MB = 3; // localStorage 용량 한계로 첨부 1개당 권장 최대 크기
 
-// 게시판 카테고리 (사이드바 4종 + 메인 메뉴 2종)
-// info: 정보마당 공지사항 게시판(info-notice.html). 실제 관리단 공지(notice, notices-data.js)와는 별개의,
-// 관리자가 이 사이트에서 직접 자료를 올리는 게시판이다.
+// 게시판 카테고리
+// notice: 정보마당 공지사항(info-notice.html). 실제 관리단 공지(notices-data.js)를 그대로 보여주는
+//   읽기 전용 공개 게시판 — 일반회원(비회원 포함) 누구나 열람 가능.
+// info: 회원광장 공지사항(board.html?cat=info). notice와는 별개로, 관리자가 이 사이트에서 직접
+//   글을 올리는 특별회원 전용 게시판이다.
 const CATEGORIES = {
   notice: "공지사항",
   data: "자료실",
@@ -16,7 +18,7 @@ const CATEGORIES = {
   info: "공지사항",
 };
 
-// 글쓰기를 관리자만 할 수 있는 카테고리 (열람은 공개)
+// 글쓰기를 관리자만 할 수 있는 카테고리 (열람은 특별회원)
 const ADMIN_WRITE_CATS = ["info"];
 
 // 현재 카테고리: 페이지가 지정한 window.BOARD_CAT 우선, 없으면 ?cat=, 기본 notice
@@ -352,8 +354,9 @@ function highlightSidebar() {
   });
 }
 
-// 특별회원 전용 카테고리 (공지사항·자료실·결산보고서·월간회의록)
-const PROTECTED_CATS = ["notice", "data", "report", "minutes"];
+// 특별회원 전용 카테고리 (회원광장 공지사항·자료실·결산보고서·월간회의록).
+// notice(정보마당 공지사항)는 일반회원도 볼 수 있는 공개 게시판이라 제외.
+const PROTECTED_CATS = ["info", "data", "report", "minutes"];
 
 /* ===== 해시 라우터 ===== */
 function route() {
