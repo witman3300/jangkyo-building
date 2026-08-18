@@ -27,6 +27,10 @@
     .view-body p{margin-bottom:14px}
     .view-body ul{margin:0 0 14px 20px}
     .view-body li{margin-bottom:6px}
+    .doc-fulltext{white-space:pre-line;font-size:14.5px;line-height:1.9;color:#33415a;background:#fafbfc;border:1px solid #e6e8ef;border-radius:8px;padding:24px 26px;margin-bottom:26px;max-height:640px;overflow-y:auto}
+    .doc-pages{display:flex;flex-direction:column;gap:10px;margin-bottom:26px}
+    .doc-pages img{width:100%;max-width:720px;border:1px solid #e6e8ef;border-radius:6px;display:block;margin:0 auto}
+    .doc-pages .page-no{text-align:center;font-size:12px;color:#a3aab8;margin:-2px 0 4px}
     .doc-download-box{display:flex;align-items:center;justify-content:space-between;gap:14px;background:#f4f6fb;border:1px solid #e6e8ef;border-radius:10px;padding:18px 20px;margin-bottom:28px;flex-wrap:wrap}
     .doc-download-box .info{font-size:13.5px;color:#5a6472;line-height:1.6}
     .doc-download-box .info b{color:#1a2744;display:block;font-size:15px;margin-bottom:2px}
@@ -109,6 +113,7 @@
   </footer>
 
   <script src="auth.js"></script>
+  <script src="docs-data.js"></script>
   <script>
   (function () {
     var DOCS = {
@@ -116,29 +121,13 @@
         title: "관리규약",
         file: "files/관리규약.hwp",
         size: "32KB",
-        summary: "장교빌딩 관리단이 제정한 관리규약 원문입니다.",
-        paragraphs: [
-          "관리규약은 장교빌딩 공용부분의 관리·사용에 관한 기본 원칙과 입주자(구분소유자·임차인)의 권리·의무, 관리단의 조직 및 운영 절차 등을 정한 규약입니다.",
-          "공용부분의 유지·보수 책임, 관리비 부과 및 징수 기준, 입주자대표기구의 구성과 의결 방법, 시설물 이용 시 준수 사항 등이 포함되어 있습니다."
-        ],
-        notes: [
-          "원문 전체 내용은 아래 다운로드 버튼을 눌러 HWP 파일로 확인하실 수 있습니다.",
-          "규약 해석이나 적용에 관해 궁금한 사항은 관리사무소로 문의해 주세요."
-        ]
+        summary: "장교빌딩 관리단이 제정한 관리규약 원문입니다."
       },
       rules: {
         title: "관리규정",
         file: "files/관리규정.hwp",
         size: "1.6MB",
-        summary: "장교빌딩 관리단이 제정한 관리규정 원문입니다.",
-        paragraphs: [
-          "관리규정은 관리규약에서 위임한 세부 사항을 규정한 문서로, 시설 운영·보안·주차·미화 등 실무 전반에 대한 구체적인 기준과 절차를 담고 있습니다.",
-          "부서별 업무 분장, 각종 신청·승인 절차, 위반 시 조치 사항 등 실제 건물 운영에 적용되는 세부 규정이 포함되어 있습니다."
-        ],
-        notes: [
-          "원문 전체 내용은 아래 다운로드 버튼을 눌러 HWP 파일로 확인하실 수 있습니다.",
-          "규정 해석이나 적용에 관해 궁금한 사항은 관리사무소로 문의해 주세요."
-        ]
+        summary: "장교빌딩 관리단이 제정한 관리규정 원문입니다. (스캔 원본이라 페이지 이미지로 제공합니다)"
       }
     };
 
@@ -159,15 +148,26 @@
 
     document.title = doc.title + " | 장교빌딩";
 
-    var paraHtml = doc.paragraphs.map(function (p) { return "<p>" + esc(p) + "</p>"; }).join("");
-    var noteHtml = "<ul>" + doc.notes.map(function (n) { return "<li>" + esc(n) + "</li>"; }).join("") + "</ul>";
+    var contentHtml;
+    if (key === "agreement" && typeof AGREEMENT_TEXT !== "undefined") {
+      contentHtml = '<div class="doc-fulltext">' + esc(AGREEMENT_TEXT) + '</div>';
+    } else if (key === "rules" && typeof RULES_PAGE_COUNT !== "undefined") {
+      var pages = [];
+      for (var i = 1; i <= RULES_PAGE_COUNT; i++) {
+        var seq = i < 10 ? "0" + i : "" + i;
+        pages.push('<div class="page-no">' + i + ' / ' + RULES_PAGE_COUNT + '페이지</div><img src="images/rules-pages/' + seq + '.jpg" alt="' + esc(doc.title) + ' ' + i + '페이지" loading="lazy" />');
+      }
+      contentHtml = '<div class="doc-pages">' + pages.join("") + '</div>';
+    } else {
+      contentHtml = '<div class="view-empty">원문을 불러올 수 없습니다. 아래 다운로드 버튼으로 원본 파일을 받아 확인해 주세요.</div>';
+    }
 
     app.innerHTML = ''
       + '<div class="view-head">'
       + '  <h1>' + esc(doc.title) + '</h1>'
       + '  <span class="file-tag">파일 용량 약 ' + esc(doc.size) + ' · HWP</span>'
       + '</div>'
-      + '<div class="view-body">' + paraHtml + noteHtml + '</div>'
+      + contentHtml
       + '<div class="doc-download-box">'
       + '  <div class="info"><b>' + esc(doc.title) + ' 원본 파일</b>' + esc(doc.summary) + '</div>'
       + '  <a href="' + doc.file + '" download class="dl-btn-lg">다운로드</a>'
