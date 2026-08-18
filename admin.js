@@ -27,10 +27,16 @@ function getRealMemberMetaMap() {
   }
 }
 
-// 기본값: 이미 존재하는 실회원 수입 데이터이므로 승인됨/일반회원으로 시작한다.
+// 기본값: 이미 존재하는 실회원 수입 데이터이므로 승인됨/일반회원으로 시작하고,
+// 가입년월일·최근 로그인은 jangkyo.co.kr 관리자 페이지에서 가져온 실제 값을 기본값으로 채운다
+// (관리자가 이 화면에서 직접 수정하면 그 값이 우선한다).
 function getRealMemberMeta(id) {
   const map = getRealMemberMetaMap();
-  return Object.assign({ grade: "normal", approved: true, joinDate: "", lastLogin: "" }, map[id]);
+  const src = (typeof REAL_MEMBERS !== "undefined" ? REAL_MEMBERS : []).find((m) => m.id === id) || {};
+  return Object.assign(
+    { grade: "normal", approved: true, joinDate: src.joinDate || "", lastLogin: src.lastLogin || "" },
+    map[id]
+  );
 }
 
 function setRealMemberMeta(id, patch) {
@@ -169,7 +175,7 @@ function renderAdmin() {
       <h1>회원관리</h1>
       <span class="pending-count" id="real-member-count">불러오는 중...</span>
     </div>
-    <p class="admin-note">jangkyo.co.kr 관리자 페이지에서 가져온 실회원 명단입니다 (기준일 2026-08-14). 가입년월일·최근 로그인·회원등급·신규회원 승인 값은 원본에 없어 이 화면에서 직접 기록하는 참고용 메모이며(이 브라우저에만 저장), "제거"와 마찬가지로 실제 명단·사이트 로그인 계정에는 영향을 주지 않습니다.</p>
+    <p class="admin-note">jangkyo.co.kr 관리자 페이지에서 가져온 실회원 명단입니다 (기준일 2026-08-18). 가입년월일·최근 로그인은 원본 관리자 페이지의 실제 값이며, 직접 수정하면 그 값이 우선 저장됩니다(이 브라우저에만 저장). 회원등급·신규회원 승인 값은 원본에 없어 이 화면에서 직접 기록하는 참고용 메모이며, "제거"와 마찬가지로 실제 명단·사이트 로그인 계정에는 영향을 주지 않습니다.</p>
     <div class="write-row" style="margin:16px 0;">
       <div class="field"><input type="text" id="real-member-search" placeholder="아이디·이름·호수 검색" oninput="renderRealMemberTable()"></div>
     </div>
