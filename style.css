@@ -2312,6 +2312,75 @@ body.page-home a {
   gap: 14px;
 }
 
+/* ----- 히어로 이미지 페이지 인디케이터 (좌측 세로선 01~08) ----- */
+.bs-hero-pagenav {
+  position: absolute;
+  left: 132px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+}
+
+.bs-hero-pagenav-rail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.bs-hero-pagenav-indicator {
+  position: absolute;
+  left: -3px;
+  top: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 0 3px rgba(10, 9, 8, 0.4);
+  transition: top 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.bs-hero-pagenav-track {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-left: 16px;
+}
+
+.bs-hero-pagenav-btn {
+  background: none;
+  border: none;
+  padding: 2px 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.bs-hero-pagenav-num {
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.45);
+  font-variant-numeric: tabular-nums;
+  transition: color 0.3s ease;
+}
+
+.bs-hero-pagenav-btn:hover .bs-hero-pagenav-num {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.bs-hero-pagenav-btn.is-active .bs-hero-pagenav-num {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .bs-hero-pagenav {
+    display: none;
+  }
+}
+
 /* ----- 버튼 (브로드시트 톤) ----- */
 .bs-btn {
   display: inline-block;
