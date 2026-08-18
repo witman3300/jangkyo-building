@@ -2296,7 +2296,7 @@ body.page-home a {
 
 .bs-hero-content {
   position: absolute;
-  left: 190px;
+  left: 250px;
   right: 96px;
   bottom: 56px;
   z-index: 3;
@@ -2335,7 +2335,7 @@ body.page-home a {
 /* ----- 히어로 이미지 페이지 인디케이터 (좌측 세로선 01~08) ----- */
 .bs-hero-pagenav {
   position: absolute;
-  left: 132px;
+  left: 200px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 4;
