@@ -30,7 +30,7 @@ function getRealMemberMetaMap() {
 // 기본값: 이미 존재하는 실회원 수입 데이터이므로 승인됨/일반회원으로 시작한다.
 function getRealMemberMeta(id) {
   const map = getRealMemberMetaMap();
-  return Object.assign({ grade: "normal", approved: true, joinDate: "" }, map[id]);
+  return Object.assign({ grade: "normal", approved: true, joinDate: "", lastLogin: "" }, map[id]);
 }
 
 function setRealMemberMeta(id, patch) {
@@ -57,12 +57,12 @@ function renderRealMemberTable() {
   document.getElementById("real-member-count").textContent = `총 ${rows.length}명`;
   document.getElementById("real-member-table-wrap").innerHTML = `
     <div class="sticky-table-wrap">
-      <table class="board-table admin-table">
+      <table class="board-table admin-table real-member-table">
         <thead>
           <tr>
-            <th width="50">#</th><th>아이디</th><th>이름</th><th>호수(별명)</th>
-            <th width="120">가입년월일</th><th width="110">회원등급</th>
-            <th width="110">신규회원 승인</th><th width="110">관리</th>
+            <th width="36">#</th><th width="90">아이디</th><th width="84">이름</th><th width="90">호수(별명)</th>
+            <th width="100">가입년월일</th><th width="100">최근 로그인</th><th width="92">회원등급</th>
+            <th width="132">신규회원 승인</th><th width="110">관리</th>
           </tr>
         </thead>
         <tbody>${
@@ -82,12 +82,13 @@ function renderRealMemberTable() {
                   <td>${escM(m.name)}</td>
                   <td>${escM(m.unit)}</td>
                   <td><input type="text" class="join-date-input" placeholder="YYYY-MM-DD" value="${escM(meta.joinDate)}" onchange="onRealMemberJoinDate('${escM(m.id)}', this.value)"></td>
+                  <td><input type="text" class="join-date-input" placeholder="YYYY-MM-DD" value="${escM(meta.lastLogin)}" onchange="onRealMemberLastLogin('${escM(m.id)}', this.value)"></td>
                   <td>${gradeSel}</td>
                   <td class="act">${approveBtn}</td>
                   <td class="act"><button type="button" class="mini danger" onclick="hideRealMember('${escM(m.id)}')">목록에서 제거</button></td>
                 </tr>`;
               }).join("")
-            : `<tr><td colspan="8" class="board-empty">검색 결과가 없습니다.</td></tr>`
+            : `<tr><td colspan="9" class="board-empty">검색 결과가 없습니다.</td></tr>`
         }</tbody>
       </table>
     </div>`;
@@ -104,6 +105,10 @@ function onRealMemberApprove(id, approved) {
 
 function onRealMemberJoinDate(id, joinDate) {
   setRealMemberMeta(id, { joinDate: joinDate.trim() });
+}
+
+function onRealMemberLastLogin(id, lastLogin) {
+  setRealMemberMeta(id, { lastLogin: lastLogin.trim() });
 }
 
 function hideRealMember(id) {
@@ -164,7 +169,7 @@ function renderAdmin() {
       <h1>회원관리</h1>
       <span class="pending-count" id="real-member-count">불러오는 중...</span>
     </div>
-    <p class="admin-note">jangkyo.co.kr 관리자 페이지에서 가져온 실회원 명단입니다 (기준일 2026-08-14). 가입년월일·회원등급·신규회원 승인 값은 원본에 없어 이 화면에서 직접 기록하는 참고용 메모이며(이 브라우저에만 저장), "제거"와 마찬가지로 실제 명단·사이트 로그인 계정에는 영향을 주지 않습니다.</p>
+    <p class="admin-note">jangkyo.co.kr 관리자 페이지에서 가져온 실회원 명단입니다 (기준일 2026-08-14). 가입년월일·최근 로그인·회원등급·신규회원 승인 값은 원본에 없어 이 화면에서 직접 기록하는 참고용 메모이며(이 브라우저에만 저장), "제거"와 마찬가지로 실제 명단·사이트 로그인 계정에는 영향을 주지 않습니다.</p>
     <div class="write-row" style="margin:16px 0;">
       <div class="field"><input type="text" id="real-member-search" placeholder="아이디·이름·호수 검색" oninput="renderRealMemberTable()"></div>
     </div>
