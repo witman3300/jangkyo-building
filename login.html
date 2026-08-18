@@ -123,10 +123,12 @@
         return;
       }
       const s = res.session;
-      showToast(s.name + " 님, 로그인되었습니다. (" + gradeLabel(s.grade) + ")");
-      setTimeout(function () {
-        location.href = s.grade === "admin" ? "admin.html" : "index.html";
-      }, 900);
+      ensurePhoneThenProceed(s.id, function () {
+        showToast(s.name + " 님, 로그인되었습니다. (" + gradeLabel(s.grade) + ")");
+        setTimeout(function () {
+          location.href = s.grade === "admin" ? "admin.html" : "index.html";
+        }, 900);
+      });
     }
   </script>
   <!-- 하단 푸터 -->

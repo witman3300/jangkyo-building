@@ -231,7 +231,8 @@ a{text-decoration:none;color:inherit}
           <div class="hint">한글·영문·숫자만 (한글 2자, 영문 4자 이상)</div></div>
       </div>
       <div class="two">
-        <div class="fld"><label>휴대전화 <span class="req">*</span></label><input id="phone" placeholder="010-0000-0000" required></div>
+        <div class="fld"><label>휴대전화 <span class="req">*</span></label><input id="phone" placeholder="010-0000-0000" required>
+          <div class="hint">본인 확인 및 로그인 계정 관리에 사용되며, 반드시 입력해야 가입할 수 있습니다.</div></div>
         <div class="fld"><label>E-mail <span class="req">*</span></label><input id="email" type="email" placeholder="name@email.com" required>
           <div class="hint">로그인 및 비밀번호 찾기에 사용됩니다.</div></div>
       </div>
@@ -342,6 +343,8 @@ async function submitForm(e){
   var pw=document.getElementById('pw1').value, pw2=document.getElementById('pw2').value;
   if(!/^[A-Za-z0-9]{6,}$/.test(pw)){ showToast('비밀번호는 영문 또는 숫자로 6자 이상 입력해 주세요.'); return false; }
   if(pw!==pw2){ showToast('비밀번호가 일치하지 않습니다.'); return false; }
+  var phoneVal=document.getElementById('phone').value.trim();
+  if(!isValidPhone(phoneVal)){ showToast('휴대전화번호를 올바른 형식으로 입력해 주세요. (예: 010-1234-5678)'); return false; }
   var cap=document.getElementById('cap-in').value.trim();
   if(cap!==capCode){ showToast('자동등록방지 숫자가 일치하지 않습니다.'); genCap(); return false; }
 

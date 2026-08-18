@@ -28,6 +28,7 @@ function getUsers() {
   list.forEach((u) => {
     if (!u.grade) u.grade = u.special ? "special" : "normal";
     if (typeof u.approved !== "boolean") u.approved = false;
+    if (typeof u.phone !== "string") u.phone = "";
     delete u.special;
   });
 
@@ -44,19 +45,38 @@ function saveUsers(list) {
   localStorage.setItem(USERS_KEY, JSON.stringify(list));
 }
 
-// 회원가입: 중복 아이디면 false. 신규 회원은 항상 '승인 대기 + 일반회원'으로 시작
+// 휴대폰번호 형식 검증 (010-0000-0000 형태, 하이픈 없어도 허용)
+function isValidPhone(phone) {
+  return /^01[016789]-?\d{3,4}-?\d{4}$/.test(String(phone || "").trim());
+}
+
+// 회원가입: 중복 아이디면 false. 휴대폰번호는 필수이며 형식이 올바르지 않으면 false.
+// 신규 회원은 항상 '승인 대기 + 일반회원'으로 시작
 function registerUser(user) {
   const list = getUsers();
   if (list.some((u) => u.id === user.id)) return false;
+  if (!isValidPhone(user.phone)) return false;
   list.push({
     id: user.id,
     pw: user.pw,
     name: user.name,
     email: user.email || "",
+    phone: String(user.phone).trim(),
     grade: "normal", // 등급은 관리자가 부여
     approved: false, // 관리자 승인 전까지 로그인 불가
     requestedSpecial: !!user.requestedSpecial, // 특별회원 신청 여부
   });
+  saveUsers(list);
+  return true;
+}
+
+// 휴대폰번호 등록/수정 (로그인 시 미입력 회원에게 입력을 요구할 때 사용)
+function setUserPhone(id, phone) {
+  if (!isValidPhone(phone)) return false;
+  const list = getUsers();
+  const u = list.find((x) => x.id === id);
+  if (!u) return false;
+  u.phone = String(phone).trim();
   saveUsers(list);
   return true;
 }
@@ -69,6 +89,54 @@ function loginUser(id, pw) {
   const sess = { id: u.id, name: u.name, grade: u.grade, approved: true };
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(sess));
   return { ok: true, session: sess };
+}
+
+// 휴대폰번호 미입력 계정에게 로그인 직후 입력을 강제하는 팝업.
+// 휴대폰번호가 이미 등록돼 있으면 팝업 없이 바로 onComplete를 실행한다.
+function ensurePhoneThenProceed(id, onComplete) {
+  const u = getUsers().find((x) => x.id === id);
+  if (u && isValidPhone(u.phone)) {
+    if (onComplete) onComplete();
+    return;
+  }
+  promptForPhone(id, onComplete);
+}
+
+function promptForPhone(id, onComplete) {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="card modal-card">
+      <h2>휴대폰번호 등록</h2>
+      <p class="subtitle">서비스 이용을 위해 휴대폰번호 등록이 필요합니다.</p>
+      <form>
+        <div class="form-group">
+          <label>휴대폰번호</label>
+          <input type="text" id="phone-modal-input" placeholder="010-0000-0000" autocomplete="tel" />
+        </div>
+        <div class="hint-err" id="phone-modal-err"></div>
+        <button type="submit" class="btn btn-primary btn-block">등록하고 계속하기</button>
+      </form>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const form = overlay.querySelector("form");
+  const input = overlay.querySelector("#phone-modal-input");
+  const err = overlay.querySelector("#phone-modal-err");
+  input.focus();
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const v = input.value.trim();
+    if (!isValidPhone(v)) {
+      err.textContent = "올바른 휴대폰번호 형식으로 입력해 주세요. (예: 010-1234-5678)";
+      err.classList.add("show");
+      return;
+    }
+    setUserPhone(id, v);
+    overlay.remove();
+    if (onComplete) onComplete();
+  });
 }
 
 function getSession() {

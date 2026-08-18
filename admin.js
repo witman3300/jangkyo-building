@@ -161,6 +161,7 @@ function renderAdmin() {
 
       return `<tr>
         <td>${escAuth(u.name)}</td>
+        <td>${escAuth(u.phone || "미입력")}</td>
         <td>${escAuth(u.id)}</td>
         <td>${escAuth(u.email || "-")}</td>
         <td>${gradeSel}</td>
@@ -189,7 +190,7 @@ function renderAdmin() {
     <table class="board-table admin-table">
       <thead>
         <tr>
-          <th>이름</th><th>아이디</th><th>이메일</th>
+          <th>이름</th><th width="130">휴대폰번호</th><th>아이디</th><th>이메일</th>
           <th width="130">등급</th><th width="90">신청</th>
           <th width="90">상태</th><th width="160">관리</th>
         </tr>

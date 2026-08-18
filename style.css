@@ -423,6 +423,34 @@ body.sidebar-open .sidebar-overlay {
   color: #888888;
 }
 
+/* ===== 휴대폰번호 필수 입력 모달 (로그인 시 미입력 계정) ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 20, 20, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.modal-card {
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.modal-card .hint-err {
+  color: #c0392b;
+  font-size: 13px;
+  margin: -8px 0 14px;
+  display: none;
+}
+
+.modal-card .hint-err.show {
+  display: block;
+}
+
 .form-footer a {
   color: #333333;
   text-decoration: none;
