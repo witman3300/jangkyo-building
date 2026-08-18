@@ -786,13 +786,13 @@ body.sidebar-open .sidebar-overlay {
 
 .hero-pagenav-indicator {
   position: absolute;
-  left: -3px;
+  left: -5.5px;
   top: 0;
-  width: 7px;
-  height: 7px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: #c9a84c;
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.4);
   transition: top 0.5s cubic-bezier(0.65, 0, 0.35, 1);
 }
 
@@ -800,33 +800,35 @@ body.sidebar-open .sidebar-overlay {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding-left: 16px;
+  gap: 28px;
+  padding-left: 22px;
 }
 
 .hero-pagenav-btn {
   background: none;
   border: none;
-  padding: 2px 0;
+  padding: 3px 0;
   cursor: pointer;
   font-family: inherit;
 }
 
 .hero-pagenav-num {
-  font-size: 11px;
-  letter-spacing: 0.03em;
-  color: rgba(255, 255, 255, 0.45);
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.6);
   font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
   transition: color 0.3s ease;
 }
 
 .hero-pagenav-btn:hover .hero-pagenav-num {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .hero-pagenav-btn.is-active .hero-pagenav-num {
   color: #ffffff;
-  font-weight: 700;
+  font-weight: 800;
+  font-size: 23px;
 }
 
 @media (max-width: 900px) {
