@@ -19,29 +19,21 @@
     .about-aside{margin-top:16px;border:1px solid #e6e8ef;border-radius:8px;padding:18px;background:#fafbfc}
     .about-aside h4{font-size:14px;color:#1a2744;margin-bottom:6px;font-weight:700}
     .about-aside p{font-size:12.5px;color:#7a8290;line-height:1.7}
-    .about-body{min-width:0}
-    .about-body h1{font-size:27px;color:#1a2744;margin-bottom:6px;letter-spacing:-.5px}
-    .about-body .lead{color:#7a8290;font-size:15px;margin-bottom:26px}
-    .about-sec{margin-bottom:40px;scroll-margin-top:80px}
-    .about-sec h2{font-size:20px;color:#223066;font-weight:700;padding-bottom:10px;border-bottom:2px solid #223066;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-    .about-sec h2 .no{background:#c9a84c;color:#fff;font-size:13px;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
-    .about-sec p{color:#48505e;font-size:15px;line-height:1.85;margin-bottom:12px}
-    .link-list{list-style:none;border-top:2px solid #223066}
-    .link-list li a{display:flex;justify-content:space-between;align-items:center;padding:14px 6px;border-bottom:1px solid #eef0f4;color:#41506a;text-decoration:none;font-size:15px}
-    .link-list li a:hover{color:#223066;background:#fafbfc}
-    .link-list .go{color:#c9a84c;font-size:13px;font-weight:700}
-    .link-list li.with-dl{display:flex;align-items:center;gap:10px;border-bottom:1px solid #eef0f4}
-    .link-list li.with-dl a.doc-title{flex:1;border-bottom:none}
-    .link-list li.with-dl .dl-btn{flex-shrink:0;background:#223066;color:#fff;font-size:12.5px;font-weight:700;padding:8px 16px;border-radius:6px;text-decoration:none;white-space:nowrap}
-    .link-list li.with-dl .dl-btn:hover{background:#2c3f80}
-    .cta{display:inline-block;margin-top:8px;background:#223066;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 22px;border-radius:8px}
-    .cta:hover{background:#2c3f80}
-    .faq-item{border:1px solid #e6e8ef;border-radius:8px;margin-bottom:10px;overflow:hidden}
-    .faq-q{padding:15px 18px;font-weight:700;font-size:15.5px;color:#33415a;cursor:pointer;display:flex;justify-content:space-between;gap:12px}
-    .faq-q .mk{color:#c9a84c;font-size:19px}
-    .faq-item.open .mk{transform:rotate(45deg)}
-    .faq-a{display:none;padding:0 18px 16px;color:#5a6472;font-size:14.5px;line-height:1.75}
-    .faq-item.open .faq-a{display:block}
+    .doc-view-body{min-width:0}
+    .view-head{border-bottom:2px solid #223066;padding-bottom:14px;margin-bottom:22px;display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}
+    .view-head h1{font-size:24px;color:#1a2744;letter-spacing:-.4px}
+    .view-head .file-tag{font-size:12.5px;color:#8a92a3}
+    .view-body{color:#48505e;font-size:15px;line-height:1.9;margin-bottom:26px}
+    .view-body p{margin-bottom:14px}
+    .view-body ul{margin:0 0 14px 20px}
+    .view-body li{margin-bottom:6px}
+    .doc-download-box{display:flex;align-items:center;justify-content:space-between;gap:14px;background:#f4f6fb;border:1px solid #e6e8ef;border-radius:10px;padding:18px 20px;margin-bottom:28px;flex-wrap:wrap}
+    .doc-download-box .info{font-size:13.5px;color:#5a6472;line-height:1.6}
+    .doc-download-box .info b{color:#1a2744;display:block;font-size:15px;margin-bottom:2px}
+    .dl-btn-lg{flex-shrink:0;background:#223066;color:#fff;text-decoration:none;font-weight:700;font-size:14.5px;padding:12px 26px;border-radius:8px}
+    .dl-btn-lg:hover{background:#2c3f80}
+    .btn-row{display:flex;gap:8px;padding-top:18px;border-top:1px solid #eef0f4}
+    .view-empty{color:#7a8290;font-size:15px;padding:40px 0}
     @media (max-width:768px){.about-wrap{grid-template-columns:1fr;gap:18px;padding:20px 14px 36px}.about-sub{order:-1}}
   </style>
 </head>
@@ -103,25 +95,8 @@
       <div class="about-aside"><h4>관리사무소</h4><p>TEL. 02-778-4611~3<br>평일 09:00 ~ 18:00</p></div>
     </aside>
 
-    <main class="about-body">
-      <h1>자료실</h1>
-      <p class="lead">관리규약·관리규정·결산보고서 등 문서 자료를 제공합니다.</p>
-
-      <section class="about-sec" id="data">
-        <h2><span class="no">1</span> 자료실</h2>
-        <p>관리규약·관리규정·결산보고서 등 문서 자료입니다. (회원 열람)</p>
-        <ul class="link-list">
-          <li class="with-dl">
-            <a href="info-doc-view.html?doc=agreement" class="doc-title">관리규약 <span class="go">보기 ›</span></a>
-            <a href="files/관리규약.hwp" download class="dl-btn">다운로드</a>
-          </li>
-          <li class="with-dl">
-            <a href="info-doc-view.html?doc=rules" class="doc-title">관리규정 <span class="go">보기 ›</span></a>
-            <a href="files/관리규정.hwp" download class="dl-btn">다운로드</a>
-          </li>
-          <li><a href="board.html?cat=report">결산보고서 <span class="go">열람 ›</span></a></li>
-        </ul>
-      </section>
+    <main class="doc-view-body">
+      <div id="app"></div>
     </main>
   </div>
 
@@ -134,6 +109,72 @@
   </footer>
 
   <script src="auth.js"></script>
+  <script>
+  (function () {
+    var DOCS = {
+      agreement: {
+        title: "관리규약",
+        file: "files/관리규약.hwp",
+        size: "32KB",
+        summary: "장교빌딩 관리단이 제정한 관리규약 원문입니다.",
+        paragraphs: [
+          "관리규약은 장교빌딩 공용부분의 관리·사용에 관한 기본 원칙과 입주자(구분소유자·임차인)의 권리·의무, 관리단의 조직 및 운영 절차 등을 정한 규약입니다.",
+          "공용부분의 유지·보수 책임, 관리비 부과 및 징수 기준, 입주자대표기구의 구성과 의결 방법, 시설물 이용 시 준수 사항 등이 포함되어 있습니다."
+        ],
+        notes: [
+          "원문 전체 내용은 아래 다운로드 버튼을 눌러 HWP 파일로 확인하실 수 있습니다.",
+          "규약 해석이나 적용에 관해 궁금한 사항은 관리사무소로 문의해 주세요."
+        ]
+      },
+      rules: {
+        title: "관리규정",
+        file: "files/관리규정.hwp",
+        size: "1.6MB",
+        summary: "장교빌딩 관리단이 제정한 관리규정 원문입니다.",
+        paragraphs: [
+          "관리규정은 관리규약에서 위임한 세부 사항을 규정한 문서로, 시설 운영·보안·주차·미화 등 실무 전반에 대한 구체적인 기준과 절차를 담고 있습니다.",
+          "부서별 업무 분장, 각종 신청·승인 절차, 위반 시 조치 사항 등 실제 건물 운영에 적용되는 세부 규정이 포함되어 있습니다."
+        ],
+        notes: [
+          "원문 전체 내용은 아래 다운로드 버튼을 눌러 HWP 파일로 확인하실 수 있습니다.",
+          "규정 해석이나 적용에 관해 궁금한 사항은 관리사무소로 문의해 주세요."
+        ]
+      }
+    };
+
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
+
+    var key = new URLSearchParams(location.search).get("doc");
+    var doc = DOCS[key];
+    var app = document.getElementById("app");
+
+    if (!doc) {
+      app.innerHTML = '<div class="view-empty">문서를 찾을 수 없습니다. <a href="info.html" style="color:#223066;font-weight:700">자료실로 돌아가기</a></div>';
+      return;
+    }
+
+    document.title = doc.title + " | 장교빌딩";
+
+    var paraHtml = doc.paragraphs.map(function (p) { return "<p>" + esc(p) + "</p>"; }).join("");
+    var noteHtml = "<ul>" + doc.notes.map(function (n) { return "<li>" + esc(n) + "</li>"; }).join("") + "</ul>";
+
+    app.innerHTML = ''
+      + '<div class="view-head">'
+      + '  <h1>' + esc(doc.title) + '</h1>'
+      + '  <span class="file-tag">파일 용량 약 ' + esc(doc.size) + ' · HWP</span>'
+      + '</div>'
+      + '<div class="view-body">' + paraHtml + noteHtml + '</div>'
+      + '<div class="doc-download-box">'
+      + '  <div class="info"><b>' + esc(doc.title) + ' 원본 파일</b>' + esc(doc.summary) + '</div>'
+      + '  <a href="' + doc.file + '" download class="dl-btn-lg">다운로드</a>'
+      + '</div>'
+      + '<div class="btn-row"><a href="info.html" class="btn btn-outline btn-sm">자료실 목록으로</a></div>';
+  })();
+  </script>
   <script src="home-slider.js"></script>
 </body>
 </html>
