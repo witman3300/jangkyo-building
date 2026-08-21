@@ -292,26 +292,7 @@ a{text-decoration:none;color:inherit}
   </footer>
 
   <script src="auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
-/* ===== Firebase 설정 (장교빌딩) ===== */
-var firebaseConfig = {
-  apiKey: "AIzaSyDOL0q9yugEQbyDOsQkdmz4zfh5Qaf0C8U",
-  authDomain: "jangkyo-building.firebaseapp.com",
-  projectId: "jangkyo-building",
-  storageBucket: "jangkyo-building.firebasestorage.app",
-  messagingSenderId: "791708703483",
-  appId: "1:791708703483:web:5433034b25ffd4d3dfee5e"
-};
-var fbReady=false, auth=null, db=null;
-try{
-  firebase.initializeApp(firebaseConfig);
-  auth=firebase.auth(); db=firebase.firestore();
-  fbReady=true;
-}catch(err){ console.error('Firebase init 실패', err); }
-
 var idChecked=false, capCode='';
 function genCap(){
   capCode=String(Math.floor(1000+Math.random()*9000));
@@ -322,8 +303,8 @@ function checkId(){
   var v=document.getElementById('uid').value.trim();
   var h=document.getElementById('uid-h');
   if(!/^[A-Za-z0-9_]{3,20}$/.test(v)){ h.className='hint err'; h.textContent='영문자, 숫자, _ 만 3자 이상 입력하세요.'; idChecked=false; return; }
-  /* 시연: 실제 서비스에서는 서버에 중복 조회 */
-  h.className='hint ok'; h.textContent='"'+v+'" 사용 가능한 아이디입니다. (시연)'; idChecked=true;
+  if(getUsers().some(function(u){ return u.id===v; })){ h.className='hint err'; h.textContent='이미 사용 중인 아이디입니다.'; idChecked=false; return; }
+  h.className='hint ok'; h.textContent='"'+v+'" 사용 가능한 아이디입니다.'; idChecked=true;
 }
 function checkPw(){
   var a=document.getElementById('pw1').value, b=document.getElementById('pw2').value;
@@ -332,7 +313,7 @@ function checkPw(){
   if(a===b){ h.className='hint ok'; h.textContent='비밀번호가 일치합니다.'; }
   else { h.className='hint err'; h.textContent='비밀번호가 일치하지 않습니다.'; }
 }
-async function submitForm(e){
+function submitForm(e){
   e.preventDefault();
   var ag1=document.querySelector('input[name=ag1]:checked');
   var ag2=document.querySelector('input[name=ag2]:checked');
@@ -348,60 +329,36 @@ async function submitForm(e){
   var cap=document.getElementById('cap-in').value.trim();
   if(cap!==capCode){ showToast('자동등록방지 숫자가 일치하지 않습니다.'); genCap(); return false; }
 
+  var uid=document.getElementById('uid').value.trim();
   var data={
-    uid: document.getElementById('uid').value.trim(),
+    id: uid,
+    pw: pw,
     email: document.getElementById('email').value.trim(),
     name: document.getElementById('name').value.trim(),
     unit: document.getElementById('unit').value.trim(),
-    phone: document.getElementById('phone').value.trim(),
-    birth: document.getElementById('birth').value || null,
-    gender: document.getElementById('gender').value || null,
+    phone: phoneVal,
     company: document.getElementById('company').value.trim(),
-    mtype: mtype.value,
-    opt_mail: document.getElementById('opt-mail').checked,
-    opt_sms: document.getElementById('opt-sms').checked,
-    opt_pub: document.getElementById('opt-pub').checked
+    requestedSpecial: (mtype.value !== 'general')
   };
 
-  /* ===== Firebase 미준비 시 안내 ===== */
-  if(!fbReady){
-    showToast('회원 시스템 연결에 문제가 있습니다. 잠시 후 다시 시도해 주세요.');
+  var btn=e.target.querySelector('button[type=submit]');
+  if(btn){ btn.disabled=true; btn.textContent='등록 중...'; }
+
+  var ok=registerUser(data);
+  if(!ok){
+    showToast('이미 사용 중인 아이디이거나 휴대전화번호 형식이 올바르지 않습니다.');
+    if(btn){ btn.disabled=false; btn.textContent='가입 신청'; }
     return false;
   }
 
-  /* ===== 실제 등록 ===== */
-  var btn=e.target.querySelector('button[type=submit]');
-  if(btn){ btn.disabled=true; btn.textContent='등록 중...'; }
-  try{
-    // 1) 인증 계정 생성 (비밀번호는 Firebase가 안전하게 해시 저장)
-    var cred=await auth.createUserWithEmailAndPassword(data.email, pw);
-    var uidAuth = cred.user ? cred.user.uid : null;
-
-    // 2) 프로필 정보 저장 (일반회원은 자동승인, 입주자·구분소유자는 승인대기)
-    var status = (data.mtype==='general') ? '승인' : '대기';
-    await db.collection('members').add({
-      auth_id: uidAuth, user_id:data.uid, email:data.email, name:data.name,
-      unit:data.unit, phone:data.phone, birth:data.birth, gender:data.gender,
-      company:data.company, member_type:data.mtype, status:status,
-      opt_mail:data.opt_mail, opt_sms:data.opt_sms, opt_pub:data.opt_pub,
-      created_at: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    if(status==='승인'){
-      showToast('회원가입이 완료되었습니다!\n일반회원으로 바로 로그인하실 수 있습니다.');
-    }else{
-      showToast('가입 신청이 접수되었습니다.\n관리사무소의 확인(호실·계약·등기) 후 승인되면 로그인하실 수 있습니다.');
-    }
-    setTimeout(function(){ location.href='index.html'; }, 1400);
-  }catch(err){
-    var m=(err&&err.message)||'알 수 없는 오류';
-    var c=(err&&err.code)||'';
-    if(c==='auth/email-already-in-use') m='이미 가입된 이메일입니다.';
-    else if(c==='auth/invalid-email') m='이메일 형식이 올바르지 않습니다.';
-    else if(c==='auth/weak-password') m='비밀번호가 너무 약합니다. 6자 이상 입력해 주세요.';
-    showToast('가입 처리 중 오류가 발생했습니다.\n\n'+m);
-    if(btn){ btn.disabled=false; btn.textContent='가입 신청'; }
+  // 일반회원은 자동승인, 입주자·구분소유자는 관리사무소 확인 후 승인대기
+  if(mtype.value==='general'){
+    adminApprove(uid, true);
+    showToast('회원가입이 완료되었습니다!\n일반회원으로 바로 로그인하실 수 있습니다.');
+  }else{
+    showToast('가입 신청이 접수되었습니다.\n관리사무소의 확인(호실·계약·등기) 후 승인되면 로그인하실 수 있습니다.');
   }
+  setTimeout(function(){ location.href='index.html'; }, 1400);
   return false;
 }
 genCap();

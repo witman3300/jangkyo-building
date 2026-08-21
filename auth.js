@@ -29,6 +29,8 @@ function getUsers() {
     if (!u.grade) u.grade = u.special ? "special" : "normal";
     if (typeof u.approved !== "boolean") u.approved = false;
     if (typeof u.phone !== "string") u.phone = "";
+    if (typeof u.unit !== "string") u.unit = "";
+    if (typeof u.company !== "string") u.company = "";
     delete u.special;
   });
 
@@ -62,6 +64,8 @@ function registerUser(user) {
     name: user.name,
     email: user.email || "",
     phone: String(user.phone).trim(),
+    unit: user.unit || "",
+    company: user.company || "",
     grade: "normal", // 등급은 관리자가 부여
     approved: false, // 관리자 승인 전까지 로그인 불가
     requestedSpecial: !!user.requestedSpecial, // 특별회원 신청 여부
@@ -77,6 +81,16 @@ function setUserPhone(id, phone) {
   const u = list.find((x) => x.id === id);
   if (!u) return false;
   u.phone = String(phone).trim();
+  saveUsers(list);
+  return true;
+}
+
+// 비밀번호 재설정 (아이디/비번 찾기에서 본인 확인 후 사용)
+function resetUserPassword(id, newPw) {
+  const list = getUsers();
+  const u = list.find((x) => x.id === id);
+  if (!u) return false;
+  u.pw = newPw;
   saveUsers(list);
   return true;
 }
