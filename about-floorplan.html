@@ -37,6 +37,7 @@
     .plan-viewer{border:1px solid #e6e8ef;border-radius:10px;background:#fafbfd;overflow:hidden}
     .plan-viewer__toolbar{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #e6e8ef;background:#fff;flex-wrap:wrap}
     .plan-viewer__label{font-size:13px;color:#7a8290;font-weight:600;margin-right:2px;white-space:nowrap}
+    .plan-viewer__select{flex:1;min-width:160px;max-width:320px;padding:7px 10px;border:1px solid #cdd4e0;border-radius:6px;font-size:13.5px;color:#33415a;font-family:inherit;background:#fff}
     .plan-viewer__btn{width:28px;height:28px;flex-shrink:0;border-radius:6px;border:1px solid #cdd4e0;background:#fff;color:#33415a;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
     .plan-viewer__btn:hover{background:#f4f6fb}
     .plan-viewer__range{flex:1;min-width:110px;max-width:220px;accent-color:#223066}
@@ -44,7 +45,13 @@
     .plan-viewer__reset{margin-left:auto;font-size:12.5px;color:#7a8290;background:none;border:none;cursor:pointer;text-decoration:underline;padding:0}
     .plan-viewer__reset:hover{color:#223066}
     .plan-viewer__frame{overflow:auto;max-height:640px;padding:18px;display:flex;justify-content:center}
-    .plan-viewer__img{width:100%;height:auto;display:block;flex-shrink:0;transition:width .15s ease}
+    .plan-viewer__img{width:100%;height:auto;display:block;flex-shrink:0;transition:width .15s ease;cursor:zoom-in}
+    .plan-viewer__hint{font-size:12.5px;color:#8a92a0;text-align:right;padding:6px 16px 0}
+    .plan-lightbox{position:fixed;inset:0;background:rgba(20,24,34,.88);z-index:1000;display:none;align-items:center;justify-content:center;padding:40px;cursor:zoom-out}
+    .plan-lightbox.is-open{display:flex}
+    .plan-lightbox__img{max-width:100%;max-height:100%;box-shadow:0 10px 40px rgba(0,0,0,.4);background:#fff}
+    .plan-lightbox__close{position:absolute;top:18px;right:26px;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:22px;line-height:1;cursor:pointer}
+    .plan-lightbox__close:hover{background:rgba(255,255,255,.22)}
     .org-chart{display:flex;flex-direction:column;align-items:center;gap:0}
     .org-node{background:#223066;color:#fff;padding:11px 22px;border-radius:8px;font-size:14px;font-weight:600;margin:0 auto}
     .org-line{width:2px;height:18px;background:#c9c9c9}
@@ -150,6 +157,36 @@
         </table>
         <div class="plan-viewer">
           <div class="plan-viewer__toolbar">
+            <span class="plan-viewer__label">보기 선택</span>
+            <select class="plan-viewer__select" id="planSelect" aria-label="층별 평면도 선택">
+              <option value="images/floorplan-full.gif" selected>전체 층별 요약도</option>
+              <optgroup label="지상 7층 ~ 지붕">
+                <option value="images/floorplan-7f.png">7층 평면도</option>
+                <option value="images/floorplan-8f.png">8층 평면도</option>
+                <option value="images/floorplan-11-20f.png">11~20층 평면도</option>
+                <option value="images/floorplan-21f.png">21층 평면도</option>
+                <option value="images/floorplan-22f.png">22층 평면도</option>
+                <option value="images/floorplan-23-26f.png">23~26층 평면도</option>
+                <option value="images/floorplan-27f.png">27층 평면도</option>
+                <option value="images/floorplan-roof-annex.png">옥탑1층 평면도</option>
+                <option value="images/floorplan-roof.png">지붕 평면도</option>
+              </optgroup>
+              <optgroup label="지하 4층 ~ 지하중1층 · 지상1층">
+                <option value="images/floorplan-b4.png">지하4층 평면도</option>
+                <option value="images/floorplan-b4mid.png">지하중4층 평면도</option>
+                <option value="images/floorplan-b3.png">지하3층 평면도</option>
+                <option value="images/floorplan-b2.png">지하2층 평면도</option>
+                <option value="images/floorplan-b1.png">지하1층 평면도</option>
+                <option value="images/floorplan-b1-ext.png">지하1층 평면도(기업은행 확장)</option>
+                <option value="images/floorplan-b1mid.png">지하중1층 평면도</option>
+                <option value="images/floorplan-1f.png">지상1층 평면도</option>
+              </optgroup>
+              <optgroup label="지하상가 구획도">
+                <option value="images/floorplan-mall-b1.png">지하상가구획도</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="plan-viewer__toolbar">
             <span class="plan-viewer__label">도면 크기</span>
             <button type="button" class="plan-viewer__btn" id="planZoomOut" aria-label="축소">−</button>
             <input type="range" class="plan-viewer__range" id="planZoomRange" min="40" max="200" step="10" value="100" aria-label="도면 크기 조절">
@@ -158,11 +195,18 @@
             <button type="button" class="plan-viewer__reset" id="planZoomReset">초기화</button>
           </div>
           <div class="plan-viewer__frame">
-            <img src="images/floorplan-full.gif" alt="장교빌딩 층별 평면도 (상가·1층·2층·7층식당가·8층식당가·사무실9~14층·사무실15~20층·오피스텔21~26층)" class="plan-viewer__img" id="planImg">
+            <img src="images/floorplan-full.gif" alt="장교빌딩 층별 평면도" class="plan-viewer__img" id="planImg">
           </div>
+          <div class="plan-viewer__hint">도면을 클릭하면 크게 볼 수 있습니다.</div>
         </div>
       </section>
     </main>
+  </div>
+
+  <!-- 도면 확대보기 라이트박스 -->
+  <div class="plan-lightbox" id="planLightbox">
+    <button type="button" class="plan-lightbox__close" id="planLightboxClose" aria-label="닫기">&times;</button>
+    <img class="plan-lightbox__img" id="planLightboxImg" alt="">
   </div>
 
   <!-- 하단 푸터 -->
@@ -188,6 +232,7 @@
       var zoomIn = document.getElementById('planZoomIn');
       var zoomOut = document.getElementById('planZoomOut');
       var reset = document.getElementById('planZoomReset');
+      var select = document.getElementById('planSelect');
       var min = Number(range.min), max = Number(range.max), step = Number(range.step);
 
       function applyZoom(v){
@@ -200,7 +245,34 @@
       zoomIn.addEventListener('click', function(){ applyZoom(Number(range.value) + step); });
       zoomOut.addEventListener('click', function(){ applyZoom(Number(range.value) - step); });
       reset.addEventListener('click', function(){ applyZoom(100); });
+      select.addEventListener('change', function(){
+        img.src = select.value;
+        img.alt = select.options[select.selectedIndex].text;
+        applyZoom(100);
+      });
       applyZoom(100);
+
+      // 도면 클릭 시 라이트박스로 확대
+      var lightbox = document.getElementById('planLightbox');
+      var lightboxImg = document.getElementById('planLightboxImg');
+      var lightboxClose = document.getElementById('planLightboxClose');
+
+      function openLightbox(){
+        lightboxImg.src = img.src;
+        lightboxImg.alt = img.alt;
+        lightbox.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeLightbox(){
+        lightbox.classList.remove('is-open');
+        document.body.style.overflow = '';
+      }
+      img.addEventListener('click', openLightbox);
+      lightbox.addEventListener('click', closeLightbox);
+      lightboxClose.addEventListener('click', closeLightbox);
+      document.addEventListener('keydown', function(e){
+        if (e.key === 'Escape') closeLightbox();
+      });
     })();
   </script>
 </body>
