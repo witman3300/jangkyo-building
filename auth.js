@@ -406,9 +406,7 @@ function renderAuthStatus() {
       ${adminLink}
       <a href="#" onclick="logoutUser().then(function(){location.reload();});return false;">로그아웃</a>`;
   } else {
-    box.innerHTML = `<a href="login.html">로그인</a>
-      <span class="divider">|</span>
-      <a href="signup.html">회원가입</a>`;
+    box.innerHTML = `<a href="login.html">로그인</a>`;
   }
 }
 
