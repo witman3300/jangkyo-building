@@ -223,6 +223,37 @@ async function setUserPhone(uid, phone) {
   }
 }
 
+// 마이페이지: 로그인한 본인의 전체 프로필 조회 (이메일 등 세션에 없는 값 포함)
+async function getMyProfile() {
+  await _sdkLoaded;
+  if (!_session) return null;
+  var snap = await userDocRef(_session.uid).get();
+  return snap.exists ? Object.assign({ uid: _session.uid }, snap.data()) : null;
+}
+
+// 마이페이지: 본인 프로필 수정 (이름/호수/회사명/휴대전화만 허용 — 등급·승인·아이디·이메일은 여기서 못 바꾼다)
+// patch: {name, phone, unit, company}
+async function updateMyProfile(patch) {
+  await _sdkLoaded;
+  if (!_session) return { ok: false, reason: "invalid" };
+  if (!patch.name || !patch.name.trim()) return { ok: false, reason: "name" };
+  if (!isValidPhone(patch.phone)) return { ok: false, reason: "phone" };
+  var data = {
+    name: patch.name.trim(),
+    phone: String(patch.phone).trim(),
+    unit: (patch.unit || "").trim(),
+    company: (patch.company || "").trim(),
+  };
+  try {
+    await userDocRef(_session.uid).update(data);
+    _session.name = data.name;
+    _session.phone = data.phone;
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, reason: "save", message: e.message };
+  }
+}
+
 // 휴대폰번호 미입력 계정에게 로그인 직후 입력을 강제하는 팝업.
 // 휴대폰번호가 이미 등록돼 있으면 팝업 없이 바로 onComplete를 실행한다.
 function ensurePhoneThenProceed(id, onComplete) {
@@ -369,6 +400,8 @@ function renderAuthStatus() {
       : "";
     const star = s.grade === "special" ? " ⭐" : s.grade === "admin" ? " 🛠" : "";
     box.innerHTML = `<span class="welcome">${escAuth(s.name)}님(${gradeLabel(s.grade)})${star}</span>
+      <span class="divider">|</span>
+      <a href="myinfo.html">내 정보 수정</a>
       <span class="divider">|</span>
       ${adminLink}
       <a href="#" onclick="logoutUser().then(function(){location.reload();});return false;">로그아웃</a>`;
