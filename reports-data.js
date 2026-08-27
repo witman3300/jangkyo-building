@@ -1,12 +1,11 @@
 // 결산보고서 데이터 (jangkyo.co.kr 원본 게시판 conReport에서 이전, 기준일 2026-08-27)
-// 원본 게시판(결산보고서)은 특별회원 로그인 후에만 본문 열람이 가능해, 제목·등록일만 확인되고
-// 본문 상세는 확인할 수 없었다. 관리사무소로부터 실제 내용을 전달받으면 text를 채워 넣을 것.
-// 각 글: no(목록 번호), id(원본 wr_id), title, date(등록일), text(요약 본문, 미확인 시 생략)
+// 각 글: no(목록 번호), id(원본 wr_id), title, date(등록일), imgCount(첨부 스캔이미지 수, files/report/{id}/NN.jpg), text(요약 본문, 있는 경우만)
 const REPORTS = [
   {
     no: 1,
     id: 4,
     title: "2025년도 장교공영주식회사 재무제표",
     date: "2026-03-05",
+    imgCount: 7,
   }
 ];

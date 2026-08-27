@@ -28,6 +28,8 @@ nav a:hover{color:var(--accent)}
 .view-head h2{font-size:21px;color:var(--ink);font-weight:800;letter-spacing:-.3px;margin-bottom:10px}
 .view-meta{display:flex;gap:16px;font-size:13px;color:var(--gray)}
 .view-body{font-size:15px;color:#3a424c;line-height:1.9;white-space:pre-line;margin-bottom:28px}
+.view-images{display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+.view-images img{width:100%;max-width:820px;border:1px solid var(--line);border-radius:6px;display:block}
 .view-empty{color:var(--gray);font-size:14px;padding:30px 0}
 .btn-row{display:flex;gap:8px;padding-top:18px;border-top:1px solid var(--line)}
 .btn{display:inline-flex;align-items:center;padding:9px 18px;border-radius:6px;font-size:13.5px;font-weight:700;border:1px solid var(--line);color:var(--gray)}
@@ -99,7 +101,20 @@ footer{background:#0d2136;color:#8ba0b5;font-size:13px;padding:30px 0;text-align
   var prev = REPORTS[idx - 1];
   var next = REPORTS[idx + 1];
 
-  var bodyHtml = post.text ? '<div class="view-body">' + esc(post.text) + '</div>' : '<div class="view-empty">등록된 내용이 없습니다.</div>';
+  var imagesHtml = "";
+  if (post.imgCount > 0) {
+    var imgs = [];
+    for (var i = 1; i <= post.imgCount; i++) {
+      var seq = (i < 10 ? "0" + i : "" + i);
+      imgs.push('<img src="files/report/' + post.id + '/' + seq + '.jpg" alt="' + esc(post.title) + ' 첨부 ' + i + '" loading="lazy" />');
+    }
+    imagesHtml = '<div class="view-images">' + imgs.join("") + '</div>';
+  }
+
+  var bodyHtml = post.text ? '<div class="view-body">' + esc(post.text) + '</div>' : "";
+  if (!post.text && !post.imgCount) {
+    bodyHtml = '<div class="view-empty">등록된 내용이 없습니다.</div>';
+  }
 
   app.innerHTML = ''
     + '<div class="view-head">'
@@ -107,6 +122,7 @@ footer{background:#0d2136;color:#8ba0b5;font-size:13px;padding:30px 0;text-align
     + '  <div class="view-meta"><span>번호 ' + post.no + '</span><span>작성자 관리자</span><span>' + post.date + '</span></div>'
     + '</div>'
     + bodyHtml
+    + imagesHtml
     + '<div class="btn-row">'
     + '  <a href="board.html?cat=report" class="btn">목록</a>'
     + (prev ? '  <a href="report-view.html?id=' + prev.id + '" class="btn">다음글: ' + esc(prev.title) + '</a>' : '')
