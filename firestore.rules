@@ -8,6 +8,11 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.grade == 'admin';
     }
+    // 최고관리자 보호: protected:true 인 계정은 앱(다른 관리자 포함)에서 등급 변경·삭제가
+    // 원천적으로 불가능하다. 오직 Firebase 콘솔에서 직접 수정하는 방법만 남는다.
+    function isProtected() {
+      return ('protected' in resource.data) && resource.data.protected == true;
+    }
 
     // 회원 프로필: 본인 또는 관리자만 읽기 가능. 가입 시 승인 상태를 스스로 true로 못 만들도록 강제한다.
     match /users/{uid} {
@@ -15,13 +20,20 @@ service cloud.firestore {
       allow create: if isOwner(uid)
         && request.resource.data.grade == 'normal'
         && request.resource.data.approved == (request.resource.data.requestedSpecial == false);
-      allow update: if isAdmin()
-        || (isOwner(uid)
+      allow update: if isProtected()
+        ? (isOwner(uid)
             && request.resource.data.grade == resource.data.grade
             && request.resource.data.approved == resource.data.approved
             && request.resource.data.id == resource.data.id
-            && request.resource.data.requestedSpecial == resource.data.requestedSpecial);
-      allow delete: if isAdmin();
+            && request.resource.data.requestedSpecial == resource.data.requestedSpecial
+            && request.resource.data.protected == resource.data.protected)
+        : (isAdmin()
+            || (isOwner(uid)
+                && request.resource.data.grade == resource.data.grade
+                && request.resource.data.approved == resource.data.approved
+                && request.resource.data.id == resource.data.id
+                && request.resource.data.requestedSpecial == resource.data.requestedSpecial));
+      allow delete: if !isProtected() && isAdmin();
     }
 
     // 아이디(로그인용) -> {uid, email} 매핑. 로그인 전 이메일 조회에 필요해 단건 조회(get)만 공개한다.

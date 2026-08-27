@@ -142,10 +142,11 @@ async function renderAdmin() {
         : `<span class="badge wait">승인대기</span>`;
       const req = u.requestedSpecial ? `<span class="badge req">특별 신청</span>` : "";
       const isAdminRow = u.grade === "admin";
+      const protectedTag = u.protected ? ` <span class="badge admin" title="Firestore 보안 규칙으로 보호되어 앱에서는 등급 변경·삭제가 불가능합니다">🛡 최고관리자</span>` : "";
 
       // 등급 선택
       const gradeSel = isAdminRow
-        ? gradeLabel(u.grade)
+        ? gradeLabel(u.grade) + protectedTag
         : `<select onchange="onGrade('${u.uid}', this.value)">
              <option value="normal" ${u.grade === "normal" ? "selected" : ""}>일반회원</option>
              <option value="special" ${u.grade === "special" ? "selected" : ""}>특별회원</option>
