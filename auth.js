@@ -1,50 +1,64 @@
-// auth.js - 회원 / 등급 / 승인 / 관리자 (백엔드 없는 데모, 브라우저 저장소 기반)
-// 회원 목록은 localStorage, 로그인 세션은 sessionStorage 에 보관
+// auth.js - 회원 / 등급 / 승인 / 관리자 (Firebase Authentication + Firestore 기반)
+// 로그인 세션은 Firebase Auth가 관리하고, 등급/승인 상태 등 프로필은 Firestore(users 컬렉션)에 보관한다.
+// 비밀번호는 Firebase Auth에만 저장되며 이 앱 코드/DB 어디에도 평문으로 남지 않는다.
 
-const USERS_KEY = "jangkyo_users";
-const SESSION_KEY = "jangkyo_session";
+// ===== Firebase SDK 로드 (모든 페이지 공통) =====
+// createElement로 순서를 보장하며 3개 스크립트를 비동기 로드한다 (async=false 로 실행 순서 고정).
+// 로드가 끝나기 전까지 fbAuth/db는 undefined이므로, 이를 사용하는 함수는 반드시 window.authReady를
+// 먼저 기다려야 한다 (아래 registerUser/loginUser 등은 내부에서 이미 기다린다).
+var fbAuth, db;
+var _sdkLoadedResolve;
+var _sdkLoaded = new Promise(function (resolve) {
+  _sdkLoadedResolve = resolve;
+});
+(function loadFirebaseSDK() {
+  var firebaseConfig = {
+    apiKey: "AIzaSyDOL0q9yugEQbyDOsQkdmz4zfh5Qaf0C8U",
+    authDomain: "jangkyo-building.firebaseapp.com",
+    projectId: "jangkyo-building",
+    storageBucket: "jangkyo-building.firebasestorage.app",
+    messagingSenderId: "791708703483",
+    appId: "1:791708703483:web:5433034b25ffd4d3dfee5e",
+  };
+  var v = "10.13.2";
+  var base = "https://www.gstatic.com/firebasejs/" + v + "/";
+  var files = ["firebase-app-compat.js", "firebase-auth-compat.js", "firebase-firestore-compat.js"];
+  var loaded = 0;
+  files.forEach(function (f) {
+    var s = document.createElement("script");
+    s.src = base + f;
+    s.async = false; // 로드는 병렬로 하되, 실행 순서는 삽입 순서대로 고정 (app -> auth -> firestore)
+    s.onload = function () {
+      loaded++;
+      if (loaded === files.length) {
+        firebase.initializeApp(firebaseConfig);
+        fbAuth = firebase.auth();
+        db = firebase.firestore();
+        _sdkLoadedResolve();
+      }
+    };
+    document.head.appendChild(s);
+  });
+})();
+
+var USERS_COL = "users"; // uid를 문서ID로 하는 회원 프로필
+var USERNAMES_COL = "usernames"; // 아이디(로그인용) -> {uid, email} 공개 조회용 (로그인 전 이메일 조회에 필요)
+var EMAILS_COL = "emails"; // 이메일 -> {id} 공개 조회용 (아이디 찾기에 필요, 이메일을 정확히 아는 사람만 조회 가능)
 
 // 등급 정의
-const GRADES = { normal: "일반회원", special: "특별회원", admin: "관리자" };
+var GRADES = { normal: "일반회원", special: "특별회원", admin: "관리자" };
 function gradeLabel(g) {
   return GRADES[g] || g;
 }
 
-// 바로 테스트할 수 있는 기본 제공 계정 (모두 승인 완료 상태)
-const DEFAULT_USERS = [
-  { id: "admin", pw: "admin", name: "관리자", grade: "admin", approved: true, requestedSpecial: false },
-  { id: "special", pw: "1234", name: "특별회원", grade: "special", approved: true, requestedSpecial: false },
-  { id: "user", pw: "1234", name: "일반회원", grade: "normal", approved: true, requestedSpecial: false },
-];
-
-function getUsers() {
-  let list;
-  try {
-    list = JSON.parse(localStorage.getItem(USERS_KEY));
-  } catch (e) {}
-  if (!Array.isArray(list)) list = [];
-
-  // 필수 필드 정규화 (옛 스키마 호환)
-  list.forEach((u) => {
-    if (!u.grade) u.grade = u.special ? "special" : "normal";
-    if (typeof u.approved !== "boolean") u.approved = false;
-    if (typeof u.phone !== "string") u.phone = "";
-    if (typeof u.unit !== "string") u.unit = "";
-    if (typeof u.company !== "string") u.company = "";
-    delete u.special;
-  });
-
-  // 기본 계정은 항상 존재 + 올바른 값 보장 (admin 로그인 보장)
-  DEFAULT_USERS.forEach((d) => {
-    const found = list.find((u) => u.id === d.id);
-    if (found) Object.assign(found, d);
-    else list.push({ ...d });
-  });
-  return list;
+function userDocRef(uid) {
+  return db.collection(USERS_COL).doc(uid);
 }
-
-function saveUsers(list) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(list));
+function usernameDocRef(id) {
+  return db.collection(USERNAMES_COL).doc(id);
+}
+function emailDocRef(email) {
+  return db.collection(EMAILS_COL).doc(email.toLowerCase());
 }
 
 // 휴대폰번호 형식 검증 (010-0000-0000 형태, 하이픈 없어도 허용)
@@ -52,71 +66,175 @@ function isValidPhone(phone) {
   return /^01[016789]-?\d{3,4}-?\d{4}$/.test(String(phone || "").trim());
 }
 
-// 회원가입: 중복 아이디면 false. 휴대폰번호는 필수이며 형식이 올바르지 않으면 false.
-// 신규 회원은 항상 '승인 대기 + 일반회원'으로 시작
-function registerUser(user) {
-  const list = getUsers();
-  if (list.some((u) => u.id === user.id)) return false;
-  if (!isValidPhone(user.phone)) return false;
-  list.push({
+/* ===== 로그인 세션 (Firebase onAuthStateChanged 로 갱신되는 캐시) =====
+   getSession()/isLoggedIn()/isAdmin()/isSpecial() 은 동기 함수로 유지한다 (기존 페이지 코드 호환).
+   대신 페이지가 이 값들을 사용하기 전에 반드시 window.authReady 를 기다려야 한다. */
+var _session = null;
+var _authReadyResolve;
+window.authReady = new Promise(function (resolve) {
+  _authReadyResolve = resolve;
+});
+
+// DOMContentLoaded + authReady 를 함께 기다린 뒤 fn을 실행하는 헬퍼 (다른 파일에서도 사용)
+window.onAuthReady = function (fn) {
+  function run() {
+    window.authReady.then(fn);
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", run);
+  } else {
+    run();
+  }
+};
+
+function getSession() {
+  return _session;
+}
+function isLoggedIn() {
+  return !!_session;
+}
+function isAdmin() {
+  return !!(_session && _session.grade === "admin");
+}
+// 특별회원 권한: 특별회원 또는 관리자 (모두 승인된 상태)
+function isSpecial() {
+  return !!(_session && (_session.grade === "special" || _session.grade === "admin"));
+}
+
+_sdkLoaded.then(function () {
+  fbAuth.onAuthStateChanged(function (user) {
+    var next;
+    if (!user) {
+      next = Promise.resolve(null);
+    } else {
+      next = userDocRef(user.uid)
+        .get()
+        .then(function (snap) {
+          if (!snap.exists || !snap.data().approved) return null;
+          var p = snap.data();
+          return { id: p.id, name: p.name, grade: p.grade, approved: true, uid: user.uid, phone: p.phone || "" };
+        })
+        .catch(function () {
+          return null;
+        });
+    }
+    next.then(function (sess) {
+      _session = sess;
+      if (_authReadyResolve) {
+        _authReadyResolve();
+        _authReadyResolve = null;
+      }
+      renderAuthStatus();
+      document.dispatchEvent(new CustomEvent("authchange"));
+    });
+  });
+});
+
+/* ===== 회원가입 =====
+   user: {id, pw, name, email, phone, unit, company, requestedSpecial}
+   반환: {ok:true} 또는 {ok:false, reason: "phone"|"id"|"auth"|"profile", message?} */
+async function registerUser(user) {
+  await _sdkLoaded;
+  if (!isValidPhone(user.phone)) return { ok: false, reason: "phone" };
+
+  var takenSnap = await usernameDocRef(user.id).get();
+  if (takenSnap.exists) return { ok: false, reason: "id" };
+
+  var cred;
+  try {
+    cred = await fbAuth.createUserWithEmailAndPassword(user.email, user.pw);
+  } catch (e) {
+    return { ok: false, reason: "auth", message: e.message, code: e.code };
+  }
+
+  var uid = cred.user.uid;
+  var approved = !user.requestedSpecial; // 일반회원은 즉시 승인, 입주자·구분소유자는 관리사무소 승인대기
+  var profile = {
     id: user.id,
-    pw: user.pw,
     name: user.name,
-    email: user.email || "",
+    email: user.email,
     phone: String(user.phone).trim(),
     unit: user.unit || "",
     company: user.company || "",
-    grade: "normal", // 등급은 관리자가 부여
-    approved: false, // 관리자 승인 전까지 로그인 불가
-    requestedSpecial: !!user.requestedSpecial, // 특별회원 신청 여부
-  });
-  saveUsers(list);
-  return true;
+    grade: "normal",
+    approved: approved,
+    requestedSpecial: !!user.requestedSpecial,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+  };
+
+  try {
+    var batch = db.batch();
+    batch.set(userDocRef(uid), profile);
+    batch.set(usernameDocRef(user.id), { uid: uid, email: user.email });
+    batch.set(emailDocRef(user.email), { id: user.id });
+    await batch.commit();
+  } catch (e) {
+    return { ok: false, reason: "profile", message: e.message };
+  }
+
+  return { ok: true, approved: approved };
+}
+
+/* ===== 로그인: { ok, reason } 형태 반환. 승인 전 계정은 reason:'pending' ===== */
+async function loginUser(id, pw) {
+  await _sdkLoaded;
+  var unameSnap;
+  try {
+    unameSnap = await usernameDocRef(id).get();
+  } catch (e) {
+    return { ok: false, reason: "invalid" };
+  }
+  if (!unameSnap.exists) return { ok: false, reason: "invalid" };
+  var email = unameSnap.data().email;
+
+  var cred;
+  try {
+    cred = await fbAuth.signInWithEmailAndPassword(email, pw);
+  } catch (e) {
+    return { ok: false, reason: "invalid" };
+  }
+
+  var uid = cred.user.uid;
+  var profSnap = await userDocRef(uid).get();
+  if (!profSnap.exists) {
+    await fbAuth.signOut();
+    return { ok: false, reason: "invalid" };
+  }
+  var p = profSnap.data();
+  if (!p.approved) {
+    await fbAuth.signOut();
+    return { ok: false, reason: "pending" };
+  }
+  var sess = { id: p.id, name: p.name, grade: p.grade, approved: true, uid: uid, phone: p.phone || "" };
+  _session = sess;
+  return { ok: true, session: sess };
 }
 
 // 휴대폰번호 등록/수정 (로그인 시 미입력 회원에게 입력을 요구할 때 사용)
-function setUserPhone(id, phone) {
+async function setUserPhone(uid, phone) {
+  await _sdkLoaded;
   if (!isValidPhone(phone)) return false;
-  const list = getUsers();
-  const u = list.find((x) => x.id === id);
-  if (!u) return false;
-  u.phone = String(phone).trim();
-  saveUsers(list);
-  return true;
-}
-
-// 비밀번호 재설정 (아이디/비번 찾기에서 본인 확인 후 사용)
-function resetUserPassword(id, newPw) {
-  const list = getUsers();
-  const u = list.find((x) => x.id === id);
-  if (!u) return false;
-  u.pw = newPw;
-  saveUsers(list);
-  return true;
-}
-
-// 로그인: { ok, reason } 형태 반환. 승인 전 계정은 reason:'pending'
-function loginUser(id, pw) {
-  const u = getUsers().find((x) => x.id === id && x.pw === pw);
-  if (!u) return { ok: false, reason: "invalid" };
-  if (!u.approved) return { ok: false, reason: "pending" };
-  const sess = { id: u.id, name: u.name, grade: u.grade, approved: true };
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(sess));
-  return { ok: true, session: sess };
+  try {
+    await userDocRef(uid).update({ phone: String(phone).trim() });
+    if (_session && _session.uid === uid) _session.phone = String(phone).trim();
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 // 휴대폰번호 미입력 계정에게 로그인 직후 입력을 강제하는 팝업.
 // 휴대폰번호가 이미 등록돼 있으면 팝업 없이 바로 onComplete를 실행한다.
 function ensurePhoneThenProceed(id, onComplete) {
-  const u = getUsers().find((x) => x.id === id);
-  if (u && isValidPhone(u.phone)) {
+  var s = _session;
+  if (!s || isValidPhone(s.phone)) {
     if (onComplete) onComplete();
     return;
   }
-  promptForPhone(id, onComplete);
+  promptForPhone(s.uid, onComplete);
 }
 
-function promptForPhone(id, onComplete) {
+function promptForPhone(uid, onComplete) {
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
   overlay.innerHTML = `
@@ -139,7 +257,7 @@ function promptForPhone(id, onComplete) {
   const err = overlay.querySelector("#phone-modal-err");
   input.focus();
 
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const v = input.value.trim();
     if (!isValidPhone(v)) {
@@ -147,61 +265,32 @@ function promptForPhone(id, onComplete) {
       err.classList.add("show");
       return;
     }
-    setUserPhone(id, v);
+    await setUserPhone(uid, v);
     overlay.remove();
     if (onComplete) onComplete();
   });
 }
 
-function getSession() {
-  try {
-    return JSON.parse(sessionStorage.getItem(SESSION_KEY));
-  } catch (e) {
-    return null;
-  }
-}
-
 function logoutUser() {
-  sessionStorage.removeItem(SESSION_KEY);
+  return fbAuth.signOut().then(function () {
+    _session = null;
+  });
 }
 
-function isLoggedIn() {
-  return !!getSession();
+/* ===== 관리자 기능 (모두 Firestore users/{uid} 문서를 직접 조작, uid 필요) ===== */
+async function adminApprove(uid, approved) {
+  await userDocRef(uid).update({ approved: approved });
 }
 
-function isAdmin() {
-  const s = getSession();
-  return !!(s && s.grade === "admin");
-}
-
-// 특별회원 권한: 특별회원 또는 관리자 (모두 승인된 상태)
-function isSpecial() {
-  const s = getSession();
-  return !!(s && (s.grade === "special" || s.grade === "admin"));
-}
-
-/* ===== 관리자 기능 ===== */
-function adminApprove(id, approved) {
-  const list = getUsers();
-  const u = list.find((x) => x.id === id);
-  if (u) {
-    u.approved = approved;
-    saveUsers(list);
-  }
-}
-
-function adminSetGrade(id, grade) {
+async function adminSetGrade(uid, grade) {
   if (!GRADES[grade]) return;
-  const list = getUsers();
-  const u = list.find((x) => x.id === id);
-  if (u) {
-    u.grade = grade;
-    saveUsers(list);
-  }
+  await userDocRef(uid).update({ grade: grade });
 }
 
-function adminDeleteUser(id) {
-  saveUsers(getUsers().filter((x) => x.id !== id));
+// 주의: Firestore 프로필만 삭제된다. Firebase Auth 계정 자체 삭제는 Admin SDK(서버)가 있어야 가능하므로
+// 클라이언트에서는 지원하지 않는다. 프로필이 없으면 로그인해도 승인되지 않은 것으로 처리되어 접근이 막힌다.
+async function adminDeleteUser(uid) {
+  await userDocRef(uid).delete();
 }
 
 // ===== 토스트 메시지 (alert() 대체용, 모든 페이지 공통) =====
@@ -282,15 +371,13 @@ function renderAuthStatus() {
     box.innerHTML = `<span class="welcome">${escAuth(s.name)}님(${gradeLabel(s.grade)})${star}</span>
       <span class="divider">|</span>
       ${adminLink}
-      <a href="#" onclick="logoutUser();location.reload();return false;">로그아웃</a>`;
+      <a href="#" onclick="logoutUser().then(function(){location.reload();});return false;">로그아웃</a>`;
   } else {
     box.innerHTML = `<a href="login.html">로그인</a>
       <span class="divider">|</span>
       <a href="signup.html">회원가입</a>`;
   }
 }
-
-window.addEventListener("DOMContentLoaded", renderAuthStatus);
 
 // ===== 좌측 사이드 메뉴 드로어 (햄버거 토글) =====
 // 모든 페이지 공통으로 햄버거 버튼/오버레이를 주입한다 (페이지별 HTML 수정 불필요)
@@ -495,7 +582,7 @@ function setupContentEdit() {
   });
 }
 
-window.addEventListener("DOMContentLoaded", setupContentEdit);
+window.onAuthReady(setupContentEdit);
 
 // ===== PWA: 모바일 홈 화면 설치 지원 =====
 // 모든 페이지가 auth.js를 로드하므로, 여기서 한 번만 매니페스트/아이콘을 주입한다.

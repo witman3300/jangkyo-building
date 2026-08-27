@@ -303,11 +303,14 @@ function genCap(){
   document.getElementById('cap-code').textContent=capCode;
   var i=document.getElementById('cap-in'); if(i) i.value='';
 }
-function checkId(){
+async function checkId(){
   var v=document.getElementById('uid').value.trim();
   var h=document.getElementById('uid-h');
   if(!/^[A-Za-z0-9_]{3,20}$/.test(v)){ h.className='hint err'; h.textContent='영문자, 숫자, _ 만 3자 이상 입력하세요.'; idChecked=false; return; }
-  if(getUsers().some(function(u){ return u.id===v; })){ h.className='hint err'; h.textContent='이미 사용 중인 아이디입니다.'; idChecked=false; return; }
+  h.className='hint'; h.textContent='확인 중...'; idChecked=false;
+  await window.authReady;
+  var taken=(await usernameDocRef(v).get()).exists;
+  if(taken){ h.className='hint err'; h.textContent='이미 사용 중인 아이디입니다.'; idChecked=false; return; }
   h.className='hint ok'; h.textContent='"'+v+'" 사용 가능한 아이디입니다.'; idChecked=true;
 }
 function checkPw(){
@@ -317,7 +320,7 @@ function checkPw(){
   if(a===b){ h.className='hint ok'; h.textContent='비밀번호가 일치합니다.'; }
   else { h.className='hint err'; h.textContent='비밀번호가 일치하지 않습니다.'; }
 }
-function submitForm(e){
+async function submitForm(e){
   e.preventDefault();
   var ag1=document.querySelector('input[name=ag1]:checked');
   var ag2=document.querySelector('input[name=ag2]:checked');
@@ -348,16 +351,20 @@ function submitForm(e){
   var btn=e.target.querySelector('button[type=submit]');
   if(btn){ btn.disabled=true; btn.textContent='등록 중...'; }
 
-  var ok=registerUser(data);
-  if(!ok){
-    showToast('이미 사용 중인 아이디이거나 휴대전화번호 형식이 올바르지 않습니다.');
+  var res=await registerUser(data);
+  if(!res.ok){
+    var msg='가입에 실패했습니다. 잠시 후 다시 시도해 주세요.';
+    if(res.reason==='phone') msg='휴대전화번호를 올바른 형식으로 입력해 주세요.';
+    else if(res.reason==='id') msg='이미 사용 중인 아이디입니다.';
+    else if(res.reason==='auth' && res.code==='auth/email-already-in-use') msg='이미 가입된 이메일 주소입니다.';
+    else if(res.reason==='auth' && res.code==='auth/weak-password') msg='비밀번호가 너무 약합니다. 6자 이상 입력해 주세요.';
+    showToast(msg);
     if(btn){ btn.disabled=false; btn.textContent='가입 신청'; }
     return false;
   }
 
   // 일반회원은 자동승인, 입주자·구분소유자는 관리사무소 확인 후 승인대기
-  if(mtype.value==='general'){
-    adminApprove(uid, true);
+  if(res.approved){
     showToast('회원가입이 완료되었습니다!\n일반회원으로 바로 로그인하실 수 있습니다.');
   }else{
     showToast('가입 신청이 접수되었습니다.\n관리사무소의 확인(호실·계약·등기) 후 승인되면 로그인하실 수 있습니다.');

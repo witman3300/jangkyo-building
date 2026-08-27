@@ -96,12 +96,7 @@
           <input type="password" id="password" placeholder="••••••••" required />
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block">로그인</button>
-
-        <p class="demo-hint">
-          데모 계정 — 관리자: <b>admin / admin</b><br />
-          특별회원: <b>special / 1234</b> · 일반회원: <b>user / 1234</b>
-        </p>
+        <button type="submit" class="btn btn-primary btn-block" id="login-submit">로그인</button>
 
         <p class="form-footer">
           <a href="find-account.html">아이디/비번 찾기</a> &nbsp;·&nbsp;
@@ -113,12 +108,17 @@
 
   <script src="auth.js"></script>
   <script>
-    function handleLogin(e) {
+    async function handleLogin(e) {
       e.preventDefault();
       const id = document.getElementById("userid").value.trim();
       const pw = document.getElementById("password").value;
-      const res = loginUser(id, pw);
+      const btn = document.getElementById("login-submit");
+      btn.disabled = true;
+      btn.textContent = "로그인 중...";
+      const res = await loginUser(id, pw);
       if (!res.ok) {
+        btn.disabled = false;
+        btn.textContent = "로그인";
         if (res.reason === "pending") {
           showToast("아직 관리자 승인 대기 중인 계정입니다. 승인 후 이용해 주세요.");
         } else {

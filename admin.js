@@ -126,10 +126,13 @@ function hideRealMember(id) {
   renderRealMemberTable();
 }
 
-function renderAdmin() {
+async function renderAdmin() {
   if (!guardAdmin("admin-app")) return;
 
-  const users = getUsers();
+  document.getElementById("admin-app").innerHTML = '<p class="admin-note">불러오는 중...</p>';
+
+  const snap = await db.collection(USERS_COL).get();
+  const users = snap.docs.map((d) => Object.assign({ uid: d.id }, d.data()));
   const pending = users.filter((u) => !u.approved).length;
 
   const rows = users
@@ -143,7 +146,7 @@ function renderAdmin() {
       // 등급 선택
       const gradeSel = isAdminRow
         ? gradeLabel(u.grade)
-        : `<select onchange="onGrade('${u.id}', this.value)">
+        : `<select onchange="onGrade('${u.uid}', this.value)">
              <option value="normal" ${u.grade === "normal" ? "selected" : ""}>일반회원</option>
              <option value="special" ${u.grade === "special" ? "selected" : ""}>특별회원</option>
            </select>`;
@@ -152,9 +155,9 @@ function renderAdmin() {
       let actions = "";
       if (!isAdminRow) {
         actions += u.approved
-          ? `<button class="mini" onclick="onApprove('${u.id}', false)">승인취소</button>`
-          : `<button class="mini primary" onclick="onApprove('${u.id}', true)">승인</button>`;
-        actions += ` <button class="mini danger" onclick="onDelete('${u.id}')">삭제</button>`;
+          ? `<button class="mini" onclick="onApprove('${u.uid}', false)">승인취소</button>`
+          : `<button class="mini primary" onclick="onApprove('${u.uid}', true)">승인</button>`;
+        actions += ` <button class="mini danger" onclick="onDelete('${u.uid}')">삭제</button>`;
       } else {
         actions = `<span style="color:#bbb">-</span>`;
       }
@@ -204,20 +207,20 @@ function renderAdmin() {
   renderRealMemberTable();
 }
 
-function onApprove(id, approved) {
-  adminApprove(id, approved);
+async function onApprove(uid, approved) {
+  await adminApprove(uid, approved);
   renderAdmin();
 }
 
-function onGrade(id, grade) {
-  adminSetGrade(id, grade);
+async function onGrade(uid, grade) {
+  await adminSetGrade(uid, grade);
   renderAdmin();
 }
 
-function onDelete(id) {
-  if (!confirm(`'${id}' 회원을 삭제하시겠습니까?`)) return;
-  adminDeleteUser(id);
+async function onDelete(uid) {
+  if (!confirm(`이 회원을 삭제하시겠습니까? (사이트 접근 권한만 제거되며, 로그인 계정 자체는 Firebase 콘솔에서 별도로 삭제해야 합니다)`)) return;
+  await adminDeleteUser(uid);
   renderAdmin();
 }
 
-window.addEventListener("DOMContentLoaded", renderAdmin);
+window.onAuthReady(renderAdmin);

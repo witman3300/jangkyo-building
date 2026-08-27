@@ -122,7 +122,7 @@
   <script src="auth.js"></script>
   <script src="notices-data.js"></script>
   <script>
-  (function () {
+  window.onAuthReady(function () {
     if (!(typeof isSpecial === "function" && isSpecial())) {
       if (typeof guardSpecial === "function") guardSpecial("feeApp");
       return;
@@ -148,7 +148,7 @@
       return '<li><a href="notice-view.html?id=' + p.id + '">' + esc(p.title)
         + ' <span class="go">' + p.date + '</span></a></li>';
     }).join('');
-  })();
+  });
   </script>
   <script src="home-slider.js"></script>
 </body>
