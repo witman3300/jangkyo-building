@@ -1,6 +1,7 @@
 // 공지사항 데이터 (jangkyo.co.kr 원본 게시판에서 이전)
 // 각 글: no(목록 번호), id(원본 wr_id), title, date, hit, imgCount(첨부이미지 수, files/notice/{id}/NN.jpg), text(본문 텍스트, 있는 경우만)
 const NOTICES = [
+  { no: 37, id: 246, title: "2026年 7月 관리비 부과내역", date: "2026-08-20", hit: 19, imgCount: 9 },
   { no: 36, id: 245, title: "2026年 6月 관리비 부과내역", date: "2026-07-23", hit: 29, imgCount: 9 },
   { no: 35, id: 240, title: "지하상가 일괄매각 추진업무 종결 통보", date: "2026-03-23", hit: 220, imgCount: 1 },
   { no: 34, id: 239, title: "2025년도 장교공영주식회사 재무제표", date: "2026-03-04", hit: 176, imgCount: 7 },
