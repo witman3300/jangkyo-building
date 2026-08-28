@@ -231,17 +231,29 @@
       var range = document.getElementById('planZoomRange');
       var pct = document.getElementById('planZoomPct');
       var img = document.getElementById('planImg');
+      var frame = document.querySelector('.plan-viewer__frame');
       var zoomIn = document.getElementById('planZoomIn');
       var zoomOut = document.getElementById('planZoomOut');
       var reset = document.getElementById('planZoomReset');
       var select = document.getElementById('planSelect');
       var min = Number(range.min), max = Number(range.max), step = Number(range.step);
+      var baseWidthPx = 0; // 100% 줌 = 박스 안에 전체 도면이 다 보이는 크기
+
+      function computeBaseWidth(){
+        var padding = 36; // .plan-viewer__frame 좌우 padding 18px * 2
+        var frameW = frame.clientWidth - padding;
+        var frameH = 640 - padding;
+        var naturalW = img.naturalWidth || frameW;
+        var naturalH = img.naturalHeight || frameH;
+        var scale = Math.min(frameW / naturalW, frameH / naturalH, 1);
+        baseWidthPx = naturalW * scale;
+      }
 
       function applyZoom(v){
         v = Math.min(max, Math.max(min, v));
         range.value = v;
         pct.textContent = v + '%';
-        img.style.width = v + '%';
+        img.style.width = (baseWidthPx * v / 100) + 'px';
       }
       range.addEventListener('input', function(){ applyZoom(Number(range.value)); });
       zoomIn.addEventListener('click', function(){ applyZoom(Number(range.value) + step); });
@@ -250,9 +262,15 @@
       select.addEventListener('change', function(){
         img.src = select.value;
         img.alt = select.options[select.selectedIndex].text;
+      });
+      img.addEventListener('load', function(){
+        computeBaseWidth();
         applyZoom(100);
       });
-      applyZoom(100);
+      if (img.complete && img.naturalWidth){
+        computeBaseWidth();
+        applyZoom(100);
+      }
 
       // 도면 클릭 시 라이트박스로 확대
       var lightbox = document.getElementById('planLightbox');
