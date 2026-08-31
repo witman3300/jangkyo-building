@@ -20,17 +20,6 @@
     .about-aside h4{font-size:14px;color:#1a2744;margin-bottom:6px;font-weight:700}
     .about-aside p{font-size:12.5px;color:#7a8290;line-height:1.7}
     .about-body{min-width:0}
-    .about-body h1{font-size:27px;color:#1a2744;margin-bottom:6px;letter-spacing:-.5px}
-    .about-body .lead{color:#7a8290;font-size:15px;margin-bottom:26px}
-    .about-sec{margin-bottom:40px;scroll-margin-top:80px}
-    .about-sec h2{font-size:20px;color:#223066;font-weight:700;padding-bottom:10px;border-bottom:2px solid #223066;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-    .about-sec h2 .no{background:#c9a84c;color:#fff;font-size:13px;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
-    .about-sec p{color:#48505e;font-size:15px;line-height:1.85;margin-bottom:12px}
-    .link-list{list-style:none;border-top:2px solid #223066}
-    .link-list li a{display:flex;justify-content:space-between;align-items:center;padding:14px 6px;border-bottom:1px solid #eef0f4;color:#41506a;text-decoration:none;font-size:15px}
-    .link-list li a:hover{color:#223066;background:#fafbfc}
-    .link-list .go{color:#c9a84c;font-size:13px;font-weight:700}
-    .empty-note{color:#7a8290;font-size:14px;padding:14px 6px}
     @media (max-width:768px){.about-wrap{grid-template-columns:1fr;gap:18px;padding:20px 14px 36px}.about-sub{order:-1}}
   </style>
 </head>
@@ -99,15 +88,9 @@
       <div class="about-aside"><h4>관리사무소</h4><p>TEL. 02-778-4611~3<br>평일 09:00 ~ 18:00</p></div>
     </aside>
 
-    <main class="about-body" id="feeApp">
-      <h1>관리비 부과내역</h1>
-      <p class="lead">매월 게시되는 관리비 부과내역 공지를 모아 안내합니다.</p>
-
-      <section class="about-sec" id="fee">
-        <h2><span class="no">1</span> 관리비 부과내역</h2>
-        <p>공지사항 중 관리비 부과내역만 모아 보여줍니다. 상세 내역과 첨부문서는 각 게시글에서 확인하실 수 있습니다.</p>
-        <ul class="link-list" id="feeRows"></ul>
-      </section>
+    <!-- 게시판 본문 (board.js가 렌더링) -->
+    <main class="about-body content">
+      <div id="app"></div>
     </main>
   </div>
 
@@ -121,35 +104,8 @@
 
   <script src="auth.js"></script>
   <script src="notices-data.js"></script>
-  <script>
-  window.onAuthReady(function () {
-    if (!(typeof isSpecial === "function" && isSpecial())) {
-      if (typeof guardSpecial === "function") guardSpecial("feeApp");
-      return;
-    }
-
-    function esc(s) {
-      return String(s).replace(/[&<>"']/g, function (c) {
-        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-      });
-    }
-    var list = document.getElementById('feeRows');
-    if (!list || typeof NOTICES === 'undefined') return;
-
-    var rows = NOTICES.filter(function (p) { return p.title.indexOf('관리비') !== -1; })
-      .sort(function (a, b) { return b.no - a.no; });
-
-    if (!rows.length) {
-      list.innerHTML = '<li class="empty-note">등록된 관리비 부과내역이 없습니다.</li>';
-      return;
-    }
-
-    list.innerHTML = rows.map(function (p) {
-      return '<li><a href="notice-view.html?id=' + p.id + '">' + esc(p.title)
-        + ' <span class="go">' + p.date + '</span></a></li>';
-    }).join('');
-  });
-  </script>
+  <script>window.BOARD_CAT = "fee";</script>
+  <script src="board.js"></script>
   <script src="home-slider.js"></script>
 </body>
 </html>

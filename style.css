@@ -713,6 +713,22 @@ body.sidebar-open .sidebar-overlay {
   border-bottom: 1px solid #eeeeee;
 }
 
+/* 첨부한 이미지(결산보고서·회의록 스캔 등)를 본문 아래에 펼쳐 보여주는 영역 */
+.view-images {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 8px 4px;
+}
+
+.view-images img {
+  display: block;
+  width: 100%;
+  max-width: 820px;
+  border: 1px solid #e3e7ec;
+  border-radius: 6px;
+}
+
 /* ===== 상단 이미지 슬라이드 (5장, 자동 전환) ===== */
 .hero-slider {
   position: relative;

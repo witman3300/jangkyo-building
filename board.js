@@ -16,10 +16,34 @@ const CATEGORIES = {
   minutes: "월간회의록",
   rental: "임대안내",
   info: "공지사항",
+  fee: "관리비 부과내역",
 };
 
 // 글쓰기를 관리자만 할 수 있는 카테고리 (열람은 특별회원)
-const ADMIN_WRITE_CATS = ["info"];
+// 결산보고서·월간회의록·관리비 부과내역은 관리사무소가 배포하는 공식 자료이므로 관리자만 등록한다.
+const ADMIN_WRITE_CATS = ["info", "report", "minutes", "fee"];
+
+// 정적 데이터 파일에 원본 글이 들어 있는 카테고리.
+// 목록에는 원본 글(data)과 이 사이트에서 새로 올린 글을 함께 보여주고,
+// 원본 글은 전용 상세 페이지(view)로 연결한다.
+const DOC_CATS = {
+  report: {
+    data: () => (typeof REPORTS !== "undefined" ? REPORTS : []),
+    view: "report-view.html",
+  },
+  minutes: {
+    data: () => (typeof MINUTES !== "undefined" ? MINUTES : []),
+    view: "minutes-view.html",
+  },
+  // 관리비 부과내역은 별도 데이터 파일 없이 공지사항 중 "관리비" 글만 모아 원본으로 삼는다.
+  fee: {
+    data: () =>
+      typeof NOTICES !== "undefined"
+        ? NOTICES.filter((p) => p.title.indexOf("관리비") !== -1)
+        : [],
+    view: "notice-view.html",
+  },
+};
 
 // 현재 카테고리: 페이지가 지정한 window.BOARD_CAT 우선, 없으면 ?cat=, 기본 notice
 function getCat() {
@@ -90,59 +114,9 @@ function renderNoticeList() {
     </table>`;
 }
 
-/* ===== 결산보고서 목록 (관리자가 reports-data.js를 직접 수정해 등록하는 정적 게시판) =====
-   실제 파일을 첨부하지 않고 요약 텍스트만 제공하며, 상세 내용은 report-view.html에서 본다. */
-function renderReportList() {
-  const sorted = (typeof REPORTS !== "undefined" ? REPORTS.slice() : []).sort((a, b) => b.no - a.no);
-
-  const rows = sorted.length === 0
-    ? `<tr><td colspan="4" class="board-empty">등록된 결산보고서가 없습니다.</td></tr>`
-    : sorted.map((p) => `<tr>
-        <td>${p.no}</td>
-        <td class="title"><a href="report-view.html?id=${p.id}">${esc(p.title)}</a></td>
-        <td>관리자</td>
-        <td>${p.date}</td>
-      </tr>`).join("");
-
-  document.getElementById("app").innerHTML = `
-    <div class="board-head">
-      <h1>${CATEGORIES.report}</h1>
-    </div>
-    <table class="board-table">
-      <thead>
-        <tr><th width="60">번호</th><th>제목</th><th width="100">작성자</th><th width="110">작성일</th></tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>`;
-}
-
-/* ===== 월간회의록 목록 (관리자가 minutes-data.js를 직접 수정해 등록하는 정적 게시판) =====
-   상세 내용은 minutes-view.html에서 본다. */
-function renderMinutesList() {
-  const sorted = (typeof MINUTES !== "undefined" ? MINUTES.slice() : []).sort((a, b) => b.no - a.no);
-
-  const rows = sorted.length === 0
-    ? `<tr><td colspan="4" class="board-empty">등록된 월간회의록이 없습니다.</td></tr>`
-    : sorted.map((p) => `<tr>
-        <td>${p.no}</td>
-        <td class="title"><a href="minutes-view.html?id=${p.id}">${esc(p.title)}</a></td>
-        <td>관리자</td>
-        <td>${p.date}</td>
-      </tr>`).join("");
-
-  document.getElementById("app").innerHTML = `
-    <div class="board-head">
-      <h1>${CATEGORIES.minutes}</h1>
-    </div>
-    <table class="board-table">
-      <thead>
-        <tr><th width="60">번호</th><th>제목</th><th width="100">작성자</th><th width="110">작성일</th></tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>`;
-}
-
-/* ===== 목록 보기 ===== */
+/* ===== 목록 보기 =====
+   DOC_CATS 카테고리는 정적 원본 글(reports-data.js 등)을 아래쪽에 두고,
+   이 사이트에서 새로 등록한 글은 원본 마지막 번호 다음 번호를 받아 위쪽에 쌓인다. */
 function renderList() {
   const cat = getCat();
   const all = loadPosts().filter((p) => (p.cat || "notice") === cat);
@@ -150,28 +124,55 @@ function renderList() {
   const pinned = all.filter((p) => p.pinned).reverse();
   const normal = all.filter((p) => !p.pinned).reverse();
 
-  const rowHtml = (p, numCell, pin) => {
-    const clip = p.files && p.files.length
-      ? `<span class="clip" title="첨부파일 ${p.files.length}개">📎${p.files.length}</span>`
+  const doc = DOC_CATS[cat];
+  const staticRows = doc ? doc.data().slice().sort((a, b) => b.no - a.no) : [];
+  const baseNo = staticRows.reduce((m, p) => Math.max(m, p.no || 0), 0);
+
+  const rowHtml = (o) => {
+    const clip = o.files
+      ? `<span class="clip" title="첨부파일 ${o.files}개">📎${o.files}</span>`
       : "";
-    const flag = pin ? `<span class="pin-flag">📌 공지</span> ` : "";
-    return `<tr class="${pin ? "pinned-row" : ""}">
-      <td>${numCell}</td>
-      <td class="title">${flag}<a href="#view/${p.id}">${esc(p.title)}</a>${clip}</td>
-      <td>${esc(p.author)}</td>
-      <td>${p.date}</td>
-      <td>${(p.files && p.files.length) || 0}</td>
+    const flag = o.pinned ? `<span class="pin-flag">📌 공지</span> ` : "";
+    return `<tr class="${o.pinned ? "pinned-row" : ""}">
+      <td>${o.num}</td>
+      <td class="title">${flag}<a href="${o.href}">${esc(o.title)}</a>${clip}</td>
+      <td>${esc(o.author)}</td>
+      <td>${o.date}</td>
+      <td>${o.files}</td>
     </tr>`;
   };
 
+  const localRow = (p, num, pin) =>
+    rowHtml({
+      num,
+      title: p.title,
+      author: p.author,
+      date: p.date,
+      href: "#view/" + p.id,
+      files: (p.files && p.files.length) || 0,
+      pinned: pin,
+    });
+
+  const staticRow = (p) =>
+    rowHtml({
+      num: p.no,
+      title: p.title,
+      author: "관리자",
+      date: p.date,
+      href: doc.view + "?id=" + p.id,
+      files: p.imgCount || 0,
+      pinned: false,
+    });
+
   let rows;
-  if (all.length === 0) {
+  if (all.length === 0 && staticRows.length === 0) {
     rows = `<tr><td colspan="5" class="board-empty">등록된 게시글이 없습니다.</td></tr>`;
   } else {
-    const pinnedRows = pinned.map((p) => rowHtml(p, "📌", true)).join("");
-    let n = normal.length;
-    const normalRows = normal.map((p) => rowHtml(p, n--, false)).join("");
-    rows = pinnedRows + normalRows;
+    let n = baseNo + normal.length;
+    rows =
+      pinned.map((p) => localRow(p, "📌", true)).join("") +
+      normal.map((p) => localRow(p, n--, false)).join("") +
+      staticRows.map(staticRow).join("");
   }
 
   const canWrite = !ADMIN_WRITE_CATS.includes(cat) || (typeof isAdmin === "function" && isAdmin());
@@ -305,6 +306,14 @@ function renderView(id) {
         .join("")}</div>`
     : "";
 
+  // 결산보고서·회의록처럼 스캔 이미지를 올린 경우 본문 아래에 그대로 펼쳐 보여준다
+  const images = (p.files || []).filter((f) => (f.type || "").indexOf("image/") === 0);
+  const imagesHtml = images.length
+    ? `<div class="view-images">${images
+        .map((f) => `<img src="${f.data}" alt="${esc(f.name)}" loading="lazy" />`)
+        .join("")}</div>`
+    : "";
+
   const admin = typeof isAdmin === "function" && isAdmin();
   const pinBtn = admin
     ? `<button type="button" class="btn btn-outline btn-sm" onclick="togglePin('${p.id}')">${p.pinned ? "고정 해제" : "상단 고정"}</button>`
@@ -319,6 +328,7 @@ function renderView(id) {
     </div>
     ${attach}
     <div class="view-body">${esc(p.content)}</div>
+    ${imagesHtml}
     <div class="btn-row">
       <a href="#list" class="btn btn-outline btn-sm">목록</a>
       ${pinBtn}
@@ -356,7 +366,7 @@ function highlightSidebar() {
 
 // 특별회원 전용 카테고리 (회원광장 공지사항·자료실·결산보고서·월간회의록).
 // notice(정보마당 공지사항)는 일반회원도 볼 수 있는 공개 게시판이라 제외.
-const PROTECTED_CATS = ["info", "data", "report", "minutes"];
+const PROTECTED_CATS = ["info", "data", "report", "minutes", "fee"];
 
 /* ===== 해시 라우터 ===== */
 function route() {
@@ -367,10 +377,6 @@ function route() {
   }
   // 공지사항은 실제 관리단 공지(notices-data.js)를 그대로 보여주는 읽기 전용 게시판
   if (getCat() === "notice") return renderNoticeList();
-  // 결산보고서는 reports-data.js를 그대로 보여주는 읽기 전용 게시판
-  if (getCat() === "report") return renderReportList();
-  // 월간회의록은 minutes-data.js를 그대로 보여주는 읽기 전용 게시판
-  if (getCat() === "minutes") return renderMinutesList();
   const hash = location.hash || "#list";
   if (hash === "#write") {
     // 관리자 전용 글쓰기 카테고리는 관리자가 아니면 목록으로 되돌린다
