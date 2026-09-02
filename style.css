@@ -2058,9 +2058,19 @@ body.sidebar-open .sidebar-overlay {
     right: 0 !important;
     z-index: 900 !important;
   }
-  .headbar .navbar .menu { height: 44px !important; }
+  .headbar .navbar .menu { height: 44px !important; width: 100%; }
+  .headbar .navbar .menu li { flex: 1 1 0; min-width: 0; }
   .headbar .navbar .menu a,
-  .headbar .navbar .menu button { height: 44px !important; font-size: 13px !important; padding: 0 12px !important; }
+  .headbar .navbar .menu button {
+    height: 44px !important; font-size: 13px !important; padding: 0 4px !important;
+    width: 100%; justify-content: center; text-align: center;
+  }
+
+  /* "장교빌딩 소개" → "소개" 로 줄여 5개 메뉴가 한 화면에 들어오도록 */
+  .navbar .menu .gnb-prefix { display: none; }
+
+  /* 메뉴가 넘치지 않으면 좌우 화살표를 숨겨 폭을 확보 */
+  .menu-slider.no-overflow .menu-arrow { display: none; }
 
   .hero-slider { order: 4; }
 

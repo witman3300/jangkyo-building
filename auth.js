@@ -514,6 +514,8 @@ function setupMenuSlider() {
   // 양 끝에서 화살표 비활성화
   function updateArrows() {
     const max = menu.scrollWidth - menu.clientWidth;
+    // 메뉴가 넘치지 않으면 화살표를 감춰 메뉴가 한 화면에 모두 보이도록
+    slider.classList.toggle("no-overflow", max <= 1);
     prev.disabled = menu.scrollLeft <= 1;
     next.disabled = menu.scrollLeft >= max - 1;
   }
