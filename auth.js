@@ -514,14 +514,24 @@ function setupMenuSlider() {
   // 양 끝에서 화살표 비활성화
   function updateArrows() {
     const max = menu.scrollWidth - menu.clientWidth;
-    // 메뉴가 넘치지 않으면 화살표를 감춰 메뉴가 한 화면에 모두 보이도록
-    slider.classList.toggle("no-overflow", max <= 1);
     prev.disabled = menu.scrollLeft <= 1;
     next.disabled = menu.scrollLeft >= max - 1;
   }
+
+  // 메뉴가 넘치지 않으면 화살표를 감춰 메뉴가 한 화면에 모두 보이도록.
+  // 화살표 자체가 폭을 차지하므로, 감춘 상태에서 넘침 여부를 판정한다.
+  function updateFit() {
+    slider.classList.add("no-overflow");
+    const fits = menu.scrollWidth - menu.clientWidth <= 4; // 소수점 반올림 오차 허용
+    slider.classList.toggle("no-overflow", fits);
+    updateArrows();
+  }
   menu.addEventListener("scroll", updateArrows, { passive: true });
-  window.addEventListener("resize", updateArrows);
-  updateArrows();
+  window.addEventListener("resize", updateFit);
+  updateFit();
+  // 웹폰트 적용 후 글자 폭이 바뀌므로 다시 판정
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(updateFit);
+  window.addEventListener("load", updateFit);
 }
 
 window.addEventListener("DOMContentLoaded", setupMenuSlider);

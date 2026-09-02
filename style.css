@@ -2079,6 +2079,14 @@ body.sidebar-open .sidebar-overlay {
   }
 }
 
+/* 초소형 화면(320px 등): 여백/글자를 줄이고 화살표를 없애 메뉴 5개를 한 줄에 표시 */
+@media (max-width: 360px) {
+  .headbar .navbar { padding: 0 8px !important; }
+  .headbar .navbar .menu a,
+  .headbar .navbar .menu button { padding: 0 4px !important; font-size: 12px !important; }
+  .headbar .navbar .menu-arrow { display: none !important; }
+}
+
 /* ===== 관리자 본문 수정 툴바 ===== */
 .content-edit-toolbar {
   display: flex;
