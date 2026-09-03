@@ -35,6 +35,12 @@ const CATEGORIES = {
 // 정보마당처럼 건물 공식 안내를 싣는 게시판이다.
 const ADMIN_WRITE_CATS = ["info", "report", "minutes", "fee", "notice", "infodata", "forms", "faq"];
 
+/* 공지사항은 정보마당(notice)과 회원광장(info) 두 곳에 따로 있다.
+   같은 이름이지만 보는 사람이 다르다 — 정보마당은 누구나, 회원광장은 특별회원만 본다.
+   두 곳 사이에서 글을 옮길 수 있게 목록에 이동 열을 둔다. */
+const MOVE_CATS = ["notice", "info"];
+const MOVE_LABELS = { notice: "정보마당", info: "회원광장" };
+
 // 정적 데이터 파일에 원본 글이 들어 있는 카테고리.
 // 목록에는 원본 글(data)과 이 사이트에서 새로 올린 글을 함께 보여주고,
 // 원본 글은 전용 상세 페이지(view)로 연결한다.
@@ -154,6 +160,16 @@ function renderList() {
   const staticRows = doc ? doc.data().slice().sort((a, b) => b.no - a.no) : [];
   const baseNo = staticRows.reduce((m, p) => Math.max(m, p.no || 0), 0);
 
+  /* 이동 열: 두 공지사항 게시판(정보마당·회원광장) 사이에서 글을 옮긴다.
+     관리자에게만 보이고, 이 사이트에서 등록한 글에만 붙는다.
+     구 사이트에서 옮겨온 원본 공지는 파일에 들어 있어 옮길 수 없다. */
+  const showMove = MOVE_CATS.includes(cat) && typeof isAdmin === "function" && isAdmin();
+
+  const moveCell = (p) =>
+    `<select class="move-select" onchange="movePost('${p.id}', this.value)">${MOVE_CATS.map(
+      (c) => `<option value="${c}"${c === cat ? " selected" : ""}>${MOVE_LABELS[c]}</option>`
+    ).join("")}</select>`;
+
   const rowHtml = (o) => {
     const clip = o.files
       ? `<span class="clip" title="첨부파일 ${o.files}개">📎${o.files}</span>`
@@ -170,6 +186,7 @@ function renderList() {
       <td class="author">${esc(o.author)}</td>
       <td class="date">${o.date}</td>
       <td class="files${o.files ? " has-file" : ""}">${o.files ? o.files : ""}</td>
+      ${showMove ? `<td class="move">${o.move || "-"}</td>` : ""}
     </tr>`;
   };
 
@@ -183,6 +200,7 @@ function renderList() {
       files: (p.files && p.files.length) || 0,
       pinned: pin,
       isNew: isWithinNewDays(p.date),
+      move: showMove ? moveCell(p) : '',
     });
 
   const staticRow = (p) =>
@@ -199,9 +217,9 @@ function renderList() {
 
   let rows;
   if (!postsLoaded && staticRows.length === 0) {
-    rows = `<tr><td colspan="5" class="board-empty">불러오는 중...</td></tr>`;
+    rows = `<tr><td colspan="${showMove ? 6 : 5}" class="board-empty">불러오는 중...</td></tr>`;
   } else if (all.length === 0 && staticRows.length === 0) {
-    rows = `<tr><td colspan="5" class="board-empty">등록된 게시글이 없습니다.</td></tr>`;
+    rows = `<tr><td colspan="${showMove ? 6 : 5}" class="board-empty">등록된 게시글이 없습니다.</td></tr>`;
   } else {
     let n = baseNo + normal.length;
     rows =
@@ -225,7 +243,7 @@ function renderList() {
     ${legacyNoticeHtml()}
     <table class="board-table">
       <thead>
-        <tr><th width="60">번호</th><th>제목</th><th width="100">작성자</th><th width="110">작성일</th><th width="70">첨부</th></tr>
+        <tr><th width="60">번호</th><th>제목</th><th width="100">작성자</th><th width="110">작성일</th><th width="70">첨부</th>${showMove ? '<th width="120">이동</th>' : ""}</tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>`;
@@ -463,6 +481,25 @@ function renderView(id) {
       ${pinBtn}
       ${delBtn}
     </div>`;
+}
+
+/* 두 공지사항 게시판 사이에서 글을 옮긴다 (관리자만).
+   옮기면 이 목록의 구독에서 빠져 화면에서 사라지고, 옮겨간 게시판에 나타난다. */
+async function movePost(id, cat) {
+  if (!(typeof isAdmin === "function" && isAdmin())) return;
+  const p = loadPosts().find((x) => x.id === id);
+  if (!p || p.cat === cat) return;
+  if (!confirm(`"${p.title}" 글을 ${MOVE_LABELS[cat]} 공지사항으로 옮기시겠습니까?`)) {
+    renderList(); // 선택을 원래대로 되돌린다
+    return;
+  }
+  try {
+    await postsRef().doc(id).update({ cat: cat });
+    showToast(`${MOVE_LABELS[cat]} 공지사항으로 옮겼습니다.`);
+  } catch (e) {
+    showToast("옮기지 못했습니다: " + e.message);
+    renderList();
+  }
 }
 
 async function togglePin(id) {

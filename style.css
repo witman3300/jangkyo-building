@@ -565,11 +565,25 @@ body.sidebar-open .sidebar-overlay {
     margin-right: 2px;
   }
 
+  /* 이동 칸(관리자 전용)은 아랫줄 오른쪽 끝에 둔다 */
+  .board-table:not(.admin-table) tbody td.move {
+    margin-left: auto;
+  }
+
   .board-table:not(.admin-table) tbody td.board-empty {
     flex: 0 0 100%;
     text-align: center;
     padding: 26px 0;
   }
+}
+
+/* 게시판 목록의 이동 열 — 두 공지사항 게시판 사이에서 글을 옮긴다 (관리자에게만 보인다) */
+.move-select {
+  padding: 5px 8px;
+  border: 1px solid #dddddd;
+  border-radius: 6px;
+  font-size: 12.5px;
+  background: #ffffff;
 }
 
 /* 실회원 명단 등 긴 표에서 스크롤해도 헤더 행이 고정되도록 */
