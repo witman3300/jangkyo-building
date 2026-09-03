@@ -169,7 +169,7 @@ function renderList() {
       <td class="title">${flag}<a href="${o.href}">${esc(o.title)}</a>${clip}</td>
       <td class="author">${esc(o.author)}</td>
       <td class="date">${o.date}</td>
-      <td class="files${o.files ? " has-file" : ""}">${o.files}</td>
+      <td class="files${o.files ? " has-file" : ""}">${o.files ? o.files : ""}</td>
     </tr>`;
   };
 
