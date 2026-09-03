@@ -72,11 +72,15 @@ const DOC_CATS = {
   },
 };
 
-// 현재 카테고리: 페이지가 지정한 window.BOARD_CAT 우선, 없으면 ?cat=, 기본 notice
+/* 현재 카테고리: 페이지가 지정한 window.BOARD_CAT 우선, 없으면 ?cat=.
+   기본값은 회원광장 공지사항(info)이다. board.js를 cat 없이 쓰는 곳은 board.html뿐이고
+   그 페이지가 회원광장이기 때문이다. 예전에는 기본값이 notice여서, 상단 메뉴에서
+   회원광장에 들어가면 정보마당 공지사항이 그대로 떴다.
+   정보마당 공지사항은 info-notice.html이 BOARD_CAT으로 직접 지정한다. */
 function getCat() {
   if (window.BOARD_CAT && CATEGORIES[window.BOARD_CAT]) return window.BOARD_CAT;
   const c = new URLSearchParams(location.search).get("cat");
-  return CATEGORIES[c] ? c : "notice";
+  return CATEGORIES[c] ? c : "info";
 }
 
 let pendingFiles = []; // 작성 중 첨부 대기 목록 (File 객체를 그대로 들고 있다가 등록할 때 업로드)
