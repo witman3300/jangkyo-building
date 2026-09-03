@@ -541,11 +541,6 @@ body.sidebar-open .sidebar-overlay {
     white-space: normal;
   }
 
-  /* 첨부는 아랫줄에 따로 보여주므로 제목 끝의 클립 표시는 감춘다 (제목이 한 줄에 들어가도록) */
-  .board-table:not(.admin-table) tbody td.title .clip {
-    display: none;
-  }
-
   /* 아랫줄: 번호 · 작성자 · 작성일 · 첨부 */
   .board-table:not(.admin-table) tbody td.num,
   .board-table:not(.admin-table) tbody td.author,
@@ -577,13 +572,22 @@ body.sidebar-open .sidebar-overlay {
   }
 }
 
-/* 게시판 목록의 이동 열 — 두 공지사항 게시판 사이에서 글을 옮긴다 (관리자에게만 보인다) */
-.move-select {
-  padding: 5px 8px;
-  border: 1px solid #dddddd;
-  border-radius: 6px;
-  font-size: 12.5px;
+/* 게시판 목록의 이동 버튼 — 반대쪽 공지사항으로 옮긴다 (관리자에게만 보인다) */
+.move-btn {
+  padding: 5px 10px;
+  border: 1px solid #d5d5d5;
+  border-radius: 8px;
   background: #ffffff;
+  color: #41506a;
+  font-size: 12.5px;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.move-btn:hover {
+  background: #f4f6fb;
+  border-color: #c9c9c9;
 }
 
 /* 실회원 명단 등 긴 표에서 스크롤해도 헤더 행이 고정되도록 */

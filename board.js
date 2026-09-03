@@ -169,15 +169,14 @@ function renderList() {
      구 사이트에서 옮겨온 원본 공지는 파일에 들어 있어 옮길 수 없다. */
   const showMove = MOVE_CATS.includes(cat) && typeof isAdmin === "function" && isAdmin();
 
+  // 지금 보고 있는 게시판의 반대쪽으로 보내는 버튼 하나만 둔다
+  const otherCat = MOVE_CATS.find((c) => c !== cat);
+
   const moveCell = (p) =>
-    `<select class="move-select" onchange="movePost('${p.id}', this.value)">${MOVE_CATS.map(
-      (c) => `<option value="${c}"${c === cat ? " selected" : ""}>${MOVE_LABELS[c]}</option>`
-    ).join("")}</select>`;
+    `<button type="button" class="move-btn" onclick="movePost('${p.id}', '${otherCat}')"
+      title="이 글을 ${MOVE_LABELS[otherCat]} 공지사항으로 옮깁니다">${MOVE_LABELS[otherCat]}으로</button>`;
 
   const rowHtml = (o) => {
-    const clip = o.files
-      ? `<span class="clip" title="첨부파일 ${o.files}개">📎${o.files}</span>`
-      : "";
     const flag = o.pinned
       ? `<span class="pin-flag">📌 공지</span> `
       : o.isNew
@@ -186,7 +185,7 @@ function renderList() {
     // 셀마다 이름을 붙여 둔다. 모바일에서는 이 이름으로 제목을 윗줄, 나머지를 아랫줄로 배치한다.
     return `<tr class="${o.pinned ? "pinned-row" : ""}">
       <td class="num">${o.num}</td>
-      <td class="title">${flag}<a href="${o.href}">${esc(o.title)}</a>${clip}</td>
+      <td class="title">${flag}<a href="${o.href}">${esc(o.title)}</a></td>
       <td class="author">${esc(o.author)}</td>
       <td class="date">${o.date}</td>
       <td class="files${o.files ? " has-file" : ""}">${o.files ? o.files : ""}</td>
