@@ -104,5 +104,12 @@ service cloud.firestore {
     match /memberMeta/{memberId} {
       allow read, write: if isAdmin();
     }
+
+    /* 실회원 명단 본체 (이름·호수·가입일 등). 문서ID = 회원 아이디.
+       예전에는 real-members-data.js 파일로 두었는데, 화면은 관리자만 볼 수 있어도
+       파일 자체는 주소만 알면 누구나 내려받을 수 있었다. 개인정보라 관리자만 읽게 옮긴다. */
+    match /realMembers/{memberId} {
+      allow read, write: if isAdmin();
+    }
   }
 }

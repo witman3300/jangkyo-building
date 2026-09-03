@@ -8,6 +8,21 @@ const MEMBER_META_COL = "memberMeta";
 const LEGACY_HIDDEN_KEY = "jangkyo_real_members_hidden"; // 옛 localStorage 키 (이전 대상)
 const LEGACY_META_KEY = "jangkyo_real_members_meta";
 
+/* 실회원 명단 본체(이름·호수·가입일 등). 관리자만 읽을 수 있는 Firestore 컬렉션에서 불러온다.
+   예전에는 real-members-data.js 파일에 두었는데, 화면은 관리자만 볼 수 있어도 파일 자체는
+   주소만 알면 누구나 내려받을 수 있었다. 202명의 이름·아이디·호수가 그대로 공개돼 있었다. */
+const REAL_MEMBERS_COL = "realMembers";
+let REAL_MEMBERS = [];
+
+async function loadRealMembers() {
+  try {
+    const snap = await db.collection(REAL_MEMBERS_COL).get();
+    REAL_MEMBERS = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
+  } catch (e) {
+    REAL_MEMBERS = []; // 관리자가 아니면 읽히지 않는다
+  }
+}
+
 let META_MAP = {}; // Firestore 구독으로 채워지는 { 회원아이디: {grade, approved, joinDate, lastLogin, hidden} }
 let metaLoaded = false;
 
@@ -39,9 +54,9 @@ function subscribeMemberMeta() {
   );
 }
 
-// real-members-data.js에 hidden:true로 확정된 회원 + 서버에서 숨김 처리된 회원
+// 명단에 hidden으로 확정된 회원 + 관리자가 화면에서 숨김 처리한 회원
 function getHiddenRealMemberIds() {
-  const fixed = (typeof REAL_MEMBERS !== "undefined" ? REAL_MEMBERS : [])
+  const fixed = REAL_MEMBERS
     .filter((m) => m.hidden)
     .map((m) => m.id);
   const remote = Object.keys(META_MAP).filter((id) => META_MAP[id].hidden);
@@ -50,9 +65,9 @@ function getHiddenRealMemberIds() {
 
 // 구회원(실회원 명단)은 모두 일반회원으로 시작한다. 관리자가 이 화면에서 특별회원으로 바꾸면
 // 그 값이 memberMeta에 저장되어 모든 관리자 화면에 반영된다.
-// 가입년월일·최근 로그인은 real-members-data.js의 원본 값을 기본으로 쓴다.
+// 가입년월일·최근 로그인은 명단의 원본 값을 기본으로 쓴다.
 function getRealMemberMeta(id) {
-  const src = (typeof REAL_MEMBERS !== "undefined" ? REAL_MEMBERS : []).find((m) => m.id === id) || {};
+  const src = REAL_MEMBERS.find((m) => m.id === id) || {};
   // 명단에 없는 신규 가입자는 로그인 계정에 기록된 가입 시각·최근 로그인 시각을 그대로 쓴다
   const u = USERS_BY_ID[id];
   return Object.assign(
@@ -102,7 +117,7 @@ async function loadLegacyIds() {
 
 // 실회원 명단의 아이디를 서버에 등록해, 구회원이 본인 아이디로 가입하면 바로 이용하게 한다.
 async function registerLegacyIds() {
-  const all = typeof REAL_MEMBERS !== "undefined" ? REAL_MEMBERS : [];
+  const all = REAL_MEMBERS;
   const todo = all.filter((m) => !LEGACY_IDS.has(m.id));
   if (!todo.length) {
     showToast("이미 모든 구회원 아이디가 등록되어 있습니다.");
@@ -132,7 +147,7 @@ async function registerLegacyIds() {
    - 명단에 있는 회원: 계정이 있으면 이메일·휴대폰·등급·승인상태를 계정 값으로 채운다.
    - 명단에 없는 신규 가입자: 계정만 있는 회원으로 뒤에 이어 붙인다. */
 function memberRows(q) {
-  const all = typeof REAL_MEMBERS !== "undefined" ? REAL_MEMBERS : [];
+  const all = REAL_MEMBERS;
   const hidden = getHiddenRealMemberIds();
 
   const merged = all
@@ -186,7 +201,7 @@ function renderRealMemberTable() {
           <tr>
             <th width="40">no</th><th width="120">id</th><th width="116">이름</th><th width="170">이메일</th>
             <th width="120">휴대폰번호</th><th width="90">호실</th><th width="104">가입일</th><th width="104">최근로그인</th>
-            <th width="104">등급</th><th width="112">신청</th><th width="140">상태</th><th width="70">게시글수</th><th width="210">비고</th>
+            <th width="104">등급</th><th width="112">신청</th><th width="140">상태</th><th width="70">게시글수</th><th width="270">비고</th>
           </tr>
         </thead>
         <tbody>${
@@ -200,7 +215,7 @@ function renderRealMemberTable() {
 
 // 구회원 아이디 선점 현황과 등록 버튼
 function legacyIdNoticeHtml() {
-  const all = typeof REAL_MEMBERS !== "undefined" ? REAL_MEMBERS : [];
+  const all = REAL_MEMBERS;
   const done = all.filter((m) => LEGACY_IDS.has(m.id)).length;
   if (done >= all.length && all.length) {
     return `<p class="admin-note">구회원 아이디 ${done}명이 등록되어 있습니다.
@@ -387,12 +402,14 @@ async function renderAdmin() {
       META_MAP = {};
       metaSnap.docs.forEach((d) => (META_MAP[d.id] = d.data()));
     } catch (e) {
-      /* 못 불러오면 real-members-data.js의 기본값으로 표시한다 */
+      /* 못 불러오면 명단의 기본값으로 표시한다 */
     }
     metaLoaded = true;
     subscribeMemberMeta();
   }
 
+  // 실회원 명단과 구회원 아이디 목록 — 둘 다 관리자만 읽을 수 있는 컬렉션이다
+  await loadRealMembers();
   await loadLegacyIds();
 
   // 로그인 계정을 아이디로 찾을 수 있게 담아 둔다 (실회원 명단과 한 표로 합쳐 보여준다)
