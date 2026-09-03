@@ -44,11 +44,21 @@
     .cta{display:inline-block;margin-top:8px;background:#223066;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 22px;border-radius:8px}
     .cta:hover{background:#2c3f80}
     .faq-item{border:1px solid #e6e8ef;border-radius:8px;margin-bottom:10px;overflow:hidden}
-    .faq-q{padding:15px 18px;font-weight:700;font-size:15.5px;color:#33415a;cursor:pointer;display:flex;justify-content:space-between;gap:12px}
-    .faq-q .mk{color:#c9a84c;font-size:19px}
+    /* 질문은 크고 굵게, 답변은 한 단계 작게 — 두 글자 크기를 뚜렷이 구분한다 */
+    .faq-q{padding:15px 18px;font-weight:700;font-size:17px;color:#33415a;cursor:pointer;display:flex;justify-content:space-between;gap:12px;text-align:left}
+    .faq-q .mk{color:#c9a84c;font-size:19px;flex-shrink:0}
     .faq-item.open .mk{transform:rotate(45deg)}
-    .faq-a{display:none;padding:0 18px 16px;color:#5a6472;font-size:14.5px;line-height:1.75}
+    .faq-a{display:none;padding:0 18px 16px;color:#5a6472;font-size:14.5px;line-height:1.75;text-align:left;white-space:pre-wrap}
     .faq-item.open .faq-a{display:block}
+    /* 관리자 전용 질문 추가 폼 */
+    .faq-add-btn{margin-left:auto}
+    .faq-add-form{display:none;background:#f9fafc;border:1px solid #e6e8ef;border-radius:8px;padding:16px;margin-bottom:16px}
+    .faq-add-form.show{display:block}
+    .faq-add-form label{display:block;font-size:13.5px;font-weight:700;color:#33415a;margin-bottom:6px}
+    .faq-add-form input,.faq-add-form textarea{width:100%;padding:11px 13px;border:1px solid #dddddd;border-radius:8px;font-size:15px;font-family:inherit;margin-bottom:12px}
+    .faq-add-form textarea{min-height:110px;font-size:14.5px;line-height:1.75;resize:vertical}
+    .faq-add-form .size-hint{font-size:12.5px;color:#8a94a6;font-weight:400;margin-left:6px}
+    .faq-add-actions{display:flex;gap:8px;justify-content:flex-end}
     @media (max-width:768px){.about-wrap{grid-template-columns:1fr;gap:18px;padding:20px 14px 36px}.about-sub{order:-1}}
   </style>
 </head>
@@ -145,6 +155,90 @@
   </footer>
 
   <script src="auth.js"></script>
+  <script>
+  (function () {
+    /* 질문을 누르면 답변이 펼쳐진다. 예전에는 이 스크립트가 없어 첫 항목 말고는
+       열리지 않았다. 새로 추가한 질문에도 같은 동작이 붙도록 문서 전체에 위임한다. */
+    document.addEventListener('click', function (e) {
+      var q = e.target.closest('.faq-q');
+      if (!q) return;
+      q.parentElement.classList.toggle('open');
+    });
+
+    // 답변 안에서 줄바꿈만 넣고 싶을 때를 위해 <br>로 바꿔 준다
+    function toHtml(text) {
+      var div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML.replace(/\n/g, '<br>');
+    }
+
+    /* 관리자에게만 "질문 추가" 폼을 붙인다.
+       질문과 답변을 각각 받아 정해진 모양으로 넣으므로, 질문은 굵고 큰 글씨,
+       답변은 한 단계 작은 글씨로 자동으로 구분된다. */
+    function init() {
+      var section = document.getElementById('faq');
+      if (!section) return;
+
+      // 저장된 본문에 예전 폼이 섞여 들어왔거나 init이 다시 불릴 때를 대비해 먼저 지운다
+      section.querySelectorAll('.faq-add-form').forEach(function (el) { el.remove(); });
+      document.querySelectorAll('.faq-add-btn').forEach(function (el) { el.remove(); });
+
+      var toolbar = document.querySelector('.content-edit-toolbar');
+      if (!toolbar) return; // 관리자가 아니면 여기서 끝
+
+      var addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'btn btn-outline btn-sm faq-add-btn';
+      addBtn.textContent = '+ 질문 추가';
+      toolbar.appendChild(addBtn);
+
+      var form = document.createElement('form');
+      form.className = 'faq-add-form';
+      form.innerHTML =
+        '<label>질문 <span class="size-hint">굵고 큰 글씨로 들어갑니다</span></label>' +
+        '<input type="text" class="fa-q" placeholder="예: 주차권은 어디서 구입하나요?" required />' +
+        '<label>답변 <span class="size-hint">질문보다 한 단계 작은 글씨로 들어갑니다</span></label>' +
+        '<textarea class="fa-a" placeholder="답변을 입력하세요. 줄바꿈은 그대로 유지됩니다." required></textarea>' +
+        '<div class="faq-add-actions">' +
+          '<button type="submit" class="btn btn-primary btn-sm">추가</button>' +
+          '<button type="button" class="btn btn-outline btn-sm fa-cancel">취소</button>' +
+        '</div>';
+      section.insertBefore(form, section.querySelector('.faq-item'));
+
+      addBtn.addEventListener('click', function () {
+        form.classList.add('show');
+        form.querySelector('.fa-q').focus();
+      });
+
+      form.querySelector('.fa-cancel').addEventListener('click', function () {
+        form.reset();
+        form.classList.remove('show');
+      });
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var q = form.querySelector('.fa-q').value.trim();
+        var a = form.querySelector('.fa-a').value.trim();
+        if (!q || !a) return;
+
+        var item = document.createElement('div');
+        item.className = 'faq-item';
+        item.innerHTML = '<div class="faq-q">' + toHtml(q) + '<span class="mk">+</span></div>' +
+                         '<div class="faq-a">' + toHtml(a) + '</div>';
+        section.appendChild(item);
+
+        form.reset();
+        form.classList.remove('show');
+        // auth.js가 Firestore에 저장한다 — 모든 방문자에게 그대로 보인다
+        if (window.saveContentEdit) window.saveContentEdit();
+        showToast('질문을 추가했습니다.');
+      });
+    }
+
+    // auth.js가 저장된 본문을 불러오고 관리자 툴바를 만든 뒤 발생시키는 이벤트
+    document.addEventListener('contentready', init);
+  })();
+  </script>
   <script>window.BOARD_CAT = "faq"; window.BOARD_HIDE_TITLE = true;</script>
   <script src="board.js"></script>
   <script src="home-slider.js"></script>
