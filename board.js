@@ -10,13 +10,18 @@ const POSTS_COL = "posts";
 const LEGACY_STORE_KEY = "jangkyo_board_posts"; // 옛 localStorage 방식으로 그 브라우저에만 남아 있던 글
 const MAX_FILE_MB = 20; // Storage에 올리므로 예전(3MB)보다 크게 잡을 수 있다
 
-// 게시판 카테고리
-// notice: 정보마당 공지사항(info-notice.html). 실제 관리단 공지(notices-data.js)를 그대로 보여주는
-//   읽기 전용 공개 게시판 — 일반회원(비회원 포함) 누구나 열람 가능.
-// info: 회원광장 공지사항(board.html?cat=info). notice와는 별개로, 관리자가 이 사이트에서 직접
-//   글을 올리는 특별회원 전용 게시판이다.
+/* 게시판 카테고리
+   정보마당(공개): notice 공지사항 · infodata 자료실 · forms 서식 다운로드 · faq 자주 묻는 질문
+     — 비회원 포함 누구나 열람할 수 있고, 등록은 관리자만 한다.
+   회원광장(특별회원 전용): info 공지사항 · data 자료실 · report 결산보고서 ·
+     minutes 월간회의록 · fee 관리비 부과내역
+   rental 임대안내는 공개 게시판이다.
+   info와 notice는 이름은 같지만 서로 다른 게시판이다(회원광장 / 정보마당). */
 const CATEGORIES = {
   notice: "공지사항",
+  infodata: "자료실",
+  forms: "서식 다운로드",
+  faq: "자주 묻는 질문",
   data: "자료실",
   report: "결산보고서",
   minutes: "월간회의록",
@@ -25,14 +30,24 @@ const CATEGORIES = {
   fee: "관리비 부과내역",
 };
 
-// 글쓰기를 관리자만 할 수 있는 카테고리 (열람은 특별회원)
-// 결산보고서·월간회의록·관리비 부과내역은 관리사무소가 배포하는 공식 자료이므로 관리자만 등록한다.
-const ADMIN_WRITE_CATS = ["info", "report", "minutes", "fee"];
+// 글쓰기를 관리자만 할 수 있는 카테고리
+// 관리사무소가 배포하는 공식 자료이거나(결산보고서·월간회의록·관리비 부과내역),
+// 정보마당처럼 건물 공식 안내를 싣는 게시판이다.
+const ADMIN_WRITE_CATS = ["info", "report", "minutes", "fee", "notice", "infodata", "forms", "faq"];
 
 // 정적 데이터 파일에 원본 글이 들어 있는 카테고리.
 // 목록에는 원본 글(data)과 이 사이트에서 새로 올린 글을 함께 보여주고,
 // 원본 글은 전용 상세 페이지(view)로 연결한다.
 const DOC_CATS = {
+  // 정보마당 공지사항은 관리단 공지 원본(notices-data.js)을 그대로 싣는다.
+  // 관리비 관련 공지는 board-fee.html(관리비 부과내역)로 옮겨 여기서는 제외한다.
+  notice: {
+    data: () =>
+      typeof NOTICES !== "undefined"
+        ? NOTICES.filter((p) => p.title.indexOf("관리비") === -1)
+        : [],
+    view: "notice-view.html",
+  },
   report: {
     data: () => (typeof REPORTS !== "undefined" ? REPORTS : []),
     view: "report-view.html",
@@ -113,42 +128,6 @@ function esc(s) {
   })[c]);
 }
 
-/* ===== 공지사항 목록 (실제 관리단 공지, notices-data.js 원본을 그대로 표시) =====
-   관리비 관련 공지(제목에 "관리비" 포함)는 board-fee.html(관리비 부과내역)로 이전되어 여기서는 제외한다. */
-function renderNoticeList() {
-  const sorted = (typeof NOTICES !== "undefined" ? NOTICES.slice() : [])
-    .filter((p) => p.title.indexOf("관리비") === -1)
-    .sort((a, b) => b.no - a.no);
-  const latestNo = sorted.length ? sorted[0].no : 0;
-
-  const rows = sorted.length === 0
-    ? `<tr><td colspan="5" class="board-empty">등록된 공지사항이 없습니다.</td></tr>`
-    : sorted.map((p) => {
-        const isNew = p.no === latestNo;
-        const hasFile = p.imgCount > 0;
-        const flag = isNew ? `<span class="pin-flag">NEW</span> ` : "";
-        const clip = hasFile ? `<span class="clip" title="첨부파일">📎</span>` : "";
-        return `<tr>
-          <td>${p.no}</td>
-          <td class="title">${flag}<a href="notice-view.html?id=${p.id}">${esc(p.title)}</a>${clip}</td>
-          <td>관리자</td>
-          <td>${p.date}</td>
-          <td>${hasFile ? 1 : 0}</td>
-        </tr>`;
-      }).join("");
-
-  document.getElementById("app").innerHTML = `
-    <div class="board-head">
-      <h1>${CATEGORIES.notice}</h1>
-    </div>
-    <table class="board-table">
-      <thead>
-        <tr><th width="60">번호</th><th>제목</th><th width="100">작성자</th><th width="110">작성일</th><th width="70">첨부</th></tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>`;
-}
-
 /* ===== 목록 보기 =====
    DOC_CATS 카테고리는 정적 원본 글(reports-data.js 등)을 아래쪽에 두고,
    이 사이트에서 새로 등록한 글은 원본 마지막 번호 다음 번호를 받아 위쪽에 쌓인다. */
@@ -167,7 +146,11 @@ function renderList() {
     const clip = o.files
       ? `<span class="clip" title="첨부파일 ${o.files}개">📎${o.files}</span>`
       : "";
-    const flag = o.pinned ? `<span class="pin-flag">📌 공지</span> ` : "";
+    const flag = o.pinned
+      ? `<span class="pin-flag">📌 공지</span> `
+      : o.isNew
+        ? `<span class="pin-flag">NEW</span> `
+        : "";
     return `<tr class="${o.pinned ? "pinned-row" : ""}">
       <td>${o.num}</td>
       <td class="title">${flag}<a href="${o.href}">${esc(o.title)}</a>${clip}</td>
@@ -188,6 +171,9 @@ function renderList() {
       pinned: pin,
     });
 
+  // 원본 글 중 가장 최근 것에 NEW 표시 (새로 등록한 글이 없을 때만 — 있으면 그쪽이 최신이다)
+  const newestStaticNo = normal.length || pinned.length ? -1 : baseNo;
+
   const staticRow = (p) =>
     rowHtml({
       num: p.no,
@@ -197,6 +183,7 @@ function renderList() {
       href: doc.view + "?id=" + p.id,
       files: p.imgCount || 0,
       pinned: false,
+      isNew: p.no === newestStaticNo,
     });
 
   let rows;
@@ -215,9 +202,13 @@ function renderList() {
   const canWrite = !ADMIN_WRITE_CATS.includes(cat) || (typeof isAdmin === "function" && isAdmin());
   const writeBtn = canWrite ? `<a href="#write" class="btn btn-primary btn-sm">글쓰기</a>` : "";
 
+  // 정보마당처럼 페이지에 이미 제목이 있는 자리에 게시판을 끼워 넣을 때는
+  // window.BOARD_HIDE_TITLE = true 로 두어 제목을 겹쳐 쓰지 않는다.
+  const heading = window.BOARD_HIDE_TITLE ? "" : `<h1>${CATEGORIES[cat]}</h1>`;
+
   document.getElementById("app").innerHTML = `
     <div class="board-head">
-      <h1>${CATEGORIES[cat]}</h1>
+      ${heading}
       ${writeBtn}
     </div>
     ${legacyNoticeHtml()}
@@ -500,8 +491,8 @@ function highlightSidebar() {
   });
 }
 
-// 특별회원 전용 카테고리 (회원광장 공지사항·자료실·결산보고서·월간회의록).
-// notice(정보마당 공지사항)는 일반회원도 볼 수 있는 공개 게시판이라 제외.
+// 특별회원 전용 카테고리 (회원광장 공지사항·자료실·결산보고서·월간회의록·관리비 부과내역).
+// 정보마당(notice·infodata·forms·faq)과 임대안내는 누구나 볼 수 있는 공개 게시판이라 제외.
 const PROTECTED_CATS = ["info", "data", "report", "minutes", "fee"];
 
 /* ===== 해시 라우터 ===== */
@@ -511,8 +502,6 @@ function route() {
   if (PROTECTED_CATS.includes(getCat()) && typeof isSpecial === "function" && !isSpecial()) {
     return guardSpecial("app");
   }
-  // 공지사항은 실제 관리단 공지(notices-data.js)를 그대로 보여주는 읽기 전용 게시판
-  if (getCat() === "notice") return renderNoticeList();
   const hash = location.hash || "#list";
   if (hash === "#write") {
     // 관리자 전용 글쓰기 카테고리는 관리자가 아니면 목록으로 되돌린다
@@ -528,7 +517,6 @@ function route() {
 
 window.addEventListener("hashchange", route);
 window.onAuthReady(function () {
-  // 공지사항(notice)은 정적 데이터만 쓰므로 굳이 구독하지 않는다
-  if (getCat() !== "notice") subscribePosts();
+  subscribePosts();
   route();
 });

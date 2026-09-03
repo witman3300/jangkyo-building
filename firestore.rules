@@ -67,15 +67,20 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    /* 게시판 글. 임대안내(rental)는 누구나 볼 수 있는 공개 게시판이고, 나머지 카테고리
-       (회원광장 공지사항·자료실·결산보고서·월간회의록·관리비 부과내역)는 특별회원 전용이다.
+    /* 게시판 글.
+       공개(누구나 열람): 임대안내(rental)와 정보마당 4개 게시판
+         — notice 공지사항, infodata 자료실, forms 서식 다운로드, faq 자주 묻는 질문
+       특별회원 전용: 회원광장(info, data, report, minutes, fee)
        목록 조회는 앱이 항상 cat으로 걸러 읽으므로 이 규칙으로 카테고리별 접근이 통제된다.
-       결산보고서·월간회의록·관리비 부과내역·회원광장 공지사항은 관리사무소 공식 자료라 관리자만 등록한다. */
+       관리사무소 공식 자료를 싣는 게시판(정보마당 전체 + 회원광장 공지·결산·회의록·관리비)은
+       관리자만 등록할 수 있다. 임대안내·회원광장 자료실은 특별회원도 올릴 수 있다. */
     match /posts/{postId} {
-      allow read: if resource.data.cat == 'rental' || isSpecialMember();
+      allow read: if resource.data.cat in ['rental', 'notice', 'infodata', 'forms', 'faq']
+        || isSpecialMember();
       allow create: if isSpecialMember()
         && request.resource.data.authorUid == request.auth.uid
-        && (!(request.resource.data.cat in ['info', 'report', 'minutes', 'fee']) || isAdmin());
+        && (!(request.resource.data.cat in ['info', 'report', 'minutes', 'fee',
+              'notice', 'infodata', 'forms', 'faq']) || isAdmin());
       // 글쓴이 본인과 관리자만 수정·삭제 (상단 고정은 관리자만)
       allow update, delete: if isAdmin() || (isSignedIn() && resource.data.authorUid == request.auth.uid);
     }
