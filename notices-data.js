@@ -1,4 +1,4 @@
-// 공지사항 데이터 (jangkyo.co.kr 원본 게시판에서 이전)
+// 공지사항 데이터 (janggyo.co.kr 원본 게시판에서 이전)
 // 각 글: no(목록 번호), id(원본 wr_id), title, date, hit, imgCount(첨부이미지 수, files/notice/{id}/NN.jpg), text(본문 텍스트, 있는 경우만)
 const NOTICES = [
   { no: 37, id: 246, title: "2026年 7月 관리비 부과내역", date: "2026-08-20", hit: 19, imgCount: 9 },

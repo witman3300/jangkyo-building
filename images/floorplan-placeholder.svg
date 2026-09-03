@@ -6,7 +6,7 @@
   <line x1="220" y1="336" x2="680" y2="336" stroke="#e6e8ef" stroke-width="1"/>
   <line x1="220" y1="428" x2="680" y2="428" stroke="#e6e8ef" stroke-width="1"/>
   <rect x="260" y="30" width="380" height="30" fill="#223066"/>
-  <text x="450" y="51" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#ffffff" font-weight="700">JANGKYO BUILDING</text>
+  <text x="450" y="51" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#ffffff" font-weight="700">JANGGYO BUILDING</text>
   <circle cx="450" cy="560" r="6" fill="#c9a84c"/>
   <text x="450" y="600" text-anchor="middle" font-family="sans-serif" font-size="22" fill="#33415a" font-weight="700">건물도면 준비 중</text>
 </svg>
