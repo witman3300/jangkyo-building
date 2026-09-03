@@ -615,10 +615,15 @@ async function setupContentEdit() {
      편집 중일 때는 덮어쓰지 않고, 편집을 끝낸 뒤에 적용한다. */
   let editing = false;
   let pendingRemote = null;
+  // 지금 화면에 적용해 둔 본문. 게시판 목록처럼 페이지 스크립트가 그려 넣은 내용은
+  // 여기 포함되지 않으므로, 살아 있는 DOM이 아니라 이 값과 비교해야 한다.
+  // (DOM과 비교하면 서버 내용이 그대로일 때도 화면을 되돌려 게시판 목록이 지워진다.)
+  let appliedHTML = applied ? saved.html : deployedHTML;
 
   function applyRemote(data) {
     const html = data && data.baseHash === baseHash ? data.html : deployedHTML;
-    if (html === area.innerHTML) return; // 내가 방금 저장한 내용이면 그대로 둔다
+    if (html === appliedHTML) return; // 서버 내용이 그대로면 화면을 건드리지 않는다
+    appliedHTML = html;
     area.innerHTML = html;
     applied = !!(data && data.baseHash === baseHash);
     notifyReady(); // 페이지별 스크립트가 바뀐 본문에 다시 붙도록 한다
@@ -710,6 +715,7 @@ async function setupContentEdit() {
         updatedBy: (getSession() && getSession().id) || "",
       });
       applied = true;
+      appliedHTML = html; // 서버에서 되돌아오는 같은 내용으로 화면을 다시 그리지 않도록 맞춰 둔다
       resetBtn.style.display = "";
       return true;
     } catch (e) {
