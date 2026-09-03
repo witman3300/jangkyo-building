@@ -702,6 +702,20 @@ async function setupContentEdit() {
     mainEl.insertBefore(notice, toolbar);
   }
 
+  /* 엔터 줄바꿈 통일.
+     contentEditable에서 엔터를 그대로 두면 브라우저가 문단(<p>)을 새로 만들어, 문단 아래
+     여백(margin-bottom)만큼 줄 간격이 더 벌어진다. 그래서 같은 글인데도 자동 줄바꿈된 줄과
+     엔터로 넘긴 줄의 간격이 달라 보인다(이 사이트 기준 27.75px vs 39.75px).
+     엔터를 항상 줄바꿈(<br>)으로 넣어, 문단·목록·표 어디서 쳐도 간격이 같게 한다.
+     한글 입력 중(조합 중)의 엔터는 글자 확정용이므로 건드리지 않는다. */
+  area.addEventListener("keydown", function (e) {
+    if (e.key !== "Enter" || e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (area.contentEditable !== "true") return;
+    if (e.isComposing || e.keyCode === 229) return;
+    e.preventDefault();
+    document.execCommand("insertLineBreak");
+  });
+
   let originalHTML = null;
 
   // 페이지별 스크립트가 본문을 바꾼 뒤 호출한다 (예: 공실 추가, 서식 파일 업로드).

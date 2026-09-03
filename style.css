@@ -611,6 +611,8 @@ body.sidebar-open .sidebar-overlay {
   border: 1px solid #dddddd;
   border-radius: 8px;
   font-size: 14px;
+  /* 등록된 글(.view-body)과 같은 줄 간격 — 쓰는 화면과 올라간 글의 줄 모양이 같아진다 */
+  line-height: 1.8;
   resize: vertical;
   font-family: inherit;
 }
