@@ -48,17 +48,18 @@ function getHiddenRealMemberIds() {
   return new Set(fixed.concat(remote));
 }
 
-// 기본값은 real-members-data.js의 값(관리자가 확정한 등급·가입년월일·최근 로그인)을 쓰고,
-// 승인 여부는 이미 존재하는 실회원 수입 데이터이므로 승인됨으로 시작한다.
-// 서버(memberMeta)에 값이 있으면 그 값이 우선한다.
+// 구회원(실회원 명단)은 모두 일반회원으로 시작한다. 관리자가 이 화면에서 특별회원으로 바꾸면
+// 그 값이 memberMeta에 저장되어 모든 관리자 화면에 반영된다.
+// 가입년월일·최근 로그인은 real-members-data.js의 원본 값을 기본으로 쓴다.
 function getRealMemberMeta(id) {
   const src = (typeof REAL_MEMBERS !== "undefined" ? REAL_MEMBERS : []).find((m) => m.id === id) || {};
   return Object.assign(
     {
-      grade: src.grade || "normal",
+      grade: "normal",
       approved: src.approved !== false,
       joinDate: src.joinDate || "",
       lastLogin: src.lastLogin || "",
+      note: "",
     },
     META_MAP[id]
   );
@@ -71,70 +72,134 @@ function setRealMemberMeta(id, patch) {
     .catch((e) => showToast("저장하지 못했습니다: " + e.message));
 }
 
-function realMemberRows(q) {
+/* 사이트 로그인 계정(Firestore users). 아이디를 키로 실회원 명단과 짝지어 한 표에 보여준다. */
+let USERS_BY_ID = {};
+
+/* 실회원 명단 + 로그인 계정을 아이디로 합친 회원 목록.
+   - 명단에 있는 회원: 계정이 있으면 이메일·휴대폰·등급·승인상태를 계정 값으로 채운다.
+   - 명단에 없는 신규 가입자: 계정만 있는 회원으로 뒤에 이어 붙인다. */
+function memberRows(q) {
   const all = typeof REAL_MEMBERS !== "undefined" ? REAL_MEMBERS : [];
   const hidden = getHiddenRealMemberIds();
-  const visible = all.filter((m) => !hidden.has(m.id));
+
+  const merged = all
+    .filter((m) => !hidden.has(m.id))
+    .map((m) => Object.assign({}, m, { user: USERS_BY_ID[m.id] || null }));
+
+  const listed = new Set(merged.map((m) => m.id));
+  Object.keys(USERS_BY_ID)
+    .filter((id) => !listed.has(id) && !hidden.has(id))
+    .forEach((id) => {
+      const u = USERS_BY_ID[id];
+      merged.push({ id: id, name: u.name || "", unit: u.unit || "", postCount: 0, user: u });
+    });
+
   const query = (q || "").trim().toLowerCase();
-  return !query
-    ? visible
-    : visible.filter((m) =>
-        [m.id, m.name, m.unit].some((v) => String(v).toLowerCase().includes(query))
-      );
+  if (!query) return merged;
+  return merged.filter((m) =>
+    [m.id, m.name, m.unit, m.user && m.user.email, m.user && m.user.phone]
+      .some((v) => String(v || "").toLowerCase().includes(query))
+  );
 }
 
 function renderRealMemberTable() {
   const q = document.getElementById("real-member-search").value;
-  const rows = realMemberRows(q);
-  document.getElementById("real-member-count").textContent = `총 ${rows.length}명`;
+  const rows = memberRows(q);
+  const withAccount = rows.filter((m) => m.user).length;
+  const pending = rows.filter((m) => m.user && !m.user.approved).length;
+  document.getElementById("real-member-count").textContent =
+    `총 ${rows.length}명 · 로그인 계정 ${withAccount}명 · 승인대기 ${pending}명`;
+
   document.getElementById("real-member-table-wrap").innerHTML = `
     ${legacyMemberNoticeHtml()}
     <div class="sticky-table-wrap">
       <table class="board-table admin-table real-member-table">
         <thead>
           <tr>
-            <th width="36">#</th><th width="90">아이디</th><th width="84">이름</th><th width="90">호수(별명)</th>
-            <th width="100">가입년월일</th><th width="100">최근 로그인</th><th width="76">게시글수</th><th width="92">회원등급</th>
-            <th width="132">신규회원 승인</th><th width="110">관리</th>
+            <th width="40">no</th><th width="96">id</th><th width="92">이름</th><th width="170">이메일</th>
+            <th width="120">휴대폰번호</th><th width="90">호실</th><th width="104">가입일</th><th width="104">최근로그인</th>
+            <th width="104">등급</th><th width="76">신청</th><th width="140">상태</th><th width="70">게시글수</th><th width="210">비고</th>
           </tr>
         </thead>
         <tbody>${
           rows.length
-            ? rows.map((m, i) => {
-                const meta = getRealMemberMeta(m.id);
-                const gradeSel = `<select class="grade-select" onchange="onRealMemberGrade('${escM(m.id)}', this.value)">
-                  <option value="normal" ${meta.grade === "normal" ? "selected" : ""}>일반회원</option>
-                  <option value="special" ${meta.grade === "special" ? "selected" : ""}>특별회원</option>
-                </select>`;
-                const approveBtn = meta.approved
-                  ? `<span class="badge ok">승인됨</span> <button type="button" class="mini" onclick="onRealMemberApprove('${escM(m.id)}', false)">취소</button>`
-                  : `<span class="badge wait">승인대기</span> <button type="button" class="mini primary" onclick="onRealMemberApprove('${escM(m.id)}', true)">승인</button>`;
-                return `<tr>
-                  <td>${i + 1}</td>
-                  <td>${escM(m.id)}</td>
-                  <td>${escM(m.name)}</td>
-                  <td>${escM(m.unit)}</td>
-                  <td><input type="text" class="join-date-input" placeholder="YYYY-MM-DD" value="${escM(meta.joinDate)}" onchange="onRealMemberJoinDate('${escM(m.id)}', this.value)"></td>
-                  <td><input type="text" class="join-date-input" placeholder="YYYY-MM-DD" value="${escM(meta.lastLogin)}" onchange="onRealMemberLastLogin('${escM(m.id)}', this.value)"></td>
-                  <td>${m.postCount || 0}</td>
-                  <td>${gradeSel}</td>
-                  <td class="act">${approveBtn}</td>
-                  <td class="act"><button type="button" class="mini danger" onclick="hideRealMember('${escM(m.id)}')">목록에서 제거</button></td>
-                </tr>`;
-              }).join("")
-            : `<tr><td colspan="10" class="board-empty">검색 결과가 없습니다.</td></tr>`
+            ? rows.map((m, i) => memberRowHtml(m, i)).join("")
+            : `<tr><td colspan="13" class="board-empty">검색 결과가 없습니다.</td></tr>`
         }</tbody>
       </table>
     </div>`;
+}
+
+/* 회원 한 줄.
+   로그인 계정이 있는 회원의 등급·승인은 실제 계정 값을 바꾸고(사이트 권한이 즉시 바뀐다),
+   계정이 없는 명단 회원의 등급·승인은 관리자가 적어 두는 기록이다. */
+function memberRowHtml(m, i) {
+  const meta = getRealMemberMeta(m.id);
+  const u = m.user;
+  const id = escM(m.id);
+  const isAdminRow = !!(u && u.grade === "admin");
+
+  const grade = isAdminRow
+    ? gradeLabel(u.grade) +
+      (u.protected
+        ? ` <span class="badge admin" title="Firestore 보안 규칙으로 보호되어 앱에서는 등급 변경·삭제가 불가능합니다">🛡</span>`
+        : "")
+    : u
+      ? `<select class="grade-select" onchange="onGrade('${escM(u.uid)}', this.value)">
+           <option value="normal" ${u.grade === "normal" ? "selected" : ""}>일반회원</option>
+           <option value="special" ${u.grade === "special" ? "selected" : ""}>특별회원</option>
+         </select>`
+      : `<select class="grade-select" onchange="onRealMemberGrade('${id}', this.value)">
+           <option value="normal" ${meta.grade === "normal" ? "selected" : ""}>일반회원</option>
+           <option value="special" ${meta.grade === "special" ? "selected" : ""}>특별회원</option>
+         </select>`;
+
+  const req = u && u.requestedSpecial ? `<span class="badge req">특별 신청</span>` : "-";
+
+  let status;
+  if (!u) {
+    status = `<span class="badge">계정없음</span>`;
+  } else if (isAdminRow) {
+    status = `<span class="badge ok">승인됨</span>`;
+  } else if (u.approved) {
+    status = `<span class="badge ok">승인됨</span> <button type="button" class="mini" onclick="onApprove('${escM(u.uid)}', false)">취소</button>`;
+  } else {
+    status = `<span class="badge wait">승인대기</span> <button type="button" class="mini primary" onclick="onApprove('${escM(u.uid)}', true)">승인</button>`;
+  }
+
+  // 비고: 관리자가 적어 두는 메모 + 정리 버튼 (최고관리자 줄에는 버튼을 두지 않는다)
+  const removeBtn = isAdminRow
+    ? ""
+    : u
+      ? `<button type="button" class="mini danger" onclick="onDelete('${escM(u.uid)}')" title="사이트 로그인 계정을 삭제합니다">계정삭제</button>`
+      : `<button type="button" class="mini danger" onclick="hideRealMember('${id}')" title="이 목록에서만 감춥니다">목록제거</button>`;
+
+  return `<tr>
+    <td>${i + 1}</td>
+    <td>${id}</td>
+    <td>${escM((u && u.name) || m.name)}</td>
+    <td class="col-email">${escM((u && u.email) || "-")}</td>
+    <td>${escM((u && u.phone) || "-")}</td>
+    <td>${escM((u && u.unit) || m.unit || "-")}</td>
+    <td><input type="text" class="join-date-input" placeholder="YYYY-MM-DD" value="${escM(meta.joinDate)}" onchange="onRealMemberJoinDate('${id}', this.value)"></td>
+    <td><input type="text" class="join-date-input" placeholder="YYYY-MM-DD" value="${escM(meta.lastLogin)}" onchange="onRealMemberLastLogin('${id}', this.value)"></td>
+    <td>${grade}</td>
+    <td>${req}</td>
+    <td class="act">${status}</td>
+    <td>${m.postCount || 0}</td>
+    <td class="act col-note">
+      <input type="text" class="note-input" placeholder="메모" value="${escM(meta.note || "")}" onchange="onRealMemberNote('${id}', this.value)">
+      ${removeBtn}
+    </td>
+  </tr>`;
 }
 
 function onRealMemberGrade(id, grade) {
   setRealMemberMeta(id, { grade });
 }
 
-function onRealMemberApprove(id, approved) {
-  setRealMemberMeta(id, { approved });
-  renderRealMemberTable();
+function onRealMemberNote(id, note) {
+  setRealMemberMeta(id, { note: note.trim() });
 }
 
 function onRealMemberJoinDate(id, joinDate) {
@@ -224,79 +289,29 @@ async function renderAdmin() {
     subscribeMemberMeta();
   }
 
+  // 로그인 계정을 아이디로 찾을 수 있게 담아 둔다 (실회원 명단과 한 표로 합쳐 보여준다)
   const snap = await db.collection(USERS_COL).get();
-  const users = snap.docs.map((d) => Object.assign({ uid: d.id }, d.data()));
-  const pending = users.filter((u) => !u.approved).length;
-
-  const rows = users
-    .map((u) => {
-      const statusBadge = u.approved
-        ? `<span class="badge ok">승인됨</span>`
-        : `<span class="badge wait">승인대기</span>`;
-      const req = u.requestedSpecial ? `<span class="badge req">특별 신청</span>` : "";
-      const isAdminRow = u.grade === "admin";
-      const protectedTag = u.protected ? ` <span class="badge admin" title="Firestore 보안 규칙으로 보호되어 앱에서는 등급 변경·삭제가 불가능합니다">🛡 최고관리자</span>` : "";
-
-      // 등급 선택
-      const gradeSel = isAdminRow
-        ? gradeLabel(u.grade) + protectedTag
-        : `<select onchange="onGrade('${u.uid}', this.value)">
-             <option value="normal" ${u.grade === "normal" ? "selected" : ""}>일반회원</option>
-             <option value="special" ${u.grade === "special" ? "selected" : ""}>특별회원</option>
-           </select>`;
-
-      // 액션 버튼
-      let actions = "";
-      if (!isAdminRow) {
-        actions += u.approved
-          ? `<button class="mini" onclick="onApprove('${u.uid}', false)">승인취소</button>`
-          : `<button class="mini primary" onclick="onApprove('${u.uid}', true)">승인</button>`;
-        actions += ` <button class="mini danger" onclick="onDelete('${u.uid}')">삭제</button>`;
-      } else {
-        actions = `<span style="color:#bbb">-</span>`;
-      }
-
-      return `<tr>
-        <td>${escAuth(u.name)}</td>
-        <td>${escAuth(u.phone || "미입력")}</td>
-        <td>${escAuth(u.unit || "-")}</td>
-        <td>${escAuth(u.id)}</td>
-        <td>${escAuth(u.email || "-")}</td>
-        <td>${gradeSel}</td>
-        <td>${req || "-"}</td>
-        <td>${statusBadge}</td>
-        <td class="act">${actions}</td>
-      </tr>`;
-    })
-    .join("");
+  USERS_BY_ID = {};
+  snap.docs.forEach((d) => {
+    const u = Object.assign({ uid: d.id }, d.data());
+    if (u.id) USERS_BY_ID[u.id] = u;
+  });
 
   document.getElementById("admin-app").innerHTML = `
     <div class="board-head">
       <h1>회원관리</h1>
       <span class="pending-count" id="real-member-count">불러오는 중...</span>
     </div>
-    <p class="admin-note">janggyo.co.kr 관리자 페이지에서 가져온 실회원 명단입니다 (기준일 2026-08-18). 가입년월일·최근 로그인·게시글수는 원본 사이트의 실제 값입니다(게시글수는 자료실·임대안내·회원게시판·공지사항·결산보고서 5개 게시판 전수 확인 결과이며, admin 외 회원은 작성 이력이 없어 0건). 가입년월일·최근 로그인은 직접 수정하면 그 값이 우선 저장됩니다(이 브라우저에만 저장). 회원등급·신규회원 승인 값은 원본에 없어 이 화면에서 직접 기록하는 참고용 메모이며, "제거"와 마찬가지로 실제 명단·사이트 로그인 계정에는 영향을 주지 않습니다.</p>
+    <p class="admin-note">janggyo.co.kr에서 가져온 실회원 명단과 이 사이트의 로그인 계정을 아이디로 합쳐 보여줍니다 (명단 기준일 2026-08-18).
+    <strong>이메일·휴대폰번호·신청</strong>은 로그인 계정에 등록된 값이고, 계정이 없는 회원은 상태가 <strong>계정없음</strong>으로 표시됩니다.
+    <strong>게시글수</strong>는 구 사이트 5개 게시판 전수 확인 결과입니다(admin 외 회원은 작성 이력이 없어 0건).
+    <strong>등급·상태</strong>는 계정이 있는 회원의 경우 실제 사이트 권한을 바꾸며, 승인 전에는 로그인할 수 없습니다.
+    특별회원(구분소유자)이 되면 회원광장(공지사항·자료실·결산보고서·월간회의록·관리비 부과내역)을 이용할 수 있습니다.
+    계정이 없는 회원의 등급과 <strong>가입일·최근로그인·비고</strong>는 관리자가 적어 두는 기록이며 모든 관리자 화면에 공유됩니다.</p>
     <div class="write-row" style="margin:16px 0;">
-      <div class="field"><input type="text" id="real-member-search" placeholder="아이디·이름·호수 검색" oninput="renderRealMemberTable()"></div>
+      <div class="field"><input type="text" id="real-member-search" placeholder="아이디·이름·호실·이메일·휴대폰 검색" oninput="renderRealMemberTable()"></div>
     </div>
-    <div id="real-member-table-wrap"></div>
-
-    <div class="board-head" style="margin-top:36px;">
-      <h1>사이트 로그인 계정</h1>
-      <span class="pending-count">승인대기 ${pending}명</span>
-    </div>
-    <table class="board-table admin-table">
-      <thead>
-        <tr>
-          <th>이름</th><th width="130">휴대폰번호</th><th width="90">호실</th><th>아이디</th><th>이메일</th>
-          <th width="130">등급</th><th width="90">신청</th>
-          <th width="90">상태</th><th width="160">관리</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <p class="admin-note">신규 가입자는 <strong>승인대기</strong> 상태이며, 승인 전에는 로그인할 수 없습니다.
-    등급을 <strong>특별회원(구분소유자)</strong>으로 부여하면 공지사항·자료실·결산보고서·월간회의록·회원게시판을 이용할 수 있습니다.</p>`;
+    <div id="real-member-table-wrap"></div>`;
 
   renderRealMemberTable();
 }
