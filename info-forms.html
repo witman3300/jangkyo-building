@@ -59,6 +59,7 @@
     .form-delete-btn{background:#fff;border:1px solid #f0c9c9;border-radius:6px;font-size:12px;padding:5px 10px;color:#c0392b;cursor:pointer;white-space:nowrap}
     .form-delete-btn:hover{background:#fdf0f0;border-color:#e0a0a0}
     .forms-add-btn{margin-left:auto}
+    .forms-add-form .size-hint{font-size:12px;color:#8a94a6;font-weight:400;margin-left:6px}
     .forms-add-form{display:none;grid-template-columns:1fr 1fr;gap:12px 14px;align-items:end;background:#f9fafc;border:1px solid #e6e8ef;border-radius:8px;padding:16px;margin-bottom:16px}
     .forms-add-form.show{display:grid}
     .forms-add-form .form-group{margin-bottom:0}
@@ -145,11 +146,6 @@
         </ul>
       </section>
 
-      <section class="about-sec" id="board">
-        <h2><span class="no">4</span> 등록 서식</h2>
-        <p>관리사무소가 올린 서식입니다. 글을 눌러 첨부파일을 내려받으실 수 있습니다.</p>
-        <div id="app"></div>
-      </section>
 
       <section class="about-sec" id="amenity">
         <h2><span class="no">4</span> 관련기관 및 편의시설</h2>
@@ -185,8 +181,6 @@
   </footer>
 
   <script src="auth.js"></script>
-  <script>window.BOARD_CAT = "forms"; window.BOARD_HIDE_TITLE = true;</script>
-  <script src="board.js"></script>
   <script>
   (function () {
     var MAX_SIZE = 600 * 1024; // 파일을 페이지 본문에 담아 Firestore에 저장하므로(문서당 1MB) 600KB로 제한
@@ -273,17 +267,17 @@
 
       var addBtn = document.createElement('button');
       addBtn.type = 'button';
-      addBtn.className = 'btn btn-outline btn-sm forms-add-btn';
-      addBtn.textContent = '+ 서식 추가';
+      addBtn.className = 'btn btn-primary btn-sm forms-add-btn';
+      addBtn.textContent = '글쓰기';
       toolbar.appendChild(addBtn);
 
       var form = document.createElement('form');
       form.className = 'forms-add-form';
       form.innerHTML =
         '<div class="form-group"><label>서식 이름</label><input type="text" class="fa-name" placeholder="예: 입주 신청서" required /></div>' +
-        '<div class="form-group"><label>파일</label><input type="file" class="fa-file" required /></div>' +
+        '<div class="form-group"><label>파일 <span class="size-hint">600KB 이하 · 올리면 바로 내려받을 수 있습니다</span></label><input type="file" class="fa-file" required /></div>' +
         '<div class="forms-add-actions">' +
-          '<button type="submit" class="btn btn-primary btn-sm">추가</button>' +
+          '<button type="submit" class="btn btn-primary btn-sm">등록</button>' +
           '<button type="button" class="btn btn-outline btn-sm fa-cancel">취소</button>' +
         '</div>';
       list.parentNode.insertBefore(form, list);
