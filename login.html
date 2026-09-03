@@ -198,7 +198,8 @@
 
       legacyId = id;
       document.getElementById("legacy-id").textContent = id;
-      document.getElementById("lg-unit").value = legacy.unit || "";
+      attachUnitRule(document.getElementById("lg-unit"));
+      document.getElementById("lg-unit").value = sanitizeUnit(legacy.unit || "");
       document.getElementById("login-card").style.display = "none";
       document.getElementById("legacy-card").style.display = "";
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -221,6 +222,9 @@
 
       const phone = document.getElementById("lg-phone").value.trim();
       if (!isValidPhone(phone)) return showToast("휴대폰번호를 올바른 형식으로 입력해 주세요. (예: 010-1234-5678)");
+
+      const unit = document.getElementById("lg-unit").value.trim();
+      if (unit && !isValidUnit(unit)) return showToast(UNIT_RULE_MSG);
 
       const btn = document.getElementById("legacy-submit");
       btn.disabled = true;

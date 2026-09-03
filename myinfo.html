@@ -148,8 +148,14 @@
           </p>
         </form>`;
 
+      attachUnitRule(document.getElementById("mi-unit"));
+
       document.getElementById("myinfo-form").addEventListener("submit", async function (e) {
         e.preventDefault();
+
+        const unitVal = document.getElementById("mi-unit").value.trim();
+        if (unitVal && !isValidUnit(unitVal)) return showToast(UNIT_RULE_MSG);
+
         const btn = document.getElementById("myinfo-submit");
         btn.disabled = true;
         btn.textContent = "저장 중...";

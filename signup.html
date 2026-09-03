@@ -342,6 +342,8 @@ async function submitForm(e){
   if(pw!==pw2){ showToast('비밀번호가 일치하지 않습니다.'); return false; }
   var phoneVal=document.getElementById('phone').value.trim();
   if(!isValidPhone(phoneVal)){ showToast('휴대전화번호를 올바른 형식으로 입력해 주세요. (예: 010-1234-5678)'); return false; }
+  var unitVal=document.getElementById('unit').value.trim();
+  if(!isValidUnit(unitVal)){ showToast(UNIT_RULE_MSG); return false; }
   var cap=document.getElementById('cap-in').value.trim();
   if(cap!==capCode){ showToast('자동등록방지 숫자가 일치하지 않습니다.'); genCap(); return false; }
 
@@ -384,6 +386,7 @@ async function submitForm(e){
   return false;
 }
 genCap();
+attachUnitRule(document.getElementById('unit'));
 </script>
   <script src="home-slider.js"></script>
 </body>

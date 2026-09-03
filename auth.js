@@ -94,6 +94,70 @@ function emailDocRef(email) {
   return db.collection(EMAILS_COL).doc(email.toLowerCase());
 }
 
+/* ===== 호실 입력 규칙 =====
+   허용: 숫자(전체 4자리까지), B, b, 호, 지하
+   그 외 문자는 받지 않는다. 예) 1201, 1201호, B102, b1, 지하151, 지하27호 */
+var UNIT_ALLOWED_RE = /^(?:지하|[Bb]|호|\d)*$/;
+var UNIT_MAX_DIGITS = 4;
+
+/* 입력 중 허용되지 않는 글자를 걸러내고, 숫자는 4자리까지만 남긴다.
+   allowPartial: 타이핑 중에는 맨 끝의 "지" 한 글자를 남겨 둔다. 그러지 않으면
+   "지하"를 칠 때 "지"가 입력되는 순간 지워져 "하"를 이어 칠 수 없다. */
+function sanitizeUnit(value, allowPartial) {
+  var out = "";
+  var digits = 0;
+  var s = String(value || "");
+  for (var i = 0; i < s.length; i++) {
+    var c = s[i];
+    if (c >= "0" && c <= "9") {
+      if (digits >= UNIT_MAX_DIGITS) continue; // 숫자는 4자리까지
+      digits++;
+      out += c;
+    } else if (c === "B" || c === "b" || c === "호") {
+      out += c;
+    } else if (c === "지") {
+      if (s[i + 1] === "하") {
+        out += "지하"; // "지하"는 두 글자가 붙어 있을 때만 허용
+        i++;
+      } else if (allowPartial && i === s.length - 1) {
+        out += "지"; // 아직 "하"를 치기 전
+      }
+    }
+  }
+  return out;
+}
+
+function isValidUnit(value) {
+  var s = String(value || "").trim();
+  if (!s) return false;
+  if (!UNIT_ALLOWED_RE.test(s)) return false;
+  return (s.match(/\d/g) || []).length <= UNIT_MAX_DIGITS;
+}
+
+var UNIT_RULE_MSG = "호실은 숫자 4자리까지와 B, b, 호, 지하만 입력할 수 있습니다. (예: 1201, B102, 지하151)";
+
+/* 호실 입력칸에 규칙을 걸어 둔다. 타이핑·붙여넣기 중에 허용되지 않는 글자를 바로 걸러낸다. */
+function attachUnitRule(input) {
+  if (!input) return;
+  input.setAttribute("placeholder", "예: 1201 / 1201호 / B102 / 지하151");
+  input.setAttribute("maxlength", "12");
+  input.addEventListener("input", function () {
+    var cleaned = sanitizeUnit(input.value, true);
+    if (cleaned === input.value) return;
+    var pos = input.selectionStart - (input.value.length - cleaned.length);
+    input.value = cleaned;
+    try {
+      input.setSelectionRange(pos, pos);
+    } catch (e) {
+      /* 커서 위치 복원이 안 되는 브라우저는 무시 */
+    }
+  });
+  // 입력을 마치면 "하"를 못 채운 "지"는 정리한다
+  input.addEventListener("blur", function () {
+    input.value = sanitizeUnit(input.value, false);
+  });
+}
+
 // 휴대폰번호 형식 검증 (010-0000-0000 형태, 하이픈 없어도 허용)
 function isValidPhone(phone) {
   return /^01[016789]-?\d{3,4}-?\d{4}$/.test(String(phone || "").trim());
