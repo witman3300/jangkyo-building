@@ -238,20 +238,21 @@ function memberRowHtml(m, i) {
       ? `<button type="button" class="mini danger" onclick="onDelete('${escM(u.uid)}')" title="사이트 로그인 계정을 삭제합니다">계정삭제</button>`
       : `<button type="button" class="mini danger" onclick="hideRealMember('${id}')" title="이 목록에서만 감춥니다">목록제거</button>`;
 
+  // data-label은 모바일에서 표를 세로 카드로 펼칠 때 각 값 앞에 붙는 항목 이름이다.
   return `<tr>
-    <td>${i + 1}</td>
-    <td>${id}</td>
-    <td>${escM((u && u.name) || m.name)}</td>
-    <td class="col-email">${escM((u && u.email) || "-")}</td>
-    <td>${escM((u && u.phone) || "-")}</td>
-    <td>${escM((u && u.unit) || m.unit || "-")}</td>
-    <td><input type="text" class="join-date-input" placeholder="YYYY-MM-DD" value="${escM(meta.joinDate)}" onchange="onRealMemberJoinDate('${id}', this.value)"></td>
-    <td><input type="text" class="join-date-input" placeholder="YYYY-MM-DD" value="${escM(meta.lastLogin)}" onchange="onRealMemberLastLogin('${id}', this.value)"></td>
-    <td>${grade}</td>
-    <td class="act">${req}</td>
-    <td class="act">${status}</td>
-    <td>${m.postCount || 0}</td>
-    <td class="act col-note">
+    <td data-label="no">${i + 1}</td>
+    <td data-label="id" class="col-id">${id}</td>
+    <td data-label="이름">${escM((u && u.name) || m.name)}</td>
+    <td data-label="이메일" class="col-email">${escM((u && u.email) || "-")}</td>
+    <td data-label="휴대폰번호">${escM((u && u.phone) || "-")}</td>
+    <td data-label="호실">${escM((u && u.unit) || m.unit || "-")}</td>
+    <td data-label="가입일"><input type="text" class="join-date-input" placeholder="YYYY-MM-DD" value="${escM(meta.joinDate)}" onchange="onRealMemberJoinDate('${id}', this.value)"></td>
+    <td data-label="최근로그인"><input type="text" class="join-date-input" placeholder="YYYY-MM-DD" value="${escM(meta.lastLogin)}" onchange="onRealMemberLastLogin('${id}', this.value)"></td>
+    <td data-label="등급">${grade}</td>
+    <td data-label="신청" class="act">${req}</td>
+    <td data-label="상태" class="act">${status}</td>
+    <td data-label="게시글수">${m.postCount || 0}</td>
+    <td data-label="비고" class="act col-note">
       <input type="text" class="note-input" placeholder="메모" value="${escM(meta.note || "")}" onchange="onRealMemberNote('${id}', this.value)">
       ${removeBtn}
     </td>

@@ -499,6 +499,80 @@ body.sidebar-open .sidebar-overlay {
   text-align: left;
 }
 
+/* ===== 모바일 게시판 목록: 제목 한 줄 + 나머지 한 줄의 2단 배치 =====
+   좁은 화면에서 5개 열을 그대로 두면 제목이 두세 글자씩 접혀 읽기 어렵다.
+   제목은 윗줄에 한 줄로 펴고, 번호·작성자·작성일·첨부는 아랫줄에 작게 모은다.
+   (회원관리 표는 성격이 달라 아래에서 따로 처리한다) */
+@media (max-width: 768px) {
+  .board-table:not(.admin-table) thead {
+    display: none;
+  }
+
+  .board-table:not(.admin-table),
+  .board-table:not(.admin-table) tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .board-table:not(.admin-table) tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 10px;
+    padding: 13px 2px;
+    border-bottom: 1px solid #eeeeee;
+    border-top: none;
+  }
+
+  .board-table:not(.admin-table) tbody td {
+    display: block;
+    border: none;
+    padding: 0;
+    text-align: left;
+  }
+
+  /* 윗줄: 제목 (order로 번호보다 앞에 오게 한다) */
+  .board-table:not(.admin-table) tbody td.title {
+    order: -1;
+    flex: 0 0 100%;
+    margin-bottom: 6px;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #1a2744;
+    white-space: normal;
+  }
+
+  /* 첨부는 아랫줄에 따로 보여주므로 제목 끝의 클립 표시는 감춘다 (제목이 한 줄에 들어가도록) */
+  .board-table:not(.admin-table) tbody td.title .clip {
+    display: none;
+  }
+
+  /* 아랫줄: 번호 · 작성자 · 작성일 · 첨부 */
+  .board-table:not(.admin-table) tbody td.num,
+  .board-table:not(.admin-table) tbody td.author,
+  .board-table:not(.admin-table) tbody td.date,
+  .board-table:not(.admin-table) tbody td.files {
+    font-size: 12.5px;
+    color: #8a94a6;
+  }
+
+  /* 첨부가 없으면 "0"을 굳이 보여주지 않고, 있으면 클립과 개수만 표시 */
+  .board-table:not(.admin-table) tbody td.files:not(.has-file) {
+    display: none;
+  }
+
+  .board-table:not(.admin-table) tbody td.files.has-file::before {
+    content: "📎";
+    margin-right: 2px;
+  }
+
+  .board-table:not(.admin-table) tbody td.board-empty {
+    flex: 0 0 100%;
+    text-align: center;
+    padding: 26px 0;
+  }
+}
+
 /* 실회원 명단 등 긴 표에서 스크롤해도 헤더 행이 고정되도록 */
 .sticky-table-wrap {
   max-height: 640px;
@@ -970,6 +1044,76 @@ body.sidebar-open .sidebar-overlay {
 .real-member-table td.act {
   overflow: visible;
   text-overflow: clip;
+}
+
+/* 모바일 회원관리: 13개 열을 옆으로 밀어 보는 대신, 회원 한 명을 한 장의 카드로 펼친다.
+   각 값 앞에 항목 이름(data-label)을 붙여 무슨 값인지 바로 알 수 있게 한다. */
+@media (max-width: 768px) {
+  .sticky-table-wrap {
+    max-height: none;
+    overflow-x: visible;
+    border: none;
+  }
+
+  .real-member-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: auto;
+  }
+
+  .real-member-table thead {
+    display: none;
+  }
+
+  .real-member-table,
+  .real-member-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .real-member-table tr {
+    display: block;
+    margin-bottom: 10px;
+    padding: 12px 14px;
+    border: 1px solid #e6e8ef;
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .real-member-table td {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    padding: 4px 0;
+    border: none;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    text-align: left;
+  }
+
+  .real-member-table td::before {
+    content: attr(data-label);
+    flex: 0 0 82px;
+    color: #8a94a6;
+    font-size: 12.5px;
+  }
+
+  .real-member-table td.col-id {
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  /* 입력칸은 남는 폭을 채우되, 옆의 버튼이 카드 밖으로 밀려나면 아랫줄로 내려가게 한다 */
+  .real-member-table .join-date-input,
+  .real-member-table .note-input {
+    width: auto;
+    flex: 1 1 120px;
+    min-width: 0;
+    text-align: left;
+    border-bottom: 1px solid #e6e8ef;
+  }
 }
 
 .real-member-table td {

@@ -151,12 +151,13 @@ function renderList() {
       : o.isNew
         ? `<span class="pin-flag">NEW</span> `
         : "";
+    // 셀마다 이름을 붙여 둔다. 모바일에서는 이 이름으로 제목을 윗줄, 나머지를 아랫줄로 배치한다.
     return `<tr class="${o.pinned ? "pinned-row" : ""}">
-      <td>${o.num}</td>
+      <td class="num">${o.num}</td>
       <td class="title">${flag}<a href="${o.href}">${esc(o.title)}</a>${clip}</td>
-      <td>${esc(o.author)}</td>
-      <td>${o.date}</td>
-      <td>${o.files}</td>
+      <td class="author">${esc(o.author)}</td>
+      <td class="date">${o.date}</td>
+      <td class="files${o.files ? " has-file" : ""}">${o.files}</td>
     </tr>`;
   };
 

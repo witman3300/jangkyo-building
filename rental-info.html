@@ -40,6 +40,15 @@
     .vacancy-add-form select{width:100%;padding:12px 14px;border:1px solid #dddddd;border-radius:10px;font-size:15px}
     .vacancy-add-actions{grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end}
     @media (max-width:768px){.vacancy-add-form{grid-template-columns:1fr 1fr}}
+    /* 모바일 공실 현황: 4개 열이 좁게 접히지 않도록 호실을 윗줄에, 나머지를 아랫줄에 둔다 */
+    @media (max-width:768px){
+      #vacancy .info-table thead{display:none}
+      #vacancy .info-table,#vacancy .info-table tbody{display:block;width:100%}
+      #vacancy .info-table tr{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 10px;padding:13px 2px;border-bottom:1px solid #e6e8ef}
+      #vacancy .info-table td{display:block;border:none;padding:0}
+      #vacancy .info-table td:first-child{flex:0 0 100%;margin-bottom:5px;font-size:15px;font-weight:700;color:#1a2744}
+      #vacancy .info-table td:not(:first-child){font-size:12.5px;color:#7a8290}
+    }
     @media (max-width:768px){.about-wrap{grid-template-columns:1fr;gap:18px;padding:20px 14px 36px}.about-sub{order:-1}}
   </style>
 </head>
