@@ -148,11 +148,25 @@ function memberRows(q) {
     });
 
   const query = (q || "").trim().toLowerCase();
-  if (!query) return merged;
-  return merged.filter((m) =>
-    [m.id, m.name, m.unit, m.user && m.user.email, m.user && m.user.phone]
-      .some((v) => String(v || "").toLowerCase().includes(query))
-  );
+  const rows = !query
+    ? merged
+    : merged.filter((m) =>
+        [m.id, m.name, m.unit, m.user && m.user.email, m.user && m.user.phone]
+          .some((v) => String(v || "").toLowerCase().includes(query))
+      );
+
+  // 가입일 내림차순(최근 가입이 위). 가입일이 비어 있는 회원은 맨 아래에 모은다.
+  // 날짜는 YYYY-MM-DD 형태라 문자열 비교로 정렬해도 날짜 순서와 같다.
+  const joinDateOf = {};
+  rows.forEach((m) => (joinDateOf[m.id] = getRealMemberMeta(m.id).joinDate || ""));
+  return rows.slice().sort((a, b) => {
+    const da = joinDateOf[a.id];
+    const db = joinDateOf[b.id];
+    if (da === db) return 0;
+    if (!da) return 1;
+    if (!db) return -1;
+    return da < db ? 1 : -1;
+  });
 }
 
 function renderRealMemberTable() {
