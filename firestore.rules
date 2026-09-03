@@ -60,6 +60,16 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    /* 구회원 아이디 선점 명단 (구 사이트 janggyo.co.kr 회원).
+       구회원은 비밀번호가 남아 있지 않아 계정을 대신 만들어 줄 수 없다. 아이디만 등록해 두고
+       본인 아이디로 가입하면 승인 없이 바로 이용하게 한다.
+       usernames와 같은 이유로 단건 조회(get)만 열고 목록 나열(list)은 막는다. */
+    match /legacyMembers/{memberId} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow write: if isAdmin();
+    }
+
     // 페이지 본문 수정 내용(관리자가 사이트에서 직접 고친 화면).
     // 모든 방문자에게 같은 화면이 보여야 하므로 읽기는 공개하고, 쓰기는 관리자만 허용한다.
     match /pages/{pageId} {

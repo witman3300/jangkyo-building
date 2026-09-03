@@ -307,6 +307,17 @@ async function checkId(){
   await window.authReady;
   var taken=(await usernameDocRef(v).get()).exists;
   if(taken){ h.className='hint err'; h.textContent='이미 사용 중인 아이디입니다.'; idChecked=false; return; }
+
+  // 구 사이트 회원 아이디면 알아보고, 승인 절차 없이 바로 이용할 수 있음을 알린다
+  var legacy = await findLegacyMember(v);
+  if(legacy){
+    h.className='hint ok';
+    h.textContent='"'+v+'" 기존 회원 아이디입니다. 가입하시면 승인 절차 없이 바로 이용하실 수 있습니다.';
+    var unitEl=document.getElementById('unit');
+    if(legacy.unit && !unitEl.value.trim()) unitEl.value=legacy.unit;  // 호실 미리 채우기
+    idChecked=true;
+    return;
+  }
   h.className='hint ok'; h.textContent='"'+v+'" 사용 가능한 아이디입니다.'; idChecked=true;
 }
 function checkPw(){
@@ -359,8 +370,11 @@ async function submitForm(e){
     return false;
   }
 
-  // 일반회원은 자동승인, 입주자·구분소유자는 관리사무소 확인 후 승인대기
-  if(res.approved){
+  // 구회원은 기존 회원으로 확인되어 바로 이용, 신규 일반회원은 자동승인,
+  // 신규 입주자·구분소유자는 관리사무소 확인 후 승인대기
+  if(res.legacy){
+    showToast('기존 회원으로 확인되었습니다!\n일반회원으로 바로 로그인하실 수 있습니다.\n구분소유자 권한이 필요하시면 관리사무소로 문의해 주세요.');
+  }else if(res.approved){
     showToast('회원가입이 완료되었습니다!\n일반회원으로 바로 로그인하실 수 있습니다.');
   }else{
     showToast('가입 신청이 접수되었습니다.\n관리사무소의 확인(호실·계약·등기) 후 승인되면 로그인하실 수 있습니다.');

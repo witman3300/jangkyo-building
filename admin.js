@@ -75,6 +75,47 @@ function setRealMemberMeta(id, patch) {
 /* 사이트 로그인 계정(Firestore users). 아이디를 키로 실회원 명단과 짝지어 한 표에 보여준다. */
 let USERS_BY_ID = {};
 
+/* 구회원 아이디 선점: 서버(legacyMembers)에 등록된 아이디 모음.
+   여기 등록된 아이디로 가입하면 승인 절차 없이 바로 일반회원으로 이용할 수 있다. */
+let LEGACY_IDS = new Set();
+
+async function loadLegacyIds() {
+  try {
+    const snap = await db.collection(LEGACY_COL).get();
+    LEGACY_IDS = new Set(snap.docs.map((d) => d.id));
+  } catch (e) {
+    LEGACY_IDS = new Set();
+  }
+}
+
+// 실회원 명단의 아이디를 서버에 등록해, 구회원이 본인 아이디로 가입하면 바로 이용하게 한다.
+async function registerLegacyIds() {
+  const all = typeof REAL_MEMBERS !== "undefined" ? REAL_MEMBERS : [];
+  const todo = all.filter((m) => !LEGACY_IDS.has(m.id));
+  if (!todo.length) {
+    showToast("이미 모든 구회원 아이디가 등록되어 있습니다.");
+    return;
+  }
+  if (!confirm(`구회원 ${todo.length}명의 아이디를 등록합니다.\n등록된 아이디로 가입하면 승인 없이 바로 일반회원으로 이용할 수 있습니다.`)) return;
+
+  showToast(`구회원 아이디 ${todo.length}건 등록 중...`);
+  try {
+    // Firestore 배치는 한 번에 500건까지라 400건씩 나눠 올린다
+    for (let i = 0; i < todo.length; i += 400) {
+      const batch = db.batch();
+      todo.slice(i, i + 400).forEach((m) => {
+        batch.set(db.collection(LEGACY_COL).doc(m.id), { unit: m.unit || "" });
+      });
+      await batch.commit();
+    }
+    await loadLegacyIds();
+    showToast(`구회원 아이디 ${todo.length}건을 등록했습니다.`);
+    renderRealMemberTable();
+  } catch (e) {
+    showToast("등록하지 못했습니다: " + e.message);
+  }
+}
+
 /* 실회원 명단 + 로그인 계정을 아이디로 합친 회원 목록.
    - 명단에 있는 회원: 계정이 있으면 이메일·휴대폰·등급·승인상태를 계정 값으로 채운다.
    - 명단에 없는 신규 가입자: 계정만 있는 회원으로 뒤에 이어 붙인다. */
@@ -111,6 +152,7 @@ function renderRealMemberTable() {
     `총 ${rows.length}명 · 로그인 계정 ${withAccount}명 · 승인대기 ${pending}명`;
 
   document.getElementById("real-member-table-wrap").innerHTML = `
+    ${legacyIdNoticeHtml()}
     ${legacyMemberNoticeHtml()}
     <div class="sticky-table-wrap">
       <table class="board-table admin-table real-member-table">
@@ -128,6 +170,21 @@ function renderRealMemberTable() {
         }</tbody>
       </table>
     </div>`;
+}
+
+// 구회원 아이디 선점 현황과 등록 버튼
+function legacyIdNoticeHtml() {
+  const all = typeof REAL_MEMBERS !== "undefined" ? REAL_MEMBERS : [];
+  const done = all.filter((m) => LEGACY_IDS.has(m.id)).length;
+  if (done >= all.length && all.length) {
+    return `<p class="admin-note">구회원 아이디 ${done}명이 등록되어 있습니다.
+      명단의 아이디로 가입하면 승인 절차 없이 바로 일반회원으로 로그인됩니다.</p>`;
+  }
+  return `<div class="content-edit-notice">
+    구회원 ${all.length}명 중 ${done}명의 아이디만 등록되어 있습니다.
+    등록해야 구회원이 본인 아이디로 가입할 때 승인 없이 바로 이용할 수 있습니다.
+    <button type="button" class="btn btn-outline btn-sm" onclick="registerLegacyIds()">구회원 아이디 등록</button>
+  </div>`;
 }
 
 /* 회원 한 줄.
@@ -288,6 +345,8 @@ async function renderAdmin() {
     metaLoaded = true;
     subscribeMemberMeta();
   }
+
+  await loadLegacyIds();
 
   // 로그인 계정을 아이디로 찾을 수 있게 담아 둔다 (실회원 명단과 한 표로 합쳐 보여준다)
   const snap = await db.collection(USERS_COL).get();

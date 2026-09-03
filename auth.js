@@ -48,6 +48,32 @@ var _sdkLoaded = new Promise(function (resolve) {
   });
 })();
 
+/* 구회원 아이디 선점 (janggyo.co.kr 구 사이트 회원 명단).
+   구회원은 이메일·비밀번호가 남아 있지 않아 계정을 대신 만들어 줄 수 없다. 대신 아이디를
+   미리 등록해 두고, 본인 아이디로 가입하면 기존 회원으로 알아보고 승인 없이 바로 이용하게 한다.
+   문서ID = 구회원 아이디, 내용 = { unit }. 이름은 담지 않는다.
+   아이디를 정확히 아는 사람만 단건 조회(get)할 수 있고 목록 나열(list)은 막혀 있어
+   전체 회원 아이디를 긁어갈 수 없다. */
+var LEGACY_COL = "legacyMembers";
+
+function legacyMemberDocRef(id) {
+  return db.collection(LEGACY_COL).doc(id);
+}
+
+// 구회원 명단에 있는 아이디인지 확인한다. 있으면 { unit }, 없으면 null.
+async function findLegacyMember(id) {
+  await _sdkLoaded;
+  var key = String(id || "").trim();
+  if (!key) return null;
+  try {
+    var snap = await legacyMemberDocRef(key).get();
+    return snap.exists ? snap.data() || {} : null;
+  } catch (e) {
+    return null; // 조회에 실패하면 일반 가입 절차로 진행한다
+  }
+}
+window.findLegacyMember = findLegacyMember;
+
 var USERS_COL = "users"; // uid를 문서ID로 하는 회원 프로필
 var USERNAMES_COL = "usernames"; // 아이디(로그인용) -> {uid, email} 공개 조회용 (로그인 전 이메일 조회에 필요)
 var EMAILS_COL = "emails"; // 이메일 -> {id} 공개 조회용 (아이디 찾기에 필요, 이메일을 정확히 아는 사람만 조회 가능)
@@ -155,19 +181,27 @@ async function registerUser(user) {
   }
 
   var uid = cred.user.uid;
-  var approved = !user.requestedSpecial; // 일반회원은 즉시 승인, 입주자·구분소유자는 관리사무소 승인대기
+
+  /* 구회원이 본인 아이디로 가입하면 기존 회원으로 보고 승인 없이 일반회원으로 바로 이용하게 한다.
+     (입주자·구분소유자를 골랐더라도 일단 일반회원으로 열어 주고, 특별회원 부여는 관리사무소가
+     회원관리 화면에서 처리한다.) 명단에 없는 신규 가입자는 종전대로 일반회원만 즉시 승인한다. */
+  var legacy = await findLegacyMember(user.id);
+  var requestedSpecial = !!user.requestedSpecial && !legacy;
+  var approved = !requestedSpecial;
+
   var profile = {
     id: user.id,
     name: user.name,
     email: user.email,
     phone: String(user.phone).trim(),
-    unit: user.unit || "",
+    unit: user.unit || (legacy && legacy.unit) || "",
     company: user.company || "",
     grade: "normal",
     approved: approved,
-    requestedSpecial: !!user.requestedSpecial,
+    requestedSpecial: requestedSpecial,
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
   };
+  if (legacy) profile.legacy = true; // 구 사이트 회원이 아이디를 되찾은 계정
 
   try {
     var batch = db.batch();
@@ -179,7 +213,7 @@ async function registerUser(user) {
     return { ok: false, reason: "profile", message: e.message };
   }
 
-  return { ok: true, approved: approved };
+  return { ok: true, approved: approved, legacy: !!legacy };
 }
 
 /* ===== 로그인: { ok, reason } 형태 반환. 승인 전 계정은 reason:'pending' ===== */
