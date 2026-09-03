@@ -58,7 +58,8 @@ function getRealMemberMeta(id) {
   return Object.assign(
     {
       grade: "normal",
-      approved: src.approved !== false,
+      // 로그인 계정이 없는 명단 회원의 관리자 승인 기록. 승인 버튼을 눌러야 true가 된다.
+      approved: false,
       joinDate: src.joinDate || tsToYmd(u && u.createdAt),
       lastLogin: src.lastLogin || tsToYmd(u && u.lastLoginAt),
       note: "",
@@ -224,16 +225,29 @@ function memberRowHtml(m, i) {
 
   /* 신청: 특별회원으로 가입 신청한 회원을 여기서 바로 승인한다.
      승인하면 등급이 특별회원이 되고 계정 승인까지 함께 처리된다. 거절하면 신청 표시만 내린다. */
-  const req =
-    u && u.requestedSpecial && !isAdminRow
-      ? `<span class="badge req">특별</span>
-         <button type="button" class="mini primary" onclick="onApproveSpecial('${escM(u.uid)}', true)" title="특별회원으로 승인합니다">승인</button>
-         <button type="button" class="mini" onclick="onApproveSpecial('${escM(u.uid)}', false)" title="신청을 거절하고 표시를 내립니다">거절</button>`
-      : "-";
+  let req;
+  if (u && u.requestedSpecial && !isAdminRow) {
+    // 특별회원으로 가입 신청한 회원 — 승인하면 등급이 특별회원이 되고 계정 승인까지 처리된다
+    req = `<span class="badge req">특별</span>
+       <button type="button" class="mini primary" onclick="onApproveSpecial('${escM(u.uid)}', true)" title="특별회원으로 승인합니다">승인</button>
+       <button type="button" class="mini" onclick="onApproveSpecial('${escM(u.uid)}', false)" title="신청을 거절하고 표시를 내립니다">거절</button>`;
+  } else if (!u) {
+    /* 로그인 계정이 아직 없는 명단 회원 — 관리사무소가 회원으로 확인했다는 표시를 남긴다.
+       승인하면 상태가 "계정없음"에서 "승인됨"으로 바뀐다. */
+    req = meta.approved
+      ? `<button type="button" class="mini" onclick="onMemberApprove('${id}', false)" title="승인 표시를 내립니다">승인취소</button>`
+      : `<button type="button" class="mini primary" onclick="onMemberApprove('${id}', true)" title="이 회원을 승인 처리합니다">승인</button>`;
+  } else {
+    req = "-";
+  }
 
   let status;
   if (!u) {
-    status = `<span class="badge">계정없음</span>`;
+    // 계정이 없는 회원은 관리자가 승인 버튼을 누르면 "승인됨"으로 바뀐다.
+    // (로그인 계정이 생기는 것은 아니고, 본인이 아이디로 가입하면 그때 계정이 만들어진다)
+    status = meta.approved
+      ? `<span class="badge ok" title="관리사무소가 승인한 회원입니다. 본인이 아이디로 가입하면 바로 로그인됩니다">승인됨</span>`
+      : `<span class="badge">계정없음</span>`;
   } else if (isAdminRow) {
     status = `<span class="badge ok">승인됨</span>`;
   } else if (u.approved) {
@@ -402,6 +416,12 @@ async function onApprove(uid, approved) {
 async function onGrade(uid, grade) {
   await adminSetGrade(uid, grade);
   renderAdmin();
+}
+
+// 계정이 없는 명단 회원의 승인 표시 (서버에 저장되어 모든 관리자 화면에 반영된다)
+function onMemberApprove(id, approved) {
+  setRealMemberMeta(id, { approved: approved });
+  renderRealMemberTable();
 }
 
 async function onApproveSpecial(uid, accept) {
