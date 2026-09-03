@@ -169,9 +169,9 @@ function renderRealMemberTable() {
       <table class="board-table admin-table real-member-table">
         <thead>
           <tr>
-            <th width="40">no</th><th width="96">id</th><th width="92">이름</th><th width="170">이메일</th>
+            <th width="40">no</th><th width="120">id</th><th width="116">이름</th><th width="170">이메일</th>
             <th width="120">휴대폰번호</th><th width="90">호실</th><th width="104">가입일</th><th width="104">최근로그인</th>
-            <th width="104">등급</th><th width="184">신청</th><th width="140">상태</th><th width="70">게시글수</th><th width="210">비고</th>
+            <th width="104">등급</th><th width="112">신청</th><th width="140">상태</th><th width="70">게시글수</th><th width="210">비고</th>
           </tr>
         </thead>
         <tbody>${
@@ -226,7 +226,7 @@ function memberRowHtml(m, i) {
      승인하면 등급이 특별회원이 되고 계정 승인까지 함께 처리된다. 거절하면 신청 표시만 내린다. */
   const req =
     u && u.requestedSpecial && !isAdminRow
-      ? `<span class="badge req">특별 신청</span>
+      ? `<span class="badge req">특별</span>
          <button type="button" class="mini primary" onclick="onApproveSpecial('${escM(u.uid)}', true)" title="특별회원으로 승인합니다">승인</button>
          <button type="button" class="mini" onclick="onApproveSpecial('${escM(u.uid)}', false)" title="신청을 거절하고 표시를 내립니다">거절</button>`
       : "-";
@@ -260,7 +260,7 @@ function memberRowHtml(m, i) {
     <td data-label="가입일"><input type="text" class="join-date-input" placeholder="YYYY-MM-DD" value="${escM(meta.joinDate)}" onchange="onRealMemberJoinDate('${id}', this.value)"></td>
     <td data-label="최근로그인"><input type="text" class="join-date-input" placeholder="YYYY-MM-DD" value="${escM(meta.lastLogin)}" onchange="onRealMemberLastLogin('${id}', this.value)"></td>
     <td data-label="등급">${grade}</td>
-    <td data-label="신청" class="act">${req}</td>
+    <td data-label="신청" class="act col-req">${req}</td>
     <td data-label="상태" class="act">${status}</td>
     <td data-label="게시글수">${m.postCount || 0}</td>
     <td data-label="비고" class="act col-note">

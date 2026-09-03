@@ -1036,14 +1036,25 @@ body.sidebar-open .sidebar-overlay {
    (table-layout:auto는 긴 입력/버튼 열에 밀려 이름 등 텍스트 열이 부당하게 줄어들므로 fixed로 폭을 그대로 유지) */
 .real-member-table {
   table-layout: fixed;
-  width: 1524px;
-  min-width: 1524px;
+  width: 1492px;
+  min-width: 1492px;
 }
 
 /* 상태·비고 열은 배지와 버튼이 함께 들어가므로 잘리지 않게 둔다 */
 .real-member-table td.act {
   overflow: visible;
   text-overflow: clip;
+}
+
+/* 신청 열은 좁게 두고, 배지 아래로 승인·거절 버튼이 한 줄에 접히게 한다
+   (신청이 들어온 줄에서만 두 줄이 되고, 나머지 줄은 "-" 한 줄이다) */
+.real-member-table td.col-req {
+  white-space: normal;
+  line-height: 1.9;
+}
+
+.real-member-table td.col-req .mini {
+  padding: 3px 8px;
 }
 
 /* 모바일 회원관리: 13개 열을 옆으로 밀어 보는 대신, 회원 한 명을 한 장의 카드로 펼친다.
