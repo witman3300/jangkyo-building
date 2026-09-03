@@ -95,9 +95,10 @@ function emailDocRef(email) {
 }
 
 /* ===== 호실 입력 규칙 =====
-   허용: 숫자(전체 4자리까지), B, b, 호, 지하
-   그 외 문자는 받지 않는다. 예) 1201, 1201호, B102, b1, 지하151, 지하27호 */
-var UNIT_ALLOWED_RE = /^(?:지하|[Bb]|호|\d)*$/;
+   허용: 숫자(이어지는 숫자 4자리까지), B, b, 호, 지하, 하이픈(-)
+   그 외 문자는 받지 않는다.
+   예) 1201, 1201호, B102, b1, 지하151, 지하27호, B1-7(지하 1층 7호) */
+var UNIT_ALLOWED_RE = /^(?:지하|[Bb]|호|-|\d)*$/;
 var UNIT_MAX_DIGITS = 4;
 
 /* 입력 중 허용되지 않는 글자를 걸러내고, 숫자는 4자리까지만 남긴다.
@@ -110,10 +111,13 @@ function sanitizeUnit(value, allowPartial) {
   for (var i = 0; i < s.length; i++) {
     var c = s[i];
     if (c >= "0" && c <= "9") {
-      if (digits >= UNIT_MAX_DIGITS) continue; // 숫자는 4자리까지
+      if (digits >= UNIT_MAX_DIGITS) continue; // 이어지는 숫자는 4자리까지
       digits++;
       out += c;
-    } else if (c === "B" || c === "b" || c === "호") {
+      continue;
+    }
+    digits = 0; // 숫자가 아닌 글자를 만나면 자릿수를 다시 센다 (B1-7 처럼 나뉘는 경우)
+    if (c === "B" || c === "b" || c === "호" || c === "-") {
       out += c;
     } else if (c === "지") {
       if (s[i + 1] === "하") {
@@ -131,15 +135,16 @@ function isValidUnit(value) {
   var s = String(value || "").trim();
   if (!s) return false;
   if (!UNIT_ALLOWED_RE.test(s)) return false;
-  return (s.match(/\d/g) || []).length <= UNIT_MAX_DIGITS;
+  return !/\d{5,}/.test(s); // 이어지는 숫자가 5자리 이상이면 안 된다
 }
 
-var UNIT_RULE_MSG = "호실은 숫자 4자리까지와 B, b, 호, 지하만 입력할 수 있습니다. (예: 1201, B102, 지하151)";
+var UNIT_RULE_MSG =
+  "호실은 숫자 4자리까지와 B, b, 호, 지하, - 만 입력할 수 있습니다. (예: 1201, B102, 지하151, B1-7)";
 
 /* 호실 입력칸에 규칙을 걸어 둔다. 타이핑·붙여넣기 중에 허용되지 않는 글자를 바로 걸러낸다. */
 function attachUnitRule(input) {
   if (!input) return;
-  input.setAttribute("placeholder", "예: 1201 / 1201호 / B102 / 지하151");
+  input.setAttribute("placeholder", "예: 1201 / 1201호 / B102 / B1-7 / 지하151");
   input.setAttribute("maxlength", "12");
   input.addEventListener("input", function () {
     var cleaned = sanitizeUnit(input.value, true);
