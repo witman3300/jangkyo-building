@@ -4,11 +4,14 @@
 //   joinDate(실제 회원가입일), lastLogin(실제 최근 로그인일 — 회원정보 수정 페이지에서 추출),
 //   postCount(전체 게시판 실제 작성글수 — 자료실·임대안내·회원게시판·공지사항·결산보고서 5개 게시판 전수 확인,
 //   admin 외 회원은 작성 이력이 없어 전원 0건)
+// 선택 항목: grade("special"이면 특별회원), hidden(true면 회원관리 목록에서 제외)
+//   - 관리자(admin·witman)가 회원관리 화면에서 고친 값을 이 파일에 반영해 둔다.
+//     예전에는 이 수정이 고친 사람의 브라우저(localStorage)에만 남아 다른 기기에서는 보이지 않았다.
 const REAL_MEMBERS = [
   { id: "ekinseo", name: "서승원", unit: "에킨", points: 0, last: "26-07-30", joinDate: "2026-07-30", lastLogin: "2026-07-30", postCount: 0 },
   { id: "sonnyc", name: "전성환", unit: "2201호", points: 0, last: "26-07-27", joinDate: "2026-07-27", lastLogin: "2026-07-27", postCount: 0 },
   { id: "ldh6476", name: "이동훈", unit: "imform24", points: 0, last: "26-07-21", joinDate: "2026-07-21", lastLogin: "2026-07-21", postCount: 0 },
-  { id: "witman", name: "이상진", unit: "810호", points: 0, last: "26-07-10", joinDate: "2026-07-10", lastLogin: "2026-07-10", postCount: 0 },
+  { id: "witman", name: "이상진", unit: "810호", points: 0, last: "26-07-10", joinDate: "2026-06-07", lastLogin: "2026-08-18", postCount: 0, grade: "special" },
   { id: "seasonclinic", name: "사계절한의원", unit: "803호", points: 0, last: "26-06-12", joinDate: "2026-03-13", lastLogin: "2026-06-12", postCount: 0 },
   { id: "augb12", name: "룡잎실", unit: "룡잎실", points: 0, last: "26-02-10", joinDate: "2026-01-16", lastLogin: "2026-02-10", postCount: 0 },
   { id: "khmdm390", name: "망절경", unit: "망절경", points: 0, last: "25-08-02", joinDate: "2025-07-29", lastLogin: "2025-08-02", postCount: 0 },
@@ -198,7 +201,7 @@ const REAL_MEMBERS = [
   { id: "wwredww", name: "홍사도아", unit: "B104", points: 0, last: "14-01-18", joinDate: "2013-07-01", lastLogin: "2014-01-18", postCount: 0 },
   { id: "park0518", name: "박창범", unit: "802호park씨", points: 0, last: "13-05-15", joinDate: "2013-05-15", lastLogin: "2013-05-15", postCount: 0 },
   { id: "yes5111", name: "이현진", unit: "지하146호", points: 0, last: "13-05-02", joinDate: "2013-05-02", lastLogin: "2013-05-02", postCount: 0 },
-  { id: "sis42", name: "송인식", unit: "지하151", points: 0, last: "13-05-02", joinDate: "2013-05-02", lastLogin: "2013-05-02", postCount: 0 },
+  { id: "sis42", name: "송인식", unit: "지하151", points: 0, last: "13-05-02", joinDate: "2013-05-02", lastLogin: "2013-05-02", postCount: 0, hidden: true },
   { id: "kimsh10503", name: "김승호", unit: "지하141호", points: 0, last: "13-05-01", joinDate: "2013-05-01", lastLogin: "2013-05-01", postCount: 0 },
   { id: "ljh45099", name: "이주형", unit: "없음", points: 0, last: "13-04-22", joinDate: "2013-04-22", lastLogin: "2013-04-22", postCount: 0 },
   { id: "pys380", name: "박유순", unit: "b124", points: 0, last: "13-04-09", joinDate: "2013-04-09", lastLogin: "2013-04-09", postCount: 0 },
