@@ -128,6 +128,18 @@ function esc(s) {
   })[c]);
 }
 
+/* NEW 표시 기간: 올린 지 7일이 지나면 사라진다.
+   날짜는 "YYYY-MM-DD" 형태다. Date.parse는 이 형태를 UTC 0시로 읽어 한국 시각과
+   9시간 어긋나므로(오늘 올린 글이 오전에는 NEW로 안 잡힌다) 직접 현지 0시로 만든다. */
+const NEW_DAYS = 7;
+
+function isWithinNewDays(dateStr) {
+  const m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(dateStr || "").trim());
+  if (!m) return false;
+  const posted = new Date(+m[1], +m[2] - 1, +m[3]); // 그날 0시(현지 시각)
+  return (Date.now() - posted.getTime()) / (24 * 60 * 60 * 1000) < NEW_DAYS;
+}
+
 /* ===== 목록 보기 =====
    DOC_CATS 카테고리는 정적 원본 글(reports-data.js 등)을 아래쪽에 두고,
    이 사이트에서 새로 등록한 글은 원본 마지막 번호 다음 번호를 받아 위쪽에 쌓인다. */
@@ -170,10 +182,8 @@ function renderList() {
       href: "#view/" + p.id,
       files: (p.files && p.files.length) || 0,
       pinned: pin,
+      isNew: isWithinNewDays(p.date),
     });
-
-  // 원본 글 중 가장 최근 것에 NEW 표시 (새로 등록한 글이 없을 때만 — 있으면 그쪽이 최신이다)
-  const newestStaticNo = normal.length || pinned.length ? -1 : baseNo;
 
   const staticRow = (p) =>
     rowHtml({
@@ -184,7 +194,7 @@ function renderList() {
       href: doc.view + "?id=" + p.id,
       files: p.imgCount || 0,
       pinned: false,
-      isNew: p.no === newestStaticNo,
+      isNew: isWithinNewDays(p.date),
     });
 
   let rows;

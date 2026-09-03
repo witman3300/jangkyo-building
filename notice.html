@@ -123,9 +123,15 @@ footer{background:#0d2136;color:#8ba0b5;font-size:13px;padding:30px 0;text-align
   }
   var sorted = NOTICES.slice().sort(function (a, b) { return b.no - a.no; });
   document.getElementById("totalCnt").textContent = "전체 " + sorted.length + "건";
-  var latestNo = sorted.length ? sorted[0].no : 0;
+  // NEW 표시는 올린 지 7일까지만 (게시판 목록과 같은 기준). 날짜는 현지 0시로 읽는다.
+  function isNewPost(dateStr) {
+    var m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(dateStr || "").trim());
+    if (!m) return false;
+    var posted = new Date(+m[1], +m[2] - 1, +m[3]);
+    return (Date.now() - posted.getTime()) / (24 * 60 * 60 * 1000) < 7;
+  }
   var rows = sorted.map(function (p) {
-    var isNew = p.no === latestNo;
+    var isNew = isNewPost(p.date);
     var hasFile = p.imgCount > 0;
     return '<tr><td class="num">' + p.no + '</td>'
       + '<td class="subj"><a href="notice-view.html?id=' + p.id + '">' + esc(p.title)
