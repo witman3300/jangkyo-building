@@ -21,7 +21,7 @@ service cloud.firestore {
       return ('protected' in resource.data) && resource.data.protected == true;
     }
 
-    // 회원 프로필: 본인 또는 관리자만 읽기 가능. 가입 시 승인 상태를 스스로 true로 못 만들도록 강제한다.
+    // 회원 프로필: 본인 또는 관리자만 읽기 가능.
     match /users/{uid} {
       allow read: if isOwner(uid) || isAdmin();
       /* 가입 시 스스로 승인 상태를 만들 수 없게 강제한다.
