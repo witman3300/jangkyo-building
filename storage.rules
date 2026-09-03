@@ -1,0 +1,18 @@
+rules_version = '2';
+
+// 게시판 첨부파일 보관 규칙 (Firebase 콘솔 > Storage > Rules 에 게시)
+// Firestore 문서는 1MB 제한이 있어 첨부파일 본체는 여기에 두고, 게시글 문서에는 주소만 저장한다.
+// Storage 규칙은 Firestore를 조회할 수 없으므로 등급(특별회원/관리자) 확인은 하지 못한다.
+// 대신 "로그인한 사용자만 업로드" + 용량 제한으로 막고, 게시글 열람 통제는 Firestore 규칙이 맡는다.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /board/{cat}/{postId}/{fileName} {
+      // 다운로드 주소(getDownloadURL)에는 추측할 수 없는 토큰이 붙는다.
+      // 그 주소를 아는 사람만 받을 수 있고, 주소는 특별회원만 볼 수 있는 게시글 안에만 노출된다.
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.resource.size < 20 * 1024 * 1024;
+      allow delete: if request.auth != null;
+    }
+  }
+}

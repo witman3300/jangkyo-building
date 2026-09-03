@@ -6,7 +6,7 @@
 // createElement로 순서를 보장하며 3개 스크립트를 비동기 로드한다 (async=false 로 실행 순서 고정).
 // 로드가 끝나기 전까지 fbAuth/db는 undefined이므로, 이를 사용하는 함수는 반드시 window.authReady를
 // 먼저 기다려야 한다 (아래 registerUser/loginUser 등은 내부에서 이미 기다린다).
-var fbAuth, db;
+var fbAuth, db, fbStorage;
 var _sdkLoadedResolve;
 var _sdkLoaded = new Promise(function (resolve) {
   _sdkLoadedResolve = resolve;
@@ -22,7 +22,13 @@ var _sdkLoaded = new Promise(function (resolve) {
   };
   var v = "10.13.2";
   var base = "https://www.gstatic.com/firebasejs/" + v + "/";
-  var files = ["firebase-app-compat.js", "firebase-auth-compat.js", "firebase-firestore-compat.js"];
+  // storage: 게시판 첨부파일을 Firebase Storage에 올리는 데 사용한다 (Firestore 문서는 1MB 제한).
+  var files = [
+    "firebase-app-compat.js",
+    "firebase-auth-compat.js",
+    "firebase-firestore-compat.js",
+    "firebase-storage-compat.js",
+  ];
   var loaded = 0;
   files.forEach(function (f) {
     var s = document.createElement("script");
@@ -34,6 +40,7 @@ var _sdkLoaded = new Promise(function (resolve) {
         firebase.initializeApp(firebaseConfig);
         fbAuth = firebase.auth();
         db = firebase.firestore();
+        fbStorage = firebase.storage();
         _sdkLoadedResolve();
       }
     };
@@ -536,12 +543,40 @@ function setupMenuSlider() {
 
 window.addEventListener("DOMContentLoaded", setupMenuSlider);
 
-// ===== 관리자 본문 수정 (백엔드 없이 localStorage에 페이지별로 저장) =====
-function setupContentEdit() {
+/* ===== 관리자 본문 수정 (Firestore pages 컬렉션에 저장) =====
+   예전에는 수정 내용을 localStorage에 넣었는데, 그러면 (1) 수정한 사람의 브라우저에만 남아
+   다른 방문자에게는 안 보이고, (2) 그 브라우저에서는 저장본이 매번 원본 HTML을 덮어써서
+   파일을 고쳐 배포해도 계속 예전 화면이 보였다("원상복구" 증상).
+   이제는 Firestore에 저장해 모든 방문자에게 공통으로 반영하고, 저장 당시 원본 HTML의 지문을
+   함께 기록한다. 배포로 원본이 바뀌면 지문이 달라지므로 예전 수정본은 적용하지 않고
+   새로 배포한 내용을 그대로 보여준다. */
+const PAGES_COL = "pages";
+const LEGACY_CONTENT_PREFIX = "jangkyo_content::"; // 옛 localStorage 방식의 키 (정리 대상)
+
+function currentPageKey() {
+  return location.pathname.split("/").pop() || "index.html";
+}
+
+// 원본 HTML의 지문(FNV-1a 32bit + 길이). 배포로 파일이 바뀌면 값이 달라진다.
+function contentFingerprint(html) {
+  const s = String(html).replace(/\s+/g, " ").trim();
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+  }
+  return h.toString(16) + "-" + s.length;
+}
+
+function pageDocRef(pageKey) {
+  return db.collection(PAGES_COL).doc(pageKey);
+}
+
+async function setupContentEdit() {
   const mainEl = document.querySelector("main.about-body");
   if (!mainEl) return;
 
-  const pageKey = "jangkyo_content::" + location.pathname.split("/").pop();
+  const pageKey = currentPageKey();
 
   // 본문을 별도 영역으로 감싸서 툴바는 편집 대상에서 제외
   const area = document.createElement("div");
@@ -549,11 +584,65 @@ function setupContentEdit() {
   while (mainEl.firstChild) area.appendChild(mainEl.firstChild);
   mainEl.appendChild(area);
 
-  // 저장된 수정 내용이 있으면 원본 대신 표시 (모든 방문자 공통)
-  const saved = localStorage.getItem(pageKey);
-  if (saved) area.innerHTML = saved;
+  // 지문과 원본 HTML은 반드시 "배포된 상태"에서 확보한다 (저장본을 적용하기 전).
+  const deployedHTML = area.innerHTML;
+  const baseHash = contentFingerprint(deployedHTML);
 
-  if (!isAdmin()) return;
+  // 옛 localStorage 저장본은 이 브라우저에서만 새 배포를 가리는 원인이므로 지운다.
+  try {
+    localStorage.removeItem(LEGACY_CONTENT_PREFIX + pageKey);
+  } catch (e) {
+    /* 저장소 접근이 막힌 브라우저는 무시 */
+  }
+
+  let saved = null;
+  try {
+    const snap = await pageDocRef(pageKey).get();
+    if (snap.exists) saved = snap.data();
+  } catch (e) {
+    /* 읽기 실패 시에는 배포된 원본을 그대로 보여준다 */
+  }
+
+  // 저장본이 있어도, 그 뒤에 페이지가 새로 배포됐다면(지문 불일치) 적용하지 않는다.
+  const stale = !!(saved && saved.baseHash !== baseHash);
+  let applied = !!saved && !stale;
+  if (applied) area.innerHTML = saved.html;
+
+  // 페이지별 스크립트(공실 추가·서식 업로드 등)가 이 시점 이후에 DOM을 다루도록 알린다.
+  const notifyReady = () => document.dispatchEvent(new CustomEvent("contentready"));
+
+  /* 다른 PC에서 관리자가 저장하면 새로고침 없이 이 화면에도 바로 반영한다.
+     편집 중일 때는 덮어쓰지 않고, 편집을 끝낸 뒤에 적용한다. */
+  let editing = false;
+  let pendingRemote = null;
+
+  function applyRemote(data) {
+    const html = data && data.baseHash === baseHash ? data.html : deployedHTML;
+    if (html === area.innerHTML) return; // 내가 방금 저장한 내용이면 그대로 둔다
+    area.innerHTML = html;
+    applied = !!(data && data.baseHash === baseHash);
+    notifyReady(); // 페이지별 스크립트가 바뀐 본문에 다시 붙도록 한다
+  }
+
+  pageDocRef(pageKey).onSnapshot(
+    function (snap) {
+      if (snap.metadata.hasPendingWrites) return; // 아직 서버에 반영 전인 내 저장은 무시
+      const data = snap.exists ? snap.data() : null;
+      if (editing) {
+        pendingRemote = data;
+        return;
+      }
+      applyRemote(data);
+    },
+    function () {
+      /* 구독 실패(네트워크 등)는 무시 — 이미 불러온 내용을 그대로 보여준다 */
+    }
+  );
+
+  if (!isAdmin()) {
+    notifyReady();
+    return;
+  }
 
   const toolbar = document.createElement("div");
   toolbar.className = "content-edit-toolbar";
@@ -579,7 +668,7 @@ function setupContentEdit() {
   resetBtn.type = "button";
   resetBtn.className = "btn btn-outline btn-sm";
   resetBtn.textContent = "원본으로 복원";
-  resetBtn.style.display = saved ? "" : "none";
+  resetBtn.style.display = applied ? "" : "none";
 
   toolbar.appendChild(editBtn);
   toolbar.appendChild(saveBtn);
@@ -587,9 +676,62 @@ function setupContentEdit() {
   toolbar.appendChild(resetBtn);
   mainEl.insertBefore(toolbar, area);
 
+  // 새 버전이 배포돼 예전 수정본이 무시된 경우, 관리자에게만 안내한다.
+  if (stale) {
+    const notice = document.createElement("div");
+    notice.className = "content-edit-notice";
+    notice.textContent = "이 페이지가 새 버전으로 배포되어, 예전에 저장한 수정 내용은 적용하지 않았습니다.";
+    const dropBtn = document.createElement("button");
+    dropBtn.type = "button";
+    dropBtn.className = "btn btn-outline btn-sm";
+    dropBtn.textContent = "예전 수정본 삭제";
+    dropBtn.addEventListener("click", async function () {
+      try {
+        await pageDocRef(pageKey).delete();
+        notice.remove();
+      } catch (e) {
+        alert("삭제하지 못했습니다: " + e.message);
+      }
+    });
+    notice.appendChild(dropBtn);
+    mainEl.insertBefore(notice, toolbar);
+  }
+
   let originalHTML = null;
 
+  // 페이지별 스크립트가 본문을 바꾼 뒤 호출한다 (예: 공실 추가, 서식 파일 업로드).
+  window.saveContentEdit = async function () {
+    const html = area.innerHTML;
+    try {
+      await pageDocRef(pageKey).set({
+        html: html,
+        baseHash: baseHash,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        updatedBy: (getSession() && getSession().id) || "",
+      });
+      applied = true;
+      resetBtn.style.display = "";
+      return true;
+    } catch (e) {
+      alert(
+        "저장하지 못했습니다. 첨부 파일이 너무 크면 저장이 거부될 수 있습니다(페이지당 1MB 제한).\n" + e.message
+      );
+      return false;
+    }
+  };
+
+  // 편집을 끝낸 뒤, 그 사이 다른 PC에서 들어온 저장 내용이 있으면 그때 반영한다.
+  function endEditing() {
+    editing = false;
+    if (pendingRemote !== null) {
+      const data = pendingRemote;
+      pendingRemote = null;
+      applyRemote(data);
+    }
+  }
+
   editBtn.addEventListener("click", function () {
+    editing = true;
     originalHTML = area.innerHTML;
     area.contentEditable = "true";
     area.classList.add("editing");
@@ -599,14 +741,18 @@ function setupContentEdit() {
     cancelBtn.style.display = "";
   });
 
-  saveBtn.addEventListener("click", function () {
+  saveBtn.addEventListener("click", async function () {
+    saveBtn.disabled = true;
+    const ok = await window.saveContentEdit();
+    saveBtn.disabled = false;
+    if (!ok) return;
     area.contentEditable = "false";
     area.classList.remove("editing");
-    localStorage.setItem(pageKey, area.innerHTML);
     editBtn.style.display = "";
     saveBtn.style.display = "none";
     cancelBtn.style.display = "none";
-    resetBtn.style.display = "";
+    pendingRemote = null; // 내 저장이 최신이므로 편집 중 들어온 알림은 버린다
+    editing = false;
   });
 
   cancelBtn.addEventListener("click", function () {
@@ -616,13 +762,20 @@ function setupContentEdit() {
     editBtn.style.display = "";
     saveBtn.style.display = "none";
     cancelBtn.style.display = "none";
+    endEditing();
   });
 
-  resetBtn.addEventListener("click", function () {
+  resetBtn.addEventListener("click", async function () {
     if (!confirm("수정 내용을 지우고 원래 페이지 내용으로 되돌릴까요?")) return;
-    localStorage.removeItem(pageKey);
-    location.reload();
+    try {
+      await pageDocRef(pageKey).delete();
+      location.reload();
+    } catch (e) {
+      alert("복원하지 못했습니다: " + e.message);
+    }
   });
+
+  notifyReady();
 }
 
 window.onAuthReady(setupContentEdit);

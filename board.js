@@ -1,8 +1,14 @@
-// 회원게시판 - localStorage 기반 (백엔드 없이 동작하는 데모)
-// 게시글 구조: { id, title, author, content, date, files: [{name, type, size, data(base64)}] }
+// 회원게시판 - Firestore(posts 컬렉션) + Firebase Storage(첨부파일) 기반.
+// 예전에는 글을 localStorage에 저장해서 글을 쓴 그 브라우저에서만 보였는데,
+// 이제는 서버에 저장되므로 어느 PC에서 쓰든 모든 회원에게 보이고, 목록을 켜 둔 다른 PC에도
+// 새로고침 없이 바로 반영된다(onSnapshot 구독).
+// 게시글 문서: { cat, title, author, authorUid, content, date, pinned, createdAt,
+//                files: [{ name, type, size, path, url }] }
+// 첨부파일 본체는 Storage의 board/{cat}/{postId}/ 아래에 두고, 문서에는 주소만 저장한다.
 
-const STORE_KEY = "jangkyo_board_posts";
-const MAX_FILE_MB = 3; // localStorage 용량 한계로 첨부 1개당 권장 최대 크기
+const POSTS_COL = "posts";
+const LEGACY_STORE_KEY = "jangkyo_board_posts"; // 옛 localStorage 방식으로 그 브라우저에만 남아 있던 글
+const MAX_FILE_MB = 20; // Storage에 올리므로 예전(3MB)보다 크게 잡을 수 있다
 
 // 게시판 카테고리
 // notice: 정보마당 공지사항(info-notice.html). 실제 관리단 공지(notices-data.js)를 그대로 보여주는
@@ -52,18 +58,47 @@ function getCat() {
   return CATEGORIES[c] ? c : "notice";
 }
 
-let pendingFiles = []; // 작성 중 첨부 대기 목록
+let pendingFiles = []; // 작성 중 첨부 대기 목록 (File 객체를 그대로 들고 있다가 등록할 때 업로드)
 
-function loadPosts() {
-  try {
-    return JSON.parse(localStorage.getItem(STORE_KEY)) || [];
-  } catch (e) {
-    return [];
-  }
+/* ===== Firestore 구독 =====
+   현재 카테고리의 글을 실시간으로 받아 POSTS에 담아 둔다.
+   where + orderBy를 같이 쓰면 복합 색인을 만들어야 하므로, 정렬은 받아온 뒤 여기서 처리한다. */
+let POSTS = [];
+let postsLoaded = false;
+let unsubscribePosts = null;
+
+function postsRef() {
+  return db.collection(POSTS_COL);
 }
 
-function savePosts(posts) {
-  localStorage.setItem(STORE_KEY, JSON.stringify(posts));
+function subscribePosts() {
+  if (unsubscribePosts) unsubscribePosts();
+  unsubscribePosts = postsRef()
+    .where("cat", "==", getCat())
+    .onSnapshot(
+      (snap) => {
+        POSTS = snap.docs
+          .map((d) => Object.assign({ id: d.id }, d.data()))
+          .sort((a, b) => (a.createdAt ? a.createdAt.seconds : 0) - (b.createdAt ? b.createdAt.seconds : 0));
+        postsLoaded = true;
+        onPostsChanged();
+      },
+      () => {
+        // 권한 없음·네트워크 오류 등: 빈 목록으로 두고 화면은 계속 그린다
+        postsLoaded = true;
+        onPostsChanged();
+      }
+    );
+}
+
+// 다른 PC에서 글이 등록·삭제되면 화면을 다시 그린다. 단, 글을 쓰는 중에는 폼을 지우지 않는다.
+function onPostsChanged() {
+  if ((location.hash || "#list") === "#write") return;
+  route();
+}
+
+function loadPosts() {
+  return POSTS;
 }
 
 function fmtSize(bytes) {
@@ -165,7 +200,9 @@ function renderList() {
     });
 
   let rows;
-  if (all.length === 0 && staticRows.length === 0) {
+  if (!postsLoaded && staticRows.length === 0) {
+    rows = `<tr><td colspan="5" class="board-empty">불러오는 중...</td></tr>`;
+  } else if (all.length === 0 && staticRows.length === 0) {
     rows = `<tr><td colspan="5" class="board-empty">등록된 게시글이 없습니다.</td></tr>`;
   } else {
     let n = baseNo + normal.length;
@@ -183,6 +220,7 @@ function renderList() {
       <h1>${CATEGORIES[cat]}</h1>
       ${writeBtn}
     </div>
+    ${legacyNoticeHtml()}
     <table class="board-table">
       <thead>
         <tr><th width="60">번호</th><th>제목</th><th width="100">작성자</th><th width="110">작성일</th><th width="70">첨부</th></tr>
@@ -191,9 +229,72 @@ function renderList() {
     </table>`;
 }
 
+/* ===== 옛 localStorage 글 서버로 옮기기 =====
+   예전 방식으로 이 브라우저에만 저장돼 있던 글이 있으면 목록 위에 안내를 띄우고,
+   버튼을 누르면 첨부파일까지 Storage에 올려 서버(Firestore)로 이전한다. */
+function legacyPosts() {
+  try {
+    return (JSON.parse(localStorage.getItem(LEGACY_STORE_KEY)) || []).filter(
+      (p) => (p.cat || "notice") === getCat()
+    );
+  } catch (e) {
+    return [];
+  }
+}
+
+function legacyNoticeHtml() {
+  const n = legacyPosts().length;
+  if (!n || !(typeof isSpecial === "function" && isSpecial())) return "";
+  return `<div class="content-edit-notice">
+    이 브라우저에만 저장된 예전 게시글이 ${n}개 있습니다. 서버로 옮기면 다른 PC에서도 보입니다.
+    <button type="button" class="btn btn-outline btn-sm" onclick="migrateLegacyPosts()">서버로 옮기기</button>
+  </div>`;
+}
+
+async function migrateLegacyPosts() {
+  const olds = legacyPosts();
+  if (!olds.length) return;
+  showToast(`예전 게시글 ${olds.length}개를 서버로 옮기는 중...`);
+  const session = typeof getSession === "function" ? getSession() : null;
+  try {
+    for (const old of olds) {
+      const ref = postsRef().doc();
+      const files = [];
+      for (let i = 0; i < (old.files || []).length; i++) {
+        const f = old.files[i];
+        // 예전 글의 첨부는 base64 데이터URL로 본문에 들어 있었다 → 실제 파일로 되살려 업로드한다
+        const blob = await fetch(f.data).then((r) => r.blob());
+        files.push(await uploadAttachment(ref.id, i, new File([blob], f.name, { type: f.type || blob.type })));
+      }
+      await ref.set({
+        cat: old.cat || "notice",
+        title: old.title || "",
+        author: old.author || "",
+        authorUid: (session && session.uid) || "",
+        content: old.content || "",
+        date: old.date || "",
+        pinned: !!old.pinned,
+        files: files,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+    // 옮긴 글만 남은 목록에서 지운다 (다른 카테고리 글은 그대로 둔다)
+    const keep = JSON.parse(localStorage.getItem(LEGACY_STORE_KEY) || "[]").filter(
+      (p) => (p.cat || "notice") !== getCat()
+    );
+    if (keep.length) localStorage.setItem(LEGACY_STORE_KEY, JSON.stringify(keep));
+    else localStorage.removeItem(LEGACY_STORE_KEY);
+    showToast(`${olds.length}개를 서버로 옮겼습니다.`);
+    route();
+  } catch (e) {
+    showToast("옮기지 못했습니다: " + e.message);
+  }
+}
+
 /* ===== 작성 보기 ===== */
 function renderWrite() {
   pendingFiles = [];
+  const session = typeof getSession === "function" ? getSession() : null;
   document.getElementById("app").innerHTML = `
     <div class="board-head"><h1>${CATEGORIES[getCat()]} · 글쓰기</h1></div>
     <form class="write-form" onsubmit="submitPost(event)">
@@ -203,13 +304,13 @@ function renderWrite() {
       </div>
       <div class="write-row">
         <div class="label">작성자</div>
-        <div class="field"><input type="text" id="f-author" placeholder="이름" required /></div>
+        <div class="field"><input type="text" id="f-author" placeholder="이름" value="${esc((session && session.name) || "")}" required /></div>
       </div>
       <div class="write-row">
         <div class="label">자료첨부</div>
         <div class="field">
           <input type="file" id="f-files" multiple onchange="onPickFiles(event)" />
-          <span class="file-hint">여러 개 선택 가능 · 파일당 최대 ${MAX_FILE_MB}MB 권장</span>
+          <span class="file-hint">여러 개 선택 가능 · 파일당 최대 ${MAX_FILE_MB}MB</span>
           <ul class="file-list" id="file-list"></ul>
         </div>
       </div>
@@ -224,7 +325,7 @@ function renderWrite() {
           </div>`
         : ""}
       <div class="btn-row">
-        <button type="submit" class="btn btn-primary btn-sm">등록</button>
+        <button type="submit" class="btn btn-primary btn-sm" id="f-submit">등록</button>
         <a href="#list" class="btn btn-outline btn-sm">취소</a>
       </div>
     </form>`;
@@ -240,22 +341,14 @@ function renderFileList() {
 }
 
 function onPickFiles(e) {
-  const files = Array.from(e.target.files);
-  let remaining = files.length;
-  if (remaining === 0) return;
-  files.forEach((file) => {
+  Array.from(e.target.files).forEach((file) => {
     if (file.size > MAX_FILE_MB * 1024 * 1024) {
       showToast(`"${file.name}" 은(는) ${MAX_FILE_MB}MB를 초과하여 제외됩니다.`);
-      remaining--;
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      pendingFiles.push({ name: file.name, type: file.type, size: file.size, data: reader.result });
-      renderFileList();
-    };
-    reader.readAsDataURL(file);
+    pendingFiles.push(file);
   });
+  renderFileList();
   e.target.value = ""; // 같은 파일 다시 선택 가능하도록 초기화
 }
 
@@ -264,45 +357,73 @@ function removeFile(i) {
   renderFileList();
 }
 
-function submitPost(e) {
+// 첨부 1개를 Storage에 올리고, 문서에 저장할 정보(주소 포함)를 돌려준다.
+async function uploadAttachment(postId, index, file) {
+  const path = `board/${getCat()}/${postId}/${index}_${file.name}`;
+  const snap = await fbStorage.ref(path).put(file, { contentType: file.type || "application/octet-stream" });
+  return {
+    name: file.name,
+    type: file.type || "",
+    size: file.size,
+    path: path,
+    url: await snap.ref.getDownloadURL(),
+  };
+}
+
+async function submitPost(e) {
   e.preventDefault();
   const title = document.getElementById("f-title").value.trim();
   const author = document.getElementById("f-author").value.trim();
   const content = document.getElementById("f-content").value.trim();
   if (!title || !author || !content) return;
 
+  const btn = document.getElementById("f-submit");
+  btn.disabled = true;
+  btn.textContent = "등록 중...";
+
   const now = new Date();
   const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const pinEl = document.getElementById("f-pinned");
-  const post = {
-    id: "p" + now.getTime(),
-    cat: getCat(),
-    title, author, content, date,
-    files: pendingFiles.slice(),
-    pinned: !!(pinEl && pinEl.checked),
-  };
-  const posts = loadPosts();
-  posts.push(post);
+  const session = typeof getSession === "function" ? getSession() : null;
+  const ref = postsRef().doc(); // 첨부 경로에 쓰려고 문서 ID를 먼저 받아 둔다
+
   try {
-    savePosts(posts);
+    const files = [];
+    for (let i = 0; i < pendingFiles.length; i++) {
+      btn.textContent = `첨부 올리는 중 ${i + 1}/${pendingFiles.length}...`;
+      files.push(await uploadAttachment(ref.id, i, pendingFiles[i]));
+    }
+    await ref.set({
+      cat: getCat(),
+      title, author, content, date,
+      authorUid: (session && session.uid) || "",
+      files: files,
+      pinned: !!(pinEl && pinEl.checked),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    location.hash = "#view/" + ref.id;
   } catch (err) {
-    showToast("저장 공간이 부족합니다. 첨부파일 용량을 줄여주세요.");
-    return;
+    showToast("등록하지 못했습니다: " + err.message);
+    btn.disabled = false;
+    btn.textContent = "등록";
   }
-  location.hash = "#view/" + post.id;
 }
 
 /* ===== 상세 보기 ===== */
 function renderView(id) {
-  const posts = loadPosts();
-  const p = posts.find((x) => x.id === id);
+  const p = loadPosts().find((x) => x.id === id);
   if (!p) {
+    // 아직 못 불러온 상태면 기다리고, 다 불러왔는데 없으면 목록으로 되돌린다
+    if (!postsLoaded) {
+      document.getElementById("app").innerHTML = `<p class="board-empty">불러오는 중...</p>`;
+      return;
+    }
     location.hash = "#list";
     return;
   }
   const attach = (p.files && p.files.length)
     ? `<div class="view-attach"><strong>📎 첨부파일</strong>${p.files
-        .map((f) => `<a href="${f.data}" download="${esc(f.name)}">${esc(f.name)} (${fmtSize(f.size)})</a>`)
+        .map((f) => `<a href="${f.url}" target="_blank" rel="noopener">${esc(f.name)} (${fmtSize(f.size)})</a>`)
         .join("")}</div>`
     : "";
 
@@ -310,13 +431,19 @@ function renderView(id) {
   const images = (p.files || []).filter((f) => (f.type || "").indexOf("image/") === 0);
   const imagesHtml = images.length
     ? `<div class="view-images">${images
-        .map((f) => `<img src="${f.data}" alt="${esc(f.name)}" loading="lazy" />`)
+        .map((f) => `<img src="${f.url}" alt="${esc(f.name)}" loading="lazy" />`)
         .join("")}</div>`
     : "";
 
   const admin = typeof isAdmin === "function" && isAdmin();
+  const session = typeof getSession === "function" ? getSession() : null;
+  const mine = !!(session && p.authorUid && session.uid === p.authorUid);
   const pinBtn = admin
     ? `<button type="button" class="btn btn-outline btn-sm" onclick="togglePin('${p.id}')">${p.pinned ? "고정 해제" : "상단 고정"}</button>`
+    : "";
+  // 삭제는 글쓴이 본인과 관리자만 (서버 규칙에서도 동일하게 막는다)
+  const delBtn = admin || mine
+    ? `<button type="button" class="btn btn-primary btn-sm" onclick="deletePost('${p.id}')">삭제</button>`
     : "";
   const pinTag = p.pinned ? `<span class="pin-flag">📌 공지</span> ` : "";
 
@@ -332,25 +459,34 @@ function renderView(id) {
     <div class="btn-row">
       <a href="#list" class="btn btn-outline btn-sm">목록</a>
       ${pinBtn}
-      <button type="button" class="btn btn-primary btn-sm" onclick="deletePost('${p.id}')">삭제</button>
+      ${delBtn}
     </div>`;
 }
 
-function togglePin(id) {
+async function togglePin(id) {
   if (!(typeof isAdmin === "function" && isAdmin())) return;
-  const posts = loadPosts();
-  const p = posts.find((x) => x.id === id);
-  if (p) {
-    p.pinned = !p.pinned;
-    savePosts(posts);
-    renderView(id);
+  const p = loadPosts().find((x) => x.id === id);
+  if (!p) return;
+  try {
+    await postsRef().doc(id).update({ pinned: !p.pinned });
+  } catch (e) {
+    showToast("변경하지 못했습니다: " + e.message);
   }
 }
 
-function deletePost(id) {
+async function deletePost(id) {
   if (!confirm("이 게시글을 삭제하시겠습니까?")) return;
-  savePosts(loadPosts().filter((p) => p.id !== id));
-  location.hash = "#list";
+  const p = loadPosts().find((x) => x.id === id);
+  try {
+    // 첨부파일부터 지우고(실패해도 글 삭제는 진행) 문서를 지운다
+    for (const f of (p && p.files) || []) {
+      if (f.path) await fbStorage.ref(f.path).delete().catch(() => {});
+    }
+    await postsRef().doc(id).delete();
+    location.hash = "#list";
+  } catch (e) {
+    showToast("삭제하지 못했습니다: " + e.message);
+  }
 }
 
 /* 현재 카테고리에 해당하는 사이드바 메뉴 활성화 */
@@ -391,4 +527,8 @@ function route() {
 }
 
 window.addEventListener("hashchange", route);
-window.onAuthReady(route);
+window.onAuthReady(function () {
+  // 공지사항(notice)은 정적 데이터만 쓰므로 굳이 구독하지 않는다
+  if (getCat() !== "notice") subscribePosts();
+  route();
+});

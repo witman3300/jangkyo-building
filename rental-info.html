@@ -152,8 +152,10 @@
       var tbody = table && table.querySelector('tbody');
       if (!tbody) return;
 
-      // auth.js의 본문 수정 캐시(localStorage)에 이전에 저장된 폼이 남아있으면 제거 후 새로 만든다 (중복 방지)
+      // 저장된 본문에 예전 폼이 섞여 들어왔거나, 다른 PC의 수정이 반영돼 init이 다시 불릴 때를
+      // 대비해 이전에 만든 폼·버튼을 먼저 지운다 (중복 방지)
       section.querySelectorAll('.vacancy-add-form').forEach(function (el) { el.remove(); });
+      document.querySelectorAll('.vacancy-add-btn').forEach(function (el) { el.remove(); });
 
       // 관리자에게만 뜨는 content-edit-toolbar(저장/취소가 있는 줄)의 맨 오른쪽에 버튼을 붙인다
       var toolbar = document.querySelector('.content-edit-toolbar');
@@ -183,9 +185,9 @@
 
       table.parentNode.insertBefore(form, table);
 
+      // 수정 내용은 auth.js가 Firestore에 저장한다 (모든 방문자·모든 기기에 공통 반영)
       function saveVacancyContent() {
-        var area = document.querySelector('main.about-body .content-editable-area');
-        if (area) localStorage.setItem('jangkyo_content::' + location.pathname.split('/').pop(), area.innerHTML);
+        if (window.saveContentEdit) window.saveContentEdit();
       }
 
       // "12F" → 12, "B1" → -1 처럼 층 표기를 숫자로 바꿔 내림차순 정렬 기준으로 쓴다
@@ -245,7 +247,8 @@
       });
     }
 
-    window.addEventListener('DOMContentLoaded', init);
+    // auth.js가 Firestore에서 저장된 본문을 불러오고 관리자 툴바를 만든 뒤 발생시키는 이벤트
+    document.addEventListener('contentready', init);
   })();
   </script>
   <script src="home-slider.js"></script>

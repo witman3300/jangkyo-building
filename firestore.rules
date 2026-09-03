@@ -8,6 +8,13 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.grade == 'admin';
     }
+    // 특별회원 권한: 승인된 특별회원 또는 관리자 (회원광장 게시판 열람·작성 기준)
+    function isSpecialMember() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.approved == true &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.grade in ['special', 'admin'];
+    }
     // 최고관리자 보호: protected:true 인 계정은 앱(다른 관리자 포함)에서 등급 변경·삭제가
     // 원천적으로 불가능하다. 오직 Firebase 콘솔에서 직접 수정하는 방법만 남는다.
     function isProtected() {
@@ -51,6 +58,32 @@ service cloud.firestore {
       allow list: if false;
       allow create: if isSignedIn();
       allow update, delete: if false;
+    }
+
+    // 페이지 본문 수정 내용(관리자가 사이트에서 직접 고친 화면).
+    // 모든 방문자에게 같은 화면이 보여야 하므로 읽기는 공개하고, 쓰기는 관리자만 허용한다.
+    match /pages/{pageId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    /* 게시판 글. 임대안내(rental)는 누구나 볼 수 있는 공개 게시판이고, 나머지 카테고리
+       (회원광장 공지사항·자료실·결산보고서·월간회의록·관리비 부과내역)는 특별회원 전용이다.
+       목록 조회는 앱이 항상 cat으로 걸러 읽으므로 이 규칙으로 카테고리별 접근이 통제된다.
+       결산보고서·월간회의록·관리비 부과내역·회원광장 공지사항은 관리사무소 공식 자료라 관리자만 등록한다. */
+    match /posts/{postId} {
+      allow read: if resource.data.cat == 'rental' || isSpecialMember();
+      allow create: if isSpecialMember()
+        && request.resource.data.authorUid == request.auth.uid
+        && (!(request.resource.data.cat in ['info', 'report', 'minutes', 'fee']) || isAdmin());
+      // 글쓴이 본인과 관리자만 수정·삭제 (상단 고정은 관리자만)
+      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.authorUid == request.auth.uid);
+    }
+
+    // 실회원 명단에 관리자가 기록하는 등급·승인·가입년월일·최근 로그인·숨김 여부.
+    // 개인정보가 섞인 관리용 기록이므로 관리자만 읽고 쓸 수 있다.
+    match /memberMeta/{memberId} {
+      allow read, write: if isAdmin();
     }
   }
 }

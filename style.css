@@ -2098,6 +2098,20 @@ body.sidebar-open .sidebar-overlay {
   border-radius: 8px;
 }
 
+.content-edit-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  background: #fdf0f0;
+  border: 1px solid #e6bcbc;
+  border-radius: 8px;
+  color: #8a3b3b;
+  font-size: 14px;
+}
+
 .content-editable-area.editing {
   outline: 2px dashed #c9a84c;
   outline-offset: 8px;
