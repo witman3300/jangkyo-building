@@ -53,15 +53,26 @@ function getHiddenRealMemberIds() {
 // 가입년월일·최근 로그인은 real-members-data.js의 원본 값을 기본으로 쓴다.
 function getRealMemberMeta(id) {
   const src = (typeof REAL_MEMBERS !== "undefined" ? REAL_MEMBERS : []).find((m) => m.id === id) || {};
+  // 명단에 없는 신규 가입자는 로그인 계정에 기록된 가입 시각·최근 로그인 시각을 그대로 쓴다
+  const u = USERS_BY_ID[id];
   return Object.assign(
     {
       grade: "normal",
       approved: src.approved !== false,
-      joinDate: src.joinDate || "",
-      lastLogin: src.lastLogin || "",
+      joinDate: src.joinDate || tsToYmd(u && u.createdAt),
+      lastLogin: src.lastLogin || tsToYmd(u && u.lastLoginAt),
       note: "",
     },
     META_MAP[id]
+  );
+}
+
+// Firestore 타임스탬프를 YYYY-MM-DD로. 값이 없으면 빈 문자열.
+function tsToYmd(ts) {
+  if (!ts || typeof ts.seconds !== "number") return "";
+  const d = new Date(ts.seconds * 1000);
+  return (
+    d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0")
   );
 }
 

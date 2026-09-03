@@ -203,6 +203,8 @@ async function registerUser(user) {
     approved: approved,
     requestedSpecial: requestedSpecial,
     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    // 가입과 동시에 로그인되므로 최근 로그인도 이 시각으로 시작한다
+    lastLoginAt: firebase.firestore.FieldValue.serverTimestamp(),
   };
   if (legacy) profile.legacy = true; // 구 사이트 회원이 아이디를 되찾은 계정
 
@@ -249,6 +251,12 @@ async function loginUser(id, pw) {
     await fbAuth.signOut();
     return { ok: false, reason: "pending" };
   }
+  // 최근 로그인 시각을 남긴다 (회원관리 화면의 "최근로그인" 값이 저절로 갱신된다).
+  // 실패해도 로그인 자체는 그대로 진행한다.
+  userDocRef(uid)
+    .update({ lastLoginAt: firebase.firestore.FieldValue.serverTimestamp() })
+    .catch(function () {});
+
   var sess = { id: p.id, name: p.name, grade: p.grade, approved: true, uid: uid, phone: p.phone || "" };
   _session = sess;
   return { ok: true, session: sess };
