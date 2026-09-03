@@ -962,8 +962,8 @@ body.sidebar-open .sidebar-overlay {
    (table-layout:auto는 긴 입력/버튼 열에 밀려 이름 등 텍스트 열이 부당하게 줄어들므로 fixed로 폭을 그대로 유지) */
 .real-member-table {
   table-layout: fixed;
-  width: 1416px;
-  min-width: 1416px;
+  width: 1524px;
+  min-width: 1524px;
 }
 
 /* 상태·비고 열은 배지와 버튼이 함께 들어가므로 잘리지 않게 둔다 */

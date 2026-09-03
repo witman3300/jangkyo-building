@@ -78,13 +78,57 @@
     </aside>
 
     <main class="content">
-      <form class="card" onsubmit="handleLogin(event)">
+      <!-- 기존 janggyo.co.kr 회원 전환: 쓰시던 아이디로 로그인을 시도하면 이 안내가 대신 열린다 -->
+      <form class="card legacy-card" id="legacy-card" onsubmit="handleLegacySetup(event)" style="display:none">
+        <h2>홈페이지가 새롭게 바뀌었습니다</h2>
+        <p class="subtitle">
+          <strong id="legacy-id"></strong> 님, 기존 회원으로 확인되었습니다.<br />
+          새 홈페이지는 보안을 위해 예전 비밀번호를 가져오지 않습니다.
+          처음 한 번만 <strong>새 비밀번호</strong>를 만들고 연락처를 확인해 주세요. 승인 절차 없이 바로 이용하실 수 있습니다.
+        </p>
+
+        <div class="form-group">
+          <label for="lg-name">이름 <span class="req">*</span></label>
+          <input type="text" id="lg-name" placeholder="홍길동" required />
+        </div>
+        <div class="form-group">
+          <label for="lg-email">이메일 <span class="req">*</span></label>
+          <input type="email" id="lg-email" placeholder="name@email.com" required />
+          <p class="field-hint">아이디·비밀번호 찾기에 사용되므로 정확히 입력해 주세요.</p>
+        </div>
+        <div class="form-group">
+          <label for="lg-phone">휴대폰번호 <span class="req">*</span></label>
+          <input type="text" id="lg-phone" placeholder="010-0000-0000" required />
+        </div>
+        <div class="form-group">
+          <label for="lg-birth">생년월일 <span class="req">*</span></label>
+          <input type="date" id="lg-birth" required />
+        </div>
+        <div class="form-group">
+          <label for="lg-unit">호실</label>
+          <input type="text" id="lg-unit" placeholder="예: 1201 / B1-7" />
+        </div>
+        <div class="form-group">
+          <label for="lg-pw1">새 비밀번호 <span class="req">*</span></label>
+          <input type="password" id="lg-pw1" placeholder="영문 또는 숫자 6자 이상" required />
+        </div>
+        <div class="form-group">
+          <label for="lg-pw2">새 비밀번호 확인 <span class="req">*</span></label>
+          <input type="password" id="lg-pw2" placeholder="비밀번호 재입력" required />
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="legacy-submit">새 비밀번호로 시작하기</button>
+        <p class="form-footer"><a href="#" onclick="cancelLegacy(event)">← 로그인 화면으로 돌아가기</a></p>
+      </form>
+
+      <form class="card" id="login-card" onsubmit="handleLogin(event)">
         <h2>로그인</h2>
         <p class="subtitle">계정에 로그인하세요</p>
 
         <div class="form-group">
           <label for="userid">아이디</label>
-          <input type="text" id="userid" placeholder="아이디" required />
+          <input type="text" id="userid" placeholder="아이디" required onblur="checkLegacyOnBlur()" />
+          <p class="field-hint">기존 janggyo.co.kr 회원이시면 쓰시던 아이디를 입력해 주세요.</p>
         </div>
 
         <div class="form-group">
@@ -117,9 +161,11 @@
         btn.textContent = "로그인";
         if (res.reason === "pending") {
           showToast("아직 관리자 승인 대기 중인 계정입니다. 승인 후 이용해 주세요.");
-        } else {
-          showToast("아이디 또는 비밀번호가 올바르지 않습니다.");
+          return;
         }
+        // 아직 계정이 없는 구회원 아이디라면, 새 비밀번호를 만드는 안내로 넘긴다
+        if (await openLegacySetup(id)) return;
+        showToast("아이디 또는 비밀번호가 올바르지 않습니다.");
         return;
       }
       const s = res.session;
@@ -130,7 +176,88 @@
         }, 900);
       });
     }
+
+    /* ===== 기존 회원 전환 =====
+       구 사이트 회원은 비밀번호가 넘어오지 않았다. 쓰시던 아이디로 로그인을 시도하면
+       (계정이 아직 없고 구회원 명단에 있는 아이디일 때) 새 비밀번호를 만드는 화면으로 안내한다. */
+    let legacyId = null;
+
+    // 아이디만 입력해도 기존 회원인지 알아보고 안내로 넘긴다 (구회원은 입력할 비밀번호가 없다)
+    async function checkLegacyOnBlur() {
+      const id = document.getElementById("userid").value.trim();
+      if (id.length < 3 || legacyId) return;
+      await openLegacySetup(id);
+    }
+
+    async function openLegacySetup(id) {
+      await window.authReady;
+      // 이미 계정이 있으면 그냥 비밀번호가 틀린 것이다
+      if ((await usernameDocRef(id).get()).exists) return false;
+      const legacy = await findLegacyMember(id);
+      if (!legacy) return false;
+
+      legacyId = id;
+      document.getElementById("legacy-id").textContent = id;
+      document.getElementById("lg-unit").value = legacy.unit || "";
+      document.getElementById("login-card").style.display = "none";
+      document.getElementById("legacy-card").style.display = "";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return true;
+    }
+
+    function cancelLegacy(e) {
+      e.preventDefault();
+      legacyId = null;
+      document.getElementById("legacy-card").style.display = "none";
+      document.getElementById("login-card").style.display = "";
+    }
+
+    async function handleLegacySetup(e) {
+      e.preventDefault();
+      const pw1 = document.getElementById("lg-pw1").value;
+      const pw2 = document.getElementById("lg-pw2").value;
+      if (pw1.length < 6) return showToast("비밀번호는 6자 이상으로 만들어 주세요.");
+      if (pw1 !== pw2) return showToast("새 비밀번호가 서로 다릅니다.");
+
+      const phone = document.getElementById("lg-phone").value.trim();
+      if (!isValidPhone(phone)) return showToast("휴대폰번호를 올바른 형식으로 입력해 주세요. (예: 010-1234-5678)");
+
+      const btn = document.getElementById("legacy-submit");
+      btn.disabled = true;
+      btn.textContent = "설정 중...";
+
+      const res = await registerUser({
+        id: legacyId,
+        pw: pw1,
+        name: document.getElementById("lg-name").value.trim(),
+        email: document.getElementById("lg-email").value.trim(),
+        phone: phone,
+        birth: document.getElementById("lg-birth").value,
+        unit: document.getElementById("lg-unit").value.trim(),
+        requestedSpecial: false,
+      });
+
+      if (!res.ok) {
+        btn.disabled = false;
+        btn.textContent = "새 비밀번호로 시작하기";
+        let msg = "설정에 실패했습니다. 잠시 후 다시 시도해 주세요.";
+        if (res.reason === "phone") msg = "휴대폰번호를 올바른 형식으로 입력해 주세요.";
+        else if (res.reason === "id") msg = "이미 사용 중인 아이디입니다.";
+        else if (res.code === "auth/email-already-in-use") msg = "이미 가입된 이메일 주소입니다. 다른 이메일을 입력해 주세요.";
+        else if (res.code === "auth/weak-password") msg = "비밀번호가 너무 약합니다. 6자 이상 입력해 주세요.";
+        showToast(msg);
+        return;
+      }
+
+      // registerUser가 계정을 만들면서 이미 로그인된 상태다
+      showToast("새 비밀번호가 설정되었습니다!\n다음부터는 이 비밀번호로 로그인해 주세요.");
+      setTimeout(function () { location.href = "index.html"; }, 1600);
+    }
   </script>
+  <style>
+    .field-hint { margin-top: 6px; font-size: 12.5px; color: #8a94a6; }
+    .legacy-card .req { color: #c0392b; }
+  </style>
   <!-- 하단 푸터 -->
   <footer class="footer">
     <div class="footer-inner">

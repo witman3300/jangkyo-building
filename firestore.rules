@@ -24,9 +24,13 @@ service cloud.firestore {
     // 회원 프로필: 본인 또는 관리자만 읽기 가능. 가입 시 승인 상태를 스스로 true로 못 만들도록 강제한다.
     match /users/{uid} {
       allow read: if isOwner(uid) || isAdmin();
+      /* 가입 시 스스로 승인 상태를 만들 수 없게 강제한다.
+         신규 가입자는 등급과 무관하게 승인대기(approved=false)로만 만들 수 있고,
+         승인된 상태로 만들 수 있는 것은 구회원 명단(legacyMembers)에 있는 아이디뿐이다. */
       allow create: if isOwner(uid)
         && request.resource.data.grade == 'normal'
-        && request.resource.data.approved == (request.resource.data.requestedSpecial == false);
+        && (request.resource.data.approved == false
+            || exists(/databases/$(database)/documents/legacyMembers/$(request.resource.data.id)));
       allow update: if isProtected()
         ? (isOwner(uid)
             && request.resource.data.grade == resource.data.grade

@@ -182,18 +182,21 @@ async function registerUser(user) {
 
   var uid = cred.user.uid;
 
-  /* 구회원이 본인 아이디로 가입하면 기존 회원으로 보고 승인 없이 일반회원으로 바로 이용하게 한다.
-     (입주자·구분소유자를 골랐더라도 일단 일반회원으로 열어 주고, 특별회원 부여는 관리사무소가
-     회원관리 화면에서 처리한다.) 명단에 없는 신규 가입자는 종전대로 일반회원만 즉시 승인한다. */
+  /* 승인 정책
+     - 구회원(구 사이트 명단에 있는 아이디): 이미 확인된 회원이므로 승인 없이 일반회원으로 바로 이용.
+       특별회원 부여가 필요하면 관리사무소가 회원관리 화면에서 처리한다.
+     - 신규 가입자: 일반회원이든 특별회원이든 관리자 승인 후 로그인할 수 있다. */
   var legacy = await findLegacyMember(user.id);
   var requestedSpecial = !!user.requestedSpecial && !legacy;
-  var approved = !requestedSpecial;
+  var approved = !!legacy;
 
   var profile = {
     id: user.id,
     name: user.name,
     email: user.email,
     phone: String(user.phone).trim(),
+    birth: user.birth || "",
+    gender: user.gender || "",
     unit: user.unit || (legacy && legacy.unit) || "",
     company: user.company || "",
     grade: "normal",
@@ -357,6 +360,17 @@ async function adminApprove(uid, approved) {
 async function adminSetGrade(uid, grade) {
   if (!GRADES[grade]) return;
   await userDocRef(uid).update({ grade: grade });
+}
+
+/* 특별회원 신청 승인: 등급을 특별회원으로 올리고, 계정 승인까지 함께 처리한다.
+   신청 표시는 처리했으므로 내린다. (거절은 신청 표시만 내리고 등급은 그대로 둔다) */
+async function adminApproveSpecial(uid, accept) {
+  var patch = { requestedSpecial: false };
+  if (accept) {
+    patch.grade = "special";
+    patch.approved = true;
+  }
+  await userDocRef(uid).update(patch);
 }
 
 // 주의: Firestore 프로필만 삭제된다. Firebase Auth 계정 자체 삭제는 Admin SDK(서버)가 있어야 가능하므로

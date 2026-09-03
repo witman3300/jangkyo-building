@@ -199,9 +199,11 @@ a{text-decoration:none;color:inherit}
     <div class="sec-b">
       <div class="mtype">
         <label><input type="radio" name="mtype" value="general" required><span><b>일반회원</b><small>공지·자료 열람 등 기본 서비스</small></span></label>
-        <label><input type="radio" name="mtype" value="tenant"><span><b>입주자 (임차인)</b><small>사무실·상가를 임차하여 사용 중</small></span></label>
-        <label><input type="radio" name="mtype" value="owner"><span><b>구분소유자</b><small>장교빌딩 호실을 소유 (등기 확인)</small></span></label>
+        <label><input type="radio" name="mtype" value="tenant"><span><b>특별회원 · 입주자</b><small>사무실·상가를 임차하여 사용 중</small></span></label>
+        <label><input type="radio" name="mtype" value="owner"><span><b>특별회원 · 구분소유자</b><small>장교빌딩 호실을 소유 (등기 확인)</small></span></label>
       </div>
+      <p class="hint" style="margin-top:12px">가입 신청은 관리사무소 확인 후 승인되며, 승인된 뒤에 로그인하실 수 있습니다.
+      기존 janggyo.co.kr 회원이시면 <a href="login.html">로그인 화면</a>에서 쓰시던 아이디로 바로 이용하실 수 있습니다.</p>
     </div>
   </div>
 
@@ -351,6 +353,8 @@ async function submitForm(e){
     name: document.getElementById('name').value.trim(),
     unit: document.getElementById('unit').value.trim(),
     phone: phoneVal,
+    birth: document.getElementById('birth').value,
+    gender: document.getElementById('gender').value,
     company: document.getElementById('company').value.trim(),
     requestedSpecial: (mtype.value !== 'general')
   };
@@ -370,14 +374,11 @@ async function submitForm(e){
     return false;
   }
 
-  // 구회원은 기존 회원으로 확인되어 바로 이용, 신규 일반회원은 자동승인,
-  // 신규 입주자·구분소유자는 관리사무소 확인 후 승인대기
+  // 구회원은 기존 회원으로 확인되어 바로 이용, 신규 가입자는 등급과 무관하게 관리사무소 승인 후 이용
   if(res.legacy){
-    showToast('기존 회원으로 확인되었습니다!\n일반회원으로 바로 로그인하실 수 있습니다.\n구분소유자 권한이 필요하시면 관리사무소로 문의해 주세요.');
-  }else if(res.approved){
-    showToast('회원가입이 완료되었습니다!\n일반회원으로 바로 로그인하실 수 있습니다.');
+    showToast('기존 회원으로 확인되었습니다!\n일반회원으로 바로 로그인하실 수 있습니다.\n특별회원 권한이 필요하시면 관리사무소로 문의해 주세요.');
   }else{
-    showToast('가입 신청이 접수되었습니다.\n관리사무소의 확인(호실·계약·등기) 후 승인되면 로그인하실 수 있습니다.');
+    showToast('가입 신청이 접수되었습니다.\n관리사무소의 확인 후 승인되면 로그인하실 수 있습니다.');
   }
   setTimeout(function(){ location.href='index.html'; }, 1400);
   return false;
