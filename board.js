@@ -116,6 +116,54 @@ function subscribePosts() {
     );
 }
 
+/* ===== 원본 공지 이동 기록 =====
+   정보마당 공지사항 목록은 대부분 구 사이트에서 옮겨온 원본 글(notices-data.js)이라
+   Firestore에 문서가 없다. 파일을 화면에서 고칠 수는 없으므로, 어떤 원본 글을 어느
+   게시판에 보일지만 Firestore에 적어 두고 목록을 그릴 때 반영한다.
+   문서ID = "{원본게시판}-{원본글 id}", 내용 = { fromCat, srcId, toCat }.
+   목록에서 감추는 데 쓰이므로 읽기는 누구나 할 수 있어야 하고, 쓰기는 관리자만 한다. */
+const MOVES_COL = "noticeMoves";
+let MOVES = {}; // "notice-246" -> 옮겨간 게시판
+let unsubscribeMoves = null;
+
+function subscribeMoves() {
+  if (!MOVE_CATS.includes(getCat())) return; // 공지사항 두 곳에서만 쓴다
+  if (unsubscribeMoves) unsubscribeMoves();
+  unsubscribeMoves = db.collection(MOVES_COL).onSnapshot(
+    (snap) => {
+      MOVES = {};
+      snap.docs.forEach((d) => (MOVES[d.id] = d.data().toCat));
+      onPostsChanged();
+    },
+    () => {} // 읽지 못하면 원래 게시판 그대로 보여 준다
+  );
+}
+
+// 원본 글이 지금 어느 게시판에 속하는지 (옮긴 적이 없으면 원래 게시판 그대로)
+function staticCatOf(srcCat, srcId) {
+  return MOVES[srcCat + "-" + srcId] || srcCat;
+}
+
+/* 목록에 실을 원본 글 모으기.
+   ① 이 게시판의 원본 글 중 다른 게시판으로 보내지 않은 것
+   ② 다른 공지사항 게시판에서 이 게시판으로 보낸 원본 글
+   각 항목은 { post, srcCat, view } — view는 원본 상세 페이지 주소다. */
+function staticEntries(cat) {
+  const cats = MOVE_CATS.includes(cat) ? Array.from(new Set([cat].concat(MOVE_CATS))) : [cat];
+  const out = [];
+  cats.forEach((srcCat) => {
+    const d = DOC_CATS[srcCat];
+    if (!d) return;
+    d.data().forEach((p) => {
+      if (staticCatOf(srcCat, p.id) === cat) out.push({ post: p, srcCat: srcCat, view: d.view });
+    });
+  });
+  // 두 게시판의 원본 글이 섞일 수 있으므로 번호 대신 날짜(최신순)로 줄 세운다
+  return out.sort((a, b) =>
+    a.post.date === b.post.date ? b.post.no - a.post.no : (a.post.date < b.post.date ? 1 : -1)
+  );
+}
+
 // 다른 PC에서 글이 등록·삭제되면 화면을 다시 그린다. 단, 글을 쓰는 중에는 폼을 지우지 않는다.
 function onPostsChanged() {
   if ((location.hash || "#list") === "#write") return;
@@ -160,21 +208,25 @@ function renderList() {
   const pinned = all.filter((p) => p.pinned).reverse();
   const normal = all.filter((p) => !p.pinned).reverse();
 
-  const doc = DOC_CATS[cat];
-  const staticRows = doc ? doc.data().slice().sort((a, b) => b.no - a.no) : [];
-  const baseNo = staticRows.reduce((m, p) => Math.max(m, p.no || 0), 0);
+  const staticRows = staticEntries(cat);
+  const baseNo = staticRows.reduce((m, e) => Math.max(m, e.post.no || 0), 0);
 
   /* 이동 열: 두 공지사항 게시판(정보마당·회원광장) 사이에서 글을 옮긴다.
-     관리자에게만 보이고, 이 사이트에서 등록한 글에만 붙는다.
-     구 사이트에서 옮겨온 원본 공지는 파일에 들어 있어 옮길 수 없다. */
+     관리자에게만 보이며, 이 사이트에서 등록한 글과 구 사이트에서 옮겨온 원본 글 모두 옮길 수 있다.
+     원본 글은 파일에 들어 있어 글 자체는 그대로 두고, 어느 게시판에 보일지만 따로 기록한다. */
   const showMove = MOVE_CATS.includes(cat) && typeof isAdmin === "function" && isAdmin();
 
   // 지금 보고 있는 게시판의 반대쪽으로 보내는 버튼 하나만 둔다
   const otherCat = MOVE_CATS.find((c) => c !== cat);
 
-  const moveCell = (p) =>
-    `<button type="button" class="move-btn" onclick="movePost('${p.id}', '${otherCat}')"
+  const moveBtn = (call) =>
+    `<button type="button" class="move-btn" onclick="${call}"
       title="이 글을 ${MOVE_LABELS[otherCat]} 공지사항으로 옮깁니다">${MOVE_LABELS[otherCat]}으로</button>`;
+
+  const moveCell = (p) => moveBtn(`movePost('${p.id}', '${otherCat}')`);
+
+  const staticMoveCell = (e) =>
+    moveBtn(`moveStaticPost('${e.srcCat}', '${e.post.id}', '${otherCat}')`);
 
   const rowHtml = (o) => {
     const flag = o.pinned
@@ -206,16 +258,17 @@ function renderList() {
       move: showMove ? moveCell(p) : '',
     });
 
-  const staticRow = (p) =>
+  const staticRow = (e) =>
     rowHtml({
-      num: p.no,
-      title: p.title,
+      num: e.post.no,
+      title: e.post.title,
       author: "관리자",
-      date: p.date,
-      href: doc.view + "?id=" + p.id,
-      files: p.imgCount || 0,
+      date: e.post.date,
+      href: e.view + "?id=" + e.post.id,
+      files: e.post.imgCount || 0,
       pinned: false,
-      isNew: isWithinNewDays(p.date),
+      isNew: isWithinNewDays(e.post.date),
+      move: showMove ? staticMoveCell(e) : "",
     });
 
   let rows;
@@ -505,6 +558,29 @@ async function movePost(id, cat) {
   }
 }
 
+/* 원본 글(파일에 들어 있는 구 사이트 공지)을 다른 공지사항 게시판으로 옮긴다 (관리자만).
+   글과 첨부 이미지는 파일에 그대로 두고, 어느 게시판에 보일지만 Firestore에 적는다.
+   원래 있던 게시판으로 되돌릴 때는 그 기록을 지운다. */
+async function moveStaticPost(srcCat, srcId, toCat) {
+  if (!(typeof isAdmin === "function" && isAdmin())) return;
+  const d = DOC_CATS[srcCat];
+  const p = d && d.data().find((x) => String(x.id) === String(srcId));
+  if (!p) return;
+  if (!confirm(`"${p.title}" 글을 ${MOVE_LABELS[toCat]} 공지사항으로 옮기시겠습니까?`)) return;
+  const key = srcCat + "-" + srcId;
+  try {
+    if (toCat === srcCat) await db.collection(MOVES_COL).doc(key).delete();
+    else
+      await db
+        .collection(MOVES_COL)
+        .doc(key)
+        .set({ fromCat: srcCat, srcId: String(srcId), toCat: toCat });
+    showToast(`${MOVE_LABELS[toCat]} 공지사항으로 옮겼습니다.`);
+  } catch (e) {
+    showToast("옮기지 못했습니다: " + e.message);
+  }
+}
+
 async function togglePin(id) {
   if (!(typeof isAdmin === "function" && isAdmin())) return;
   const p = loadPosts().find((x) => x.id === id);
@@ -569,5 +645,6 @@ function route() {
 window.addEventListener("hashchange", route);
 window.onAuthReady(function () {
   subscribePosts();
+  subscribeMoves();
   route();
 });

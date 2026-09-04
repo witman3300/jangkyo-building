@@ -99,6 +99,14 @@ service cloud.firestore {
       allow update, delete: if isAdmin() || (isSignedIn() && resource.data.authorUid == request.auth.uid);
     }
 
+    /* 원본 공지(구 사이트에서 옮겨온 글, notices-data.js)를 어느 공지사항 게시판에
+       보일지 적어 두는 기록. 글 본문은 파일에 그대로 있고 여기에는 위치만 담긴다.
+       목록을 그릴 때 누구나 참고해야 하므로 읽기는 공개하고, 쓰기는 관리자만 허용한다. */
+    match /noticeMoves/{moveId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // 실회원 명단에 관리자가 기록하는 등급·승인·가입년월일·최근 로그인·숨김 여부.
     // 개인정보가 섞인 관리용 기록이므로 관리자만 읽고 쓸 수 있다.
     match /memberMeta/{memberId} {
