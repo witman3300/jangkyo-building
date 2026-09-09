@@ -41,6 +41,10 @@ const ADMIN_WRITE_CATS = ["info", "report", "minutes", "fee", "notice", "infodat
 const MOVE_CATS = ["notice", "info"];
 const MOVE_LABELS = { notice: "정보마당", info: "회원광장" };
 
+/* 필요 없어진 원본 글(구 사이트에서 옮겨온 공지·결산보고서·회의록 등)은 파일에 들어 있어
+   지울 수가 없다. 대신 "삭제됨" 자리로 보내 목록에서 빠지게 하고, 되살릴 수 있게 둔다. */
+const HIDDEN_CAT = "__deleted__";
+
 // 정적 데이터 파일에 원본 글이 들어 있는 카테고리.
 // 목록에는 원본 글(data)과 이 사이트에서 새로 올린 글을 함께 보여주고,
 // 원본 글은 전용 상세 페이지(view)로 연결한다.
@@ -116,46 +120,61 @@ function subscribePosts() {
     );
 }
 
-/* ===== 원본 공지 이동 기록 =====
-   정보마당 공지사항 목록은 대부분 구 사이트에서 옮겨온 원본 글(notices-data.js)이라
-   Firestore에 문서가 없다. 파일을 화면에서 고칠 수는 없으므로, 어떤 원본 글을 어느
-   게시판에 보일지만 Firestore에 적어 두고 목록을 그릴 때 반영한다.
-   문서ID = "{원본게시판}-{원본글 id}", 내용 = { fromCat, srcId, toCat }.
+/* ===== 원본 글 이동·삭제 기록 =====
+   목록에 함께 싣는 원본 글(notices-data.js 등)은 데이터 파일에 들어 있어 Firestore에
+   문서가 없다. 파일을 화면에서 고칠 수는 없으므로, 어떤 원본 글을 어느 게시판에 보일지
+   또는 목록에서 감출지만 Firestore에 적어 두고 목록을 그릴 때 반영한다.
+   문서ID = "{원본게시판}-{원본글 id}", 내용 = { fromCat, srcId, toCat, prevCat }.
+   toCat이 HIDDEN_CAT이면 지운 글이고, prevCat은 지우기 전에 있던 게시판이다(되살리기용).
+   컬렉션 이름은 공지사항 이동에만 쓰던 때 지은 것이라 기록을 살려 두려고 그대로 쓴다.
    목록에서 감추는 데 쓰이므로 읽기는 누구나 할 수 있어야 하고, 쓰기는 관리자만 한다. */
 const MOVES_COL = "noticeMoves";
-let MOVES = {}; // "notice-246" -> 옮겨간 게시판
+let MOVES = {}; // "notice-246" -> { fromCat, srcId, toCat, prevCat }
 let unsubscribeMoves = null;
+let showDeletedStatic = false; // 관리자가 "펼쳐 보기"를 누르면 지운 원본 글도 목록에 잠시 보인다
 
 function subscribeMoves() {
-  if (!MOVE_CATS.includes(getCat())) return; // 공지사항 두 곳에서만 쓴다
+  // 원본 글이 있는 게시판과, 원본 글을 받을 수 있는 공지사항 두 곳에서 쓴다
+  if (!DOC_CATS[getCat()] && !MOVE_CATS.includes(getCat())) return;
   if (unsubscribeMoves) unsubscribeMoves();
   unsubscribeMoves = db.collection(MOVES_COL).onSnapshot(
     (snap) => {
       MOVES = {};
-      snap.docs.forEach((d) => (MOVES[d.id] = d.data().toCat));
+      snap.docs.forEach((d) => (MOVES[d.id] = d.data()));
       onPostsChanged();
     },
     () => {} // 읽지 못하면 원래 게시판 그대로 보여 준다
   );
 }
 
-// 원본 글이 지금 어느 게시판에 속하는지 (옮긴 적이 없으면 원래 게시판 그대로)
+// 원본 글이 지금 어느 게시판에 속하는지 (옮긴 적도 지운 적도 없으면 원래 게시판 그대로)
 function staticCatOf(srcCat, srcId) {
-  return MOVES[srcCat + "-" + srcId] || srcCat;
+  const m = MOVES[srcCat + "-" + srcId];
+  return (m && m.toCat) || srcCat;
+}
+
+// 지운 원본 글이 지우기 전에 있던 게시판 (삭제 목록을 어디에 보여 주고 어디로 되살릴지)
+function staticHomeOf(srcCat, srcId) {
+  const m = MOVES[srcCat + "-" + srcId];
+  return (m && m.prevCat) || srcCat;
 }
 
 /* 목록에 실을 원본 글 모으기.
-   ① 이 게시판의 원본 글 중 다른 게시판으로 보내지 않은 것
+   ① 이 게시판의 원본 글 중 다른 게시판으로 보내거나 지우지 않은 것
    ② 다른 공지사항 게시판에서 이 게시판으로 보낸 원본 글
-   각 항목은 { post, srcCat, view } — view는 원본 상세 페이지 주소다. */
-function staticEntries(cat) {
+   ③ withDeleted면 이 게시판에서 지운 원본 글도 deleted 표시를 달아 함께 (관리자용)
+   각 항목은 { post, srcCat, view, deleted } — view는 원본 상세 페이지 주소다. */
+function staticEntries(cat, withDeleted) {
   const cats = MOVE_CATS.includes(cat) ? Array.from(new Set([cat].concat(MOVE_CATS))) : [cat];
   const out = [];
   cats.forEach((srcCat) => {
     const d = DOC_CATS[srcCat];
     if (!d) return;
     d.data().forEach((p) => {
-      if (staticCatOf(srcCat, p.id) === cat) out.push({ post: p, srcCat: srcCat, view: d.view });
+      const now = staticCatOf(srcCat, p.id);
+      if (now === cat) out.push({ post: p, srcCat: srcCat, view: d.view, deleted: false });
+      else if (withDeleted && now === HIDDEN_CAT && staticHomeOf(srcCat, p.id) === cat)
+        out.push({ post: p, srcCat: srcCat, view: d.view, deleted: true });
     });
   });
   // 두 게시판의 원본 글이 섞일 수 있으므로 번호 대신 날짜(최신순)로 줄 세운다
@@ -208,13 +227,22 @@ function renderList() {
   const pinned = all.filter((p) => p.pinned).reverse();
   const normal = all.filter((p) => !p.pinned).reverse();
 
-  const staticRows = staticEntries(cat);
-  const baseNo = staticRows.reduce((m, e) => Math.max(m, e.post.no || 0), 0);
+  /* 이동 열: 두 공지사항 게시판(정보마당·회원광장) 사이에서 글을 옮긴다. 관리자 전용.
+     삭제 열: 필요 없어진 글을 상세 페이지에 들어가지 않고 목록에서 바로 지운다.
+     관리자는 모든 글을, 회원은 자기가 쓴 글을 지운다(서버 규칙도 같은 기준이다).
+     구 사이트에서 옮겨온 원본 글은 파일에 들어 있어 지울 수 없으므로, 글은 그대로 두고
+     목록에서만 감춘다(관리자 전용, 되살릴 수 있다). */
+  const admin = typeof isAdmin === "function" && isAdmin();
+  const session = typeof getSession === "function" ? getSession() : null;
+  const canDelete = (p) => admin || !!(session && p.authorUid && session.uid === p.authorUid);
+  const showMove = MOVE_CATS.includes(cat) && admin;
+  const showDelete = admin || all.some(canDelete);
 
-  /* 이동 열: 두 공지사항 게시판(정보마당·회원광장) 사이에서 글을 옮긴다.
-     관리자에게만 보이며, 이 사이트에서 등록한 글과 구 사이트에서 옮겨온 원본 글 모두 옮길 수 있다.
-     원본 글은 파일에 들어 있어 글 자체는 그대로 두고, 어느 게시판에 보일지만 따로 기록한다. */
-  const showMove = MOVE_CATS.includes(cat) && typeof isAdmin === "function" && isAdmin();
+  // 지운 원본 글은 평소에는 감추고, 관리자가 "펼쳐 보기"를 눌렀을 때만 목록에 섞어 보여 준다
+  const staticAll = staticEntries(cat, admin);
+  const deletedStatic = staticAll.filter((e) => e.deleted);
+  const staticRows = showDeletedStatic ? staticAll : staticAll.filter((e) => !e.deleted);
+  const baseNo = staticRows.reduce((m, e) => Math.max(m, e.post.no || 0), 0);
 
   // 지금 보고 있는 게시판의 반대쪽으로 보내는 버튼 하나만 둔다
   const otherCat = MOVE_CATS.find((c) => c !== cat);
@@ -228,20 +256,35 @@ function renderList() {
   const staticMoveCell = (e) =>
     moveBtn(`moveStaticPost('${e.srcCat}', '${e.post.id}', '${otherCat}')`);
 
+  const delCell = (p) =>
+    `<button type="button" class="move-btn danger" onclick="deletePost('${p.id}')"
+      title="이 글과 첨부파일을 지웁니다">삭제</button>`;
+
+  // 원본 글은 파일에 그대로 남으므로 지운 뒤에도 되살릴 수 있다
+  const staticDelCell = (e) =>
+    e.deleted
+      ? `<button type="button" class="move-btn" onclick="restoreStaticPost('${e.srcCat}', '${e.post.id}')"
+          title="이 글을 목록에 되살립니다">되살리기</button>`
+      : `<button type="button" class="move-btn danger" onclick="deleteStaticPost('${e.srcCat}', '${e.post.id}')"
+          title="이 글을 목록에서 지웁니다">삭제</button>`;
+
   const rowHtml = (o) => {
-    const flag = o.pinned
-      ? `<span class="pin-flag">📌 공지</span> `
-      : o.isNew
-        ? `<span class="pin-flag">NEW</span> `
-        : "";
+    const flag = o.deleted
+      ? `<span class="pin-flag">삭제됨</span> `
+      : o.pinned
+        ? `<span class="pin-flag">📌 공지</span> `
+        : o.isNew
+          ? `<span class="pin-flag">NEW</span> `
+          : "";
     // 셀마다 이름을 붙여 둔다. 모바일에서는 이 이름으로 제목을 윗줄, 나머지를 아랫줄로 배치한다.
-    return `<tr class="${o.pinned ? "pinned-row" : ""}">
+    return `<tr class="${o.pinned ? "pinned-row" : ""}${o.deleted ? " deleted-row" : ""}">
       <td class="num">${o.num}</td>
       <td class="title">${flag}<a href="${o.href}">${esc(o.title)}</a></td>
       <td class="author">${esc(o.author)}</td>
       <td class="date">${o.date}</td>
       <td class="files${o.files ? " has-file" : ""}">${o.files ? o.files : ""}</td>
       ${showMove ? `<td class="move">${o.move || "-"}</td>` : ""}
+      ${showDelete ? `<td class="del">${o.del || "-"}</td>` : ""}
     </tr>`;
   };
 
@@ -255,7 +298,8 @@ function renderList() {
       files: (p.files && p.files.length) || 0,
       pinned: pin,
       isNew: isWithinNewDays(p.date),
-      move: showMove ? moveCell(p) : '',
+      move: showMove ? moveCell(p) : "",
+      del: showDelete && canDelete(p) ? delCell(p) : "",
     });
 
   const staticRow = (e) =>
@@ -267,15 +311,19 @@ function renderList() {
       href: e.view + "?id=" + e.post.id,
       files: e.post.imgCount || 0,
       pinned: false,
-      isNew: isWithinNewDays(e.post.date),
-      move: showMove ? staticMoveCell(e) : "",
+      deleted: e.deleted,
+      isNew: !e.deleted && isWithinNewDays(e.post.date),
+      move: showMove && !e.deleted ? staticMoveCell(e) : "",
+      del: admin ? staticDelCell(e) : "",
     });
+
+  const cols = 5 + (showMove ? 1 : 0) + (showDelete ? 1 : 0);
 
   let rows;
   if (!postsLoaded && staticRows.length === 0) {
-    rows = `<tr><td colspan="${showMove ? 6 : 5}" class="board-empty">불러오는 중...</td></tr>`;
+    rows = `<tr><td colspan="${cols}" class="board-empty">불러오는 중...</td></tr>`;
   } else if (all.length === 0 && staticRows.length === 0) {
-    rows = `<tr><td colspan="${showMove ? 6 : 5}" class="board-empty">등록된 게시글이 없습니다.</td></tr>`;
+    rows = `<tr><td colspan="${cols}" class="board-empty">등록된 게시글이 없습니다.</td></tr>`;
   } else {
     let n = baseNo + normal.length;
     rows =
@@ -291,15 +339,24 @@ function renderList() {
   // window.BOARD_HIDE_TITLE = true 로 두어 제목을 겹쳐 쓰지 않는다.
   const heading = window.BOARD_HIDE_TITLE ? "" : `<h1>${CATEGORIES[cat]}</h1>`;
 
+  // 지운 원본 글 안내 (관리자 전용) — 몇 건인지 알리고, 펼쳐서 되살릴 수 있게 한다
+  const deletedNotice = deletedStatic.length
+    ? `<div class="content-edit-notice">
+        목록에서 지운 원본 글이 ${deletedStatic.length}건 있습니다. 글은 그대로 남아 있어 되살릴 수 있습니다.
+        <button type="button" class="btn btn-outline btn-sm" onclick="toggleDeletedStatic()">${showDeletedStatic ? "감추기" : "펼쳐 보기"}</button>
+      </div>`
+    : "";
+
   document.getElementById("app").innerHTML = `
     <div class="board-head">
       ${heading}
       ${writeBtn}
     </div>
     ${legacyNoticeHtml()}
+    ${deletedNotice}
     <table class="board-table">
       <thead>
-        <tr><th width="60">번호</th><th>제목</th><th width="100">작성자</th><th width="110">작성일</th><th width="70">첨부</th>${showMove ? '<th width="120">이동</th>' : ""}</tr>
+        <tr><th width="60">번호</th><th>제목</th><th width="100">작성자</th><th width="110">작성일</th><th width="70">첨부</th>${showMove ? '<th width="120">이동</th>' : ""}${showDelete ? '<th width="70">삭제</th>' : ""}</tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>`;
@@ -581,6 +638,55 @@ async function moveStaticPost(srcCat, srcId, toCat) {
   }
 }
 
+/* 원본 글을 목록에서 지운다 (관리자만).
+   글과 첨부 이미지는 파일에 그대로 두고 "삭제됨" 자리로 보내 목록에서만 빼는데,
+   지우기 전 게시판을 prevCat에 남겨 두어 되살릴 때 제자리로 돌려 놓는다. */
+async function deleteStaticPost(srcCat, srcId) {
+  if (!(typeof isAdmin === "function" && isAdmin())) return;
+  const d = DOC_CATS[srcCat];
+  const p = d && d.data().find((x) => String(x.id) === String(srcId));
+  if (!p) return;
+  if (!confirm(`"${p.title}" 글을 목록에서 지우시겠습니까?`)) return;
+  try {
+    await db
+      .collection(MOVES_COL)
+      .doc(srcCat + "-" + srcId)
+      .set({
+        fromCat: srcCat,
+        srcId: String(srcId),
+        toCat: HIDDEN_CAT,
+        prevCat: staticCatOf(srcCat, srcId),
+      });
+    showToast("목록에서 지웠습니다.");
+  } catch (e) {
+    showToast("지우지 못했습니다: " + e.message);
+  }
+}
+
+// 지운 원본 글을 지우기 전 게시판으로 되살린다 (관리자만)
+async function restoreStaticPost(srcCat, srcId) {
+  if (!(typeof isAdmin === "function" && isAdmin())) return;
+  const key = srcCat + "-" + srcId;
+  const prev = staticHomeOf(srcCat, srcId);
+  try {
+    if (prev === srcCat) await db.collection(MOVES_COL).doc(key).delete();
+    else
+      await db
+        .collection(MOVES_COL)
+        .doc(key)
+        .set({ fromCat: srcCat, srcId: String(srcId), toCat: prev });
+    showToast("목록에 되살렸습니다.");
+  } catch (e) {
+    showToast("되살리지 못했습니다: " + e.message);
+  }
+}
+
+// 지운 원본 글을 목록에 펼쳐 보거나 다시 감춘다 (관리자에게만 버튼이 보인다)
+function toggleDeletedStatic() {
+  showDeletedStatic = !showDeletedStatic;
+  renderList();
+}
+
 async function togglePin(id) {
   if (!(typeof isAdmin === "function" && isAdmin())) return;
   const p = loadPosts().find((x) => x.id === id);
@@ -593,8 +699,9 @@ async function togglePin(id) {
 }
 
 async function deletePost(id) {
-  if (!confirm("이 게시글을 삭제하시겠습니까?")) return;
   const p = loadPosts().find((x) => x.id === id);
+  // 목록에서도 지울 수 있으므로 어느 글인지 제목으로 확인시킨다
+  if (!confirm(`${p ? `"${p.title}" 글을` : "이 게시글을"} 삭제하시겠습니까? 첨부파일도 함께 지워집니다.`)) return;
   try {
     // 첨부파일부터 지우고(실패해도 글 삭제는 진행) 문서를 지운다
     for (const f of (p && p.files) || []) {

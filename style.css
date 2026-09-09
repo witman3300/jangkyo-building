@@ -545,7 +545,8 @@ body.sidebar-open .sidebar-overlay {
   .board-table:not(.admin-table) tbody td.num,
   .board-table:not(.admin-table) tbody td.author,
   .board-table:not(.admin-table) tbody td.date,
-  .board-table:not(.admin-table) tbody td.files {
+  .board-table:not(.admin-table) tbody td.files,
+  .board-table:not(.admin-table) tbody td.del {
     font-size: 12.5px;
     color: #8a94a6;
   }
@@ -560,9 +561,15 @@ body.sidebar-open .sidebar-overlay {
     margin-right: 2px;
   }
 
-  /* 이동 칸(관리자 전용)은 아랫줄 오른쪽 끝에 둔다 */
-  .board-table:not(.admin-table) tbody td.move {
+  /* 이동·삭제 칸(관리자·글쓴이 전용)은 아랫줄 오른쪽 끝에 둔다.
+     둘 다 있을 때는 이동 칸만 밀어내 두 칸이 나란히 붙게 한다. */
+  .board-table:not(.admin-table) tbody td.move,
+  .board-table:not(.admin-table) tbody td.del {
     margin-left: auto;
+  }
+
+  .board-table:not(.admin-table) tbody td.move + td.del {
+    margin-left: 0;
   }
 
   .board-table:not(.admin-table) tbody td.board-empty {
@@ -588,6 +595,27 @@ body.sidebar-open .sidebar-overlay {
 .move-btn:hover {
   background: #f4f6fb;
   border-color: #c9c9c9;
+}
+
+/* 삭제 버튼 — 되돌리기 어려운 동작이라 글자만 붉게 둔다 */
+.move-btn.danger {
+  color: #c0392b;
+  border-color: #f0c9c9;
+}
+
+.move-btn.danger:hover {
+  background: #fdf0f0;
+  border-color: #e0a0a0;
+}
+
+/* 관리자가 "펼쳐 보기"로 잠시 꺼내 본, 목록에서 지운 원본 글 */
+.deleted-row td,
+.deleted-row .title a {
+  color: #b0b6c0;
+}
+
+.deleted-row .title a {
+  text-decoration: line-through;
 }
 
 /* 실회원 명단 등 긴 표에서 스크롤해도 헤더 행이 고정되도록 */
