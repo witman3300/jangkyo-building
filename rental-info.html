@@ -50,6 +50,9 @@
     .vacancy-add-form .form-group{margin-bottom:0}
     .vacancy-add-form select{width:100%;padding:12px 14px;border:1px solid #dddddd;border-radius:10px;font-size:15px}
     .vacancy-add-actions{grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end}
+    .vacancy-del-btn{background:#fff;border:1px solid #f0c9c9;border-radius:6px;font-size:12px;padding:4px 10px;color:#c0392b;cursor:pointer;white-space:nowrap}
+    .vacancy-del-btn:hover{background:#fdf0f0;border-color:#e0a0a0}
+    #vacancy .info-table .vacancy-del-col{width:70px;text-align:center;white-space:nowrap}
     @media (max-width:768px){.vacancy-add-form{grid-template-columns:1fr 1fr}}
     /* 모바일 공실 현황: 4개 열이 좁게 접히지 않도록 호실을 윗줄에, 나머지를 아랫줄에 둔다 */
     @media (max-width:768px){
@@ -59,6 +62,7 @@
       #vacancy .info-table td{display:block;border:none;padding:0}
       #vacancy .info-table td:first-child{flex:0 0 100%;margin-bottom:5px;font-size:15px;font-weight:700;color:#1a2744}
       #vacancy .info-table td:not(:first-child){font-size:12.5px;color:#7a8290}
+      #vacancy .info-table td.vacancy-del-col{margin-left:auto;align-self:center}
     }
     @media (max-width:768px){.about-wrap{grid-template-columns:1fr;gap:18px;padding:20px 14px 36px}.about-sub{order:-1}}
   </style>
@@ -173,8 +177,9 @@
       if (!tbody) return;
 
       // 저장된 본문에 예전 폼이 섞여 들어왔거나, 다른 PC의 수정이 반영돼 init이 다시 불릴 때를
-      // 대비해 이전에 만든 폼·버튼을 먼저 지운다 (중복 방지)
+      // 대비해 이전에 만든 폼·버튼·삭제 열을 먼저 지운다 (중복 방지)
       section.querySelectorAll('.vacancy-add-form').forEach(function (el) { el.remove(); });
+      section.querySelectorAll('.vacancy-del-col').forEach(function (el) { el.remove(); });
       document.querySelectorAll('.vacancy-add-btn').forEach(function (el) { el.remove(); });
 
       // 관리자에게만 뜨는 content-edit-toolbar(저장/취소가 있는 줄)의 맨 오른쪽에 버튼을 붙인다
@@ -205,9 +210,52 @@
 
       table.parentNode.insertBefore(form, table);
 
+      // 삭제 열은 관리자 화면에만 붙이는 조작 장치다. 본문에 그대로 남으면 저장본에 섞여
+      // 모든 방문자의 표에 빈 칸으로 나오므로, 저장 직전에 떼고 저장 직후에 다시 붙인다.
+      function removeRowControls() {
+        section.querySelectorAll('.vacancy-del-col').forEach(function (el) { el.remove(); });
+      }
+
+      function addRowControls() {
+        removeRowControls();
+
+        var headRow = table.querySelector('thead tr');
+        if (headRow) {
+          var th = document.createElement('th');
+          th.className = 'vacancy-del-col';
+          th.setAttribute('contenteditable', 'false');
+          th.textContent = '관리';
+          headRow.appendChild(th);
+        }
+
+        tbody.querySelectorAll('tr').forEach(function (tr) {
+          var td = document.createElement('td');
+          td.className = 'vacancy-del-col';
+          // 내용 수정 중에 커서가 버튼 안으로 들어가 지워지는 일이 없게 한다
+          td.setAttribute('contenteditable', 'false');
+
+          var delBtn = document.createElement('button');
+          delBtn.type = 'button';
+          delBtn.className = 'vacancy-del-btn';
+          delBtn.textContent = '삭제';
+          delBtn.addEventListener('click', function () {
+            var room = tr.children[0] ? tr.children[0].textContent.trim() : '';
+            if (!confirm((room || '이 행') + ' 행을 삭제하시겠습니까?')) return;
+            tr.remove();
+            saveVacancyContent();
+          });
+
+          td.appendChild(delBtn);
+          tr.appendChild(td);
+        });
+      }
+
       // 수정 내용은 auth.js가 Firestore에 저장한다 (모든 방문자·모든 기기에 공통 반영)
+      // saveContentEdit은 호출 즉시 본문 HTML을 읽어 두므로, 그 사이에만 삭제 열을 비워 둔다.
       function saveVacancyContent() {
+        removeRowControls();
         if (window.saveContentEdit) window.saveContentEdit();
+        addRowControls();
       }
 
       // "12F" → 12, "B1" → -1 처럼 층 표기를 숫자로 바꿔 내림차순 정렬 기준으로 쓴다
@@ -265,6 +313,8 @@
         form.reset();
         form.classList.remove('show');
       });
+
+      addRowControls();
     }
 
     // auth.js가 Firestore에서 저장된 본문을 불러오고 관리자 툴바를 만든 뒤 발생시키는 이벤트
