@@ -195,14 +195,10 @@
       var form = document.createElement('form');
       form.className = 'vacancy-add-form';
       form.innerHTML =
-        '<div class="form-group"><label>층</label><input type="text" class="va-floor" placeholder="예: 5F" required /></div>' +
-        '<div class="form-group"><label>전용면적</label><input type="text" class="va-area" placeholder="예: 100.0㎡ (30평)" required /></div>' +
-        '<div class="form-group"><label>용도 추천</label><input type="text" class="va-use" placeholder="예: 일반 사무실" required /></div>' +
-        '<div class="form-group"><label>상태</label><select class="va-status">' +
-          '<option value="p-ok">즉시 입주</option>' +
-          '<option value="p-wait">협의 중</option>' +
-          '<option value="p-gray">계약 완료</option>' +
-        '</select></div>' +
+        '<div class="form-group"><label>호실</label><input type="text" class="va-room" placeholder="예: 지하 27호" required /></div>' +
+        '<div class="form-group"><label>용도</label><input type="text" class="va-use" placeholder="예: 지하상가" required /></div>' +
+        '<div class="form-group"><label>평형(전용면적)</label><input type="text" class="va-area" placeholder="예: 143.34㎡ (43.36평)" required /></div>' +
+        '<div class="form-group"><label>문의전화</label><input type="text" class="va-tel" placeholder="예: 010-3724-6636" required /></div>' +
         '<div class="vacancy-add-actions">' +
           '<button type="submit" class="btn btn-primary btn-sm">추가</button>' +
           '<button type="button" class="btn btn-outline btn-sm va-cancel">취소</button>' +
@@ -258,26 +254,9 @@
         addRowControls();
       }
 
-      // "12F" → 12, "B1" → -1 처럼 층 표기를 숫자로 바꿔 내림차순 정렬 기준으로 쓴다
-      function floorValue(text) {
-        var s = text.trim().toUpperCase();
-        var basement = s.match(/^B\s*(\d+(?:\.\d+)?)/);
-        if (basement) return -parseFloat(basement[1]);
-        var num = s.match(/-?\d+(?:\.\d+)?/);
-        return num ? parseFloat(num[0]) : -Infinity;
-      }
-
-      function sortVacancyRows() {
-        var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
-        rows.sort(function (a, b) {
-          return floorValue(b.children[0].textContent) - floorValue(a.children[0].textContent);
-        });
-        rows.forEach(function (r) { tbody.appendChild(r); });
-      }
-
       addBtn.addEventListener('click', function () {
         form.classList.add('show');
-        form.querySelector('.va-floor').focus();
+        form.querySelector('.va-room').focus();
       });
 
       form.querySelector('.va-cancel').addEventListener('click', function () {
@@ -287,26 +266,20 @@
 
       form.addEventListener('submit', function (e) {
         e.preventDefault();
-        var floor = form.querySelector('.va-floor').value.trim();
-        var areaVal = form.querySelector('.va-area').value.trim();
+        var room = form.querySelector('.va-room').value.trim();
         var use = form.querySelector('.va-use').value.trim();
-        var statusSel = form.querySelector('.va-status');
-        if (!floor || !areaVal || !use) return;
+        var areaVal = form.querySelector('.va-area').value.trim();
+        var tel = form.querySelector('.va-tel').value.trim();
+        if (!room || !use || !areaVal || !tel) return;
 
+        // 차례는 관리자가 손으로 맞춰 둔 그대로 두고, 새 공실은 맨 아래에 붙인다
         var tr = document.createElement('tr');
-        [floor, areaVal, use].forEach(function (v) {
+        [room, use, areaVal, tel].forEach(function (v) {
           var td = document.createElement('td');
           td.textContent = v;
           tr.appendChild(td);
         });
-        var statusTd = document.createElement('td');
-        var pill = document.createElement('span');
-        pill.className = 'pill ' + statusSel.value;
-        pill.textContent = statusSel.options[statusSel.selectedIndex].text;
-        statusTd.appendChild(pill);
-        tr.appendChild(statusTd);
         tbody.appendChild(tr);
-        sortVacancyRows();
 
         saveVacancyContent();
 
