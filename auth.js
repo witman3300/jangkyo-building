@@ -439,13 +439,17 @@ async function adminSetGrade(uid, grade) {
   await userDocRef(uid).update({ grade: grade });
 }
 
-/* 특별회원 신청 승인: 등급을 특별회원으로 올리고, 계정 승인까지 함께 처리한다.
-   신청 표시는 처리했으므로 내린다. (거절은 신청 표시만 내리고 등급은 그대로 둔다) */
-async function adminApproveSpecial(uid, accept) {
-  var patch = { requestedSpecial: false };
-  if (accept) {
-    patch.grade = "special";
-    patch.approved = true;
+/* 가입 신청 승인·취소.
+   구분소유자·임차인·건물관리자는 가입할 때 특별회원으로 신청할 수 있고, 관리자가 그 신청을
+   승인하면 특별회원이 되어 회원광장을 이용한다. 특별회원 신청이 아니면 일반회원으로 승인한다.
+   - 승인: 로그인할 수 있게 하고, 특별회원 신청이면 등급도 올린다. 처리한 신청 표시는 내린다.
+   - 취소: 로그인 승인을 내리고, 특별회원이면 일반회원으로 되돌리면서 신청 표시를 다시 세운다.
+     (승인을 한 번 더 누르면 원래대로 돌아오도록, 신청한 상태 그대로 남겨 둔다) */
+async function adminSetApproval(uid, approved, special) {
+  var patch = { approved: approved };
+  if (special) {
+    patch.grade = approved ? "special" : "normal";
+    patch.requestedSpecial = !approved;
   }
   await userDocRef(uid).update(patch);
 }

@@ -250,77 +250,49 @@ function memberRowHtml(m, i) {
   const meta = getRealMemberMeta(m.id);
   const u = m.user;
   const id = escM(m.id);
-  const isAdminRow = !!(u && u.grade === "admin");
 
-  /* 최고관리자 줄도 다른 회원과 같은 선택상자 모양으로 둔다. 다만 등급은 바꿀 수 없다.
-     Firestore 규칙(protected)이 막고 있고, 통했더라도 관리사무소가 관리자 권한을 스스로
-     내려놓는 셈이 된다. 자리는 같게 두되 누를 수 없게 하고 이유를 말풍선으로 적는다. */
-  const grade = isAdminRow
-    ? `<select class="grade-select" disabled title="최고관리자 계정은 등급을 바꿀 수 없습니다 (Firestore 보안 규칙으로 보호됨)">
-         <option selected>${gradeLabel(u.grade)}</option>
-       </select>`
-    : u
-      ? `<select class="grade-select" onchange="onGrade('${escM(u.uid)}', this.value)">
-           <option value="normal" ${u.grade === "normal" ? "selected" : ""}>일반회원</option>
-           <option value="special" ${u.grade === "special" ? "selected" : ""}>특별회원</option>
-         </select>`
-      : `<select class="grade-select" onchange="onRealMemberGrade('${id}', this.value)">
-           <option value="normal" ${meta.grade === "normal" ? "selected" : ""}>일반회원</option>
-           <option value="special" ${meta.grade === "special" ? "selected" : ""}>특별회원</option>
-         </select>`;
+  /* 등급 선택상자. 모든 줄을 같은 모양으로 둔다.
+     관리자처럼 목록에 없는 등급이면 현재 값을 항목으로 덧붙여 그대로 보이게 한다. */
+  const gradeOptions = (cur) =>
+    (cur === "normal" || cur === "special" ? "" : `<option value="${escM(cur)}" selected>${escM(gradeLabel(cur))}</option>`) +
+    `<option value="normal" ${cur === "normal" ? "selected" : ""}>일반회원</option>` +
+    `<option value="special" ${cur === "special" ? "selected" : ""}>특별회원</option>`;
 
-  /* 신청: 특별회원으로 가입 신청한 회원을 여기서 바로 승인한다.
-     승인하면 등급이 특별회원이 되고 계정 승인까지 함께 처리된다. 거절하면 신청 표시만 내린다. */
+  const grade = u
+    ? `<select class="grade-select" onchange="onGrade('${escM(u.uid)}', this.value)">${gradeOptions(u.grade)}</select>`
+    : `<select class="grade-select" onchange="onRealMemberGrade('${id}', this.value)">${gradeOptions(meta.grade)}</select>`;
+
+  /* 신청: 가입할 때 낸 신청을 관리자가 승인하는 자리.
+     구분소유자·임차인·건물관리자는 가입할 때 특별회원으로 신청할 수 있고, 승인하면 특별회원이
+     되어 회원광장을 이용한다. 특별회원 신청이 아니면 일반회원으로 로그인만 승인한다.
+     승인한 줄은 버튼이 "승인취소"로 바뀌어, 한 번 더 누르면 신청 상태로 되돌아간다. */
   let req;
-  if (u && u.requestedSpecial && !isAdminRow) {
-    // 특별회원으로 가입 신청한 회원 — 승인하면 등급이 특별회원이 되고 계정 승인까지 처리된다
-    req = `<span class="badge req">특별</span>
-       <button type="button" class="mini primary" onclick="onApproveSpecial('${escM(u.uid)}', true)" title="특별회원으로 승인합니다">승인</button>
-       <button type="button" class="mini" onclick="onApproveSpecial('${escM(u.uid)}', false)" title="신청을 거절하고 표시를 내립니다">거절</button>`;
-  } else if (!u) {
+  if (!u) {
     /* 로그인 계정이 아직 없는 명단 회원 — 관리사무소가 회원으로 확인했다는 표시를 남긴다.
-       승인하면 상태가 "계정없음"에서 "승인됨"으로 바뀐다. */
+       승인해 두면 본인이 그 아이디로 로그인할 때 새 비밀번호를 만들고 바로 이용할 수 있다. */
     req = meta.approved
       ? `<button type="button" class="mini" onclick="onMemberApprove('${id}', false)" title="승인 표시를 내리고, 이 아이디로 가입할 때 다시 관리자 승인을 받도록 되돌립니다">승인취소</button>`
       : `<button type="button" class="mini primary" onclick="onMemberApprove('${id}', true)" title="이 회원을 승인합니다. 본인 아이디로 로그인하면 새 비밀번호와 연락처를 직접 입력하고 바로 이용할 수 있습니다">승인</button>`;
-  } else if (isAdminRow) {
-    /* 최고관리자는 이미 회원광장을 모두 이용할 수 있고(isSpecialMember는 admin을 포함한다),
-       Firestore 규칙(protected)이 등급 변경을 막고 있다. 자리는 같게 두되 누를 수 없게 한다. */
-    req = `<button type="button" class="mini primary" disabled title="최고관리자 계정은 등급을 바꿀 수 없습니다 (Firestore 보안 규칙으로 보호됨). 회원광장은 이미 모두 이용할 수 있습니다">특별승인</button>`;
-  } else if (u.grade === "special") {
-    req = "-"; // 이미 특별회원이라 승인할 것이 없다 (되돌리려면 왼쪽 등급에서 일반회원으로)
   } else {
-    /* 특별회원으로 신청하지 않았어도, 구분소유자로 확인된 회원은 여기서 바로 올린다.
-       왼쪽 등급 선택상자로도 같은 일을 할 수 있지만, 신청 승인과 같은 자리에서 처리하게 둔다. */
-    req = `<button type="button" class="mini primary" onclick="onApproveSpecial('${escM(u.uid)}', true)" title="이 회원을 특별회원으로 올립니다. 회원광장을 이용할 수 있게 됩니다">특별승인</button>`;
+    // 특별회원으로 신청했거나 이미 특별회원인 줄에는 무슨 신청인지 표시를 붙인다
+    const special = u.requestedSpecial || u.grade === "special";
+    const badge = special ? `<span class="badge req">특별</span> ` : "";
+    req = u.approved
+      ? `${badge}<button type="button" class="mini" onclick="onApproveMember('${escM(u.uid)}', false)" title="승인을 취소합니다. 로그인할 수 없게 되고, 특별회원이면 일반회원으로 되돌아가 다시 신청 상태가 됩니다">승인취소</button>`
+      : `${badge}<button type="button" class="mini primary" onclick="onApproveMember('${escM(u.uid)}', true)" title="${special ? "특별회원으로 승인합니다. 회원광장을 이용할 수 있게 됩니다" : "가입을 승인합니다. 바로 로그인할 수 있게 됩니다"}">승인</button>`;
   }
 
-  let status;
-  if (!u) {
-    // 계정이 없는 회원은 관리자가 승인 버튼을 누르면 "승인됨"으로 바뀐다.
-    // (로그인 계정이 생기는 것은 아니고, 본인이 아이디로 가입하면 그때 계정이 만들어진다)
-    status = meta.approved
-      ? `<span class="badge ok" title="관리사무소가 승인한 회원입니다. 본인이 아이디로 가입하면 바로 로그인됩니다">승인됨</span>`
-      : `<span class="badge">계정없음</span>`;
-  } else if (isAdminRow) {
-    /* 최고관리자 줄도 다른 계정과 같은 모양으로 둔다. 다만 승인취소는 실제로 할 수 없다.
-       Firestore 규칙(protected)이 approved 변경을 막고 있고, 설령 통했더라도 관리자가
-       스스로 로그인 길을 끊는 셈이 되기 때문이다. 자리는 같게 두되 누를 수 없게 한다. */
-    status = `<span class="badge ok">승인됨</span>
-      <button type="button" class="mini" disabled title="최고관리자 계정은 승인을 취소할 수 없습니다 (Firestore 보안 규칙으로 보호됨)">취소</button>`;
-  } else if (u.approved) {
-    status = `<span class="badge ok">승인됨</span> <button type="button" class="mini" onclick="onApprove('${escM(u.uid)}', false)">취소</button>`;
-  } else {
-    status = `<span class="badge wait">승인대기</span> <button type="button" class="mini primary" onclick="onApprove('${escM(u.uid)}', true)">승인</button>`;
-  }
+  /* 상태: 이 사이트에 로그인 계정이 있는지만 나타낸다.
+     승인 여부는 신청 칸에서 다루므로, 아직 승인 전이라 로그인할 수 없을 때만 함께 표시한다. */
+  const status = u
+    ? `<span class="badge ok" title="이 사이트에 로그인 계정이 있습니다">계정있음</span>` +
+      (u.approved ? "" : ` <span class="badge wait" title="아직 승인 전이라 로그인할 수 없습니다">승인대기</span>`)
+    : `<span class="badge" title="실회원 명단에는 있으나 아직 이 사이트에 가입하지 않았습니다">계정없음</span>`;
 
-  // 비고: 관리자가 적어 두는 메모 + 정리 버튼
-  // (최고관리자 줄은 삭제할 수 없으므로 버튼 자리만 같게 두고 누를 수 없게 한다)
-  const removeBtn = isAdminRow
-    ? `<button type="button" class="mini danger" disabled title="최고관리자 계정은 삭제할 수 없습니다 (Firestore 보안 규칙으로 보호됨)">계정삭제</button>`
-    : u
-      ? `<button type="button" class="mini danger" onclick="onDelete('${escM(u.uid)}')" title="사이트 로그인 계정을 삭제합니다">계정삭제</button>`
-      : `<button type="button" class="mini danger" onclick="hideRealMember('${id}')" title="이 목록에서만 감춥니다">목록제거</button>`;
+  // 비고: 관리자가 적어 두는 메모 + 계정삭제
+  const removeBtn = u
+    ? `<button type="button" class="mini danger" onclick="onDelete('${escM(u.uid)}', '${id}')" title="이 회원의 로그인 계정을 삭제합니다">계정삭제</button>`
+    : `<button type="button" class="mini danger" onclick="onDeleteRealMember('${id}')" title="아직 로그인 계정이 없는 회원입니다. 실회원 명단에서 삭제합니다">계정삭제</button>`;
 
   // data-label은 모바일에서 표를 세로 카드로 펼칠 때 각 값 앞에 붙는 항목 이름이다.
   return `<tr>
@@ -357,12 +329,6 @@ function onRealMemberJoinDate(id, joinDate) {
 
 function onRealMemberLastLogin(id, lastLogin) {
   setRealMemberMeta(id, { lastLogin: lastLogin.trim() });
-}
-
-function hideRealMember(id) {
-  if (!confirm(`'${id}' 회원을 이 목록에서 제거하시겠습니까? (모든 관리자 화면에서 숨겨지며, 실제 명단 데이터에는 영향이 없습니다)`)) return;
-  setRealMemberMeta(id, { hidden: true });
-  renderRealMemberTable();
 }
 
 /* ===== 옛 localStorage 회원관리 기록 서버로 옮기기 =====
@@ -459,10 +425,13 @@ async function renderAdmin() {
       </div>
     </div>
     <p class="admin-note">janggyo.co.kr에서 가져온 실회원 명단과 이 사이트의 로그인 계정을 아이디로 합쳐 보여줍니다 (명단 기준일 2026-08-18).
-    <strong>이메일·휴대폰번호·신청</strong>은 로그인 계정에 등록된 값이고, 계정이 없는 회원은 상태가 <strong>계정없음</strong>으로 표시됩니다.
+    <strong>이메일·휴대폰번호</strong>는 로그인 계정에 등록된 값입니다.
     <strong>게시글수</strong>는 구 사이트 5개 게시판 전수 확인 결과입니다(admin 외 회원은 작성 이력이 없어 0건).
-    <strong>등급·상태</strong>는 계정이 있는 회원의 경우 실제 사이트 권한을 바꾸며, 승인 전에는 로그인할 수 없습니다.
-    특별회원(구분소유자)이 되면 회원광장(공지사항·자료실·결산보고서·월간회의록·관리비 부과내역)을 이용할 수 있습니다.
+    <strong>상태</strong>는 이 사이트에 로그인 계정이 있는지를 나타냅니다 — <strong>계정있음</strong>은 가입을 마친 회원,
+    <strong>계정없음</strong>은 명단에는 있으나 아직 가입하지 않은 회원입니다.
+    <strong>신청</strong>은 가입할 때 낸 신청을 승인하는 자리입니다. 구분소유자·임차인·건물관리자는 가입할 때 특별회원으로
+    신청할 수 있고, 승인하면 특별회원이 되어 회원광장(공지사항·자료실·결산보고서·월간회의록·관리비 부과내역)을
+    이용할 수 있습니다. 승인 전에는 로그인할 수 없으며, 승인한 뒤 한 번 더 누르면 승인이 취소되어 신청 상태로 돌아갑니다.
     계정이 없는 회원의 등급과 <strong>가입일·최근로그인·비고</strong>는 관리자가 적어 두는 기록이며 모든 관리자 화면에 공유됩니다.</p>
     <div class="write-row" style="margin:16px 0;">
       <div class="field"><input type="text" id="real-member-search" placeholder="아이디·이름·호실·이메일·휴대폰 검색" oninput="renderRealMemberTable()"></div>
@@ -472,13 +441,42 @@ async function renderAdmin() {
   renderRealMemberTable();
 }
 
-async function onApprove(uid, approved) {
-  await adminApprove(uid, approved);
-  renderAdmin();
+/* 신청 칸의 승인 ↔ 승인취소.
+   승인하면 로그인할 수 있게 되고, 특별회원으로 신청한 회원은 등급도 특별회원이 된다.
+   한 번 더 누르면(승인취소) 로그인 승인이 내려가고 신청 상태로 되돌아간다. */
+async function onApproveMember(uid, accept) {
+  const u = Object.keys(USERS_BY_ID).map((k) => USERS_BY_ID[k]).find((x) => x.uid === uid);
+  const special = !!(u && (u.requestedSpecial || u.grade === "special"));
+
+  const msg = accept
+    ? special
+      ? `이 회원을 특별회원으로 승인하시겠습니까?
+회원광장(공지사항·자료실·결산보고서·월간회의록·관리비 부과내역)을 이용할 수 있게 됩니다.`
+      : `이 회원의 가입을 승인하시겠습니까?
+승인하면 바로 로그인할 수 있게 됩니다.`
+    : special
+      ? `승인을 취소하시겠습니까?
+로그인할 수 없게 되고, 등급도 일반회원으로 되돌아가 다시 특별회원 신청 상태가 됩니다.`
+      : `승인을 취소하시겠습니까?
+이 회원은 로그인할 수 없게 됩니다.`;
+  if (!confirm(msg)) return;
+
+  try {
+    await adminSetApproval(uid, accept, special);
+    showToast(accept ? (special ? "특별회원으로 승인했습니다." : "승인했습니다.") : "승인을 취소했습니다.");
+    renderAdmin();
+  } catch (e) {
+    showToast("처리하지 못했습니다: " + e.message);
+    renderAdmin();
+  }
 }
 
 async function onGrade(uid, grade) {
-  await adminSetGrade(uid, grade);
+  try {
+    await adminSetGrade(uid, grade);
+  } catch (e) {
+    showToast("등급을 바꾸지 못했습니다: " + e.message);
+  }
   renderAdmin();
 }
 
@@ -560,21 +558,53 @@ async function onMemberApprove(id, approved) {
   renderRealMemberTable();
 }
 
-async function onApproveSpecial(uid, accept) {
-  if (accept && !confirm("이 회원을 특별회원으로 승인하시겠습니까?\n회원광장(공지사항·자료실·결산보고서·월간회의록·관리비 부과내역)을 이용할 수 있게 됩니다.")) return;
-  if (!accept && !confirm("특별회원 신청을 거절하시겠습니까?\n등급은 일반회원 그대로 두고 신청 표시만 내립니다.")) return;
+/* 로그인 계정 삭제.
+   Firestore의 회원 정보를 지운다. 프로필이 없으면 로그인해도 승인되지 않은 것으로 처리되어
+   사이트를 쓸 수 없다. 다만 로그인에 쓰는 Firebase 인증 계정 자체는 Admin SDK(서버)가 있어야
+   지울 수 있어, 그 부분은 콘솔에서 따로 지워야 한다는 것을 확인창에 적어 둔다. */
+async function onDelete(uid, id) {
+  if (
+    !confirm(
+      `'${id}' 회원의 계정을 정말로 삭제하시겠습니까?
+
+` +
+        `이 사이트의 회원 정보와 권한이 지워지며 되돌릴 수 없습니다.
+` +
+        `(로그인에 쓰는 Firebase 인증 계정 자체는 콘솔에서 따로 지워야 합니다)`
+    )
+  )
+    return;
   try {
-    await adminApproveSpecial(uid, accept);
-    showToast(accept ? "특별회원으로 승인했습니다." : "신청을 거절했습니다.");
-    renderAdmin();
+    await adminDeleteUser(uid);
+    showToast(`'${id}' 회원의 계정을 삭제했습니다.`);
   } catch (e) {
-    showToast("처리하지 못했습니다: " + e.message);
+    showToast("삭제하지 못했습니다: " + e.message);
   }
+  renderAdmin();
 }
 
-async function onDelete(uid) {
-  if (!confirm(`이 회원을 삭제하시겠습니까? (사이트 접근 권한만 제거되며, 로그인 계정 자체는 Firebase 콘솔에서 별도로 삭제해야 합니다)`)) return;
-  await adminDeleteUser(uid);
+/* 아직 로그인 계정이 없는 명단 회원 삭제.
+   지울 계정이 없으므로 실회원 명단에서 내리고, 함께 적어 둔 관리 기록과 구회원 아이디
+   등록도 같이 정리한다. */
+async function onDeleteRealMember(id) {
+  if (
+    !confirm(
+      `'${id}' 회원을 정말로 삭제하시겠습니까?
+
+` +
+        `아직 로그인 계정이 없는 회원이라 실회원 명단에서 지워집니다. 되돌릴 수 없습니다.`
+    )
+  )
+    return;
+  try {
+    await db.collection(REAL_MEMBERS_COL).doc(id).delete();
+    // 함께 남아 있던 관리 기록과 아이디 등록도 정리한다 (없으면 그냥 넘어간다)
+    await memberMetaRef(id).delete().catch(() => {});
+    await db.collection(LEGACY_COL).doc(id).delete().catch(() => {});
+    showToast(`'${id}' 회원을 명단에서 삭제했습니다.`);
+  } catch (e) {
+    showToast("삭제하지 못했습니다: " + e.message);
+  }
   renderAdmin();
 }
 
