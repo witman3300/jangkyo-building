@@ -274,12 +274,10 @@ function memberRowHtml(m, i) {
       ? `<button type="button" class="mini" onclick="onMemberApprove('${id}', false)" title="승인 표시를 내리고, 이 아이디로 가입할 때 다시 관리자 승인을 받도록 되돌립니다">승인취소</button>`
       : `<button type="button" class="mini primary" onclick="onMemberApprove('${id}', true)" title="이 회원을 승인합니다. 본인 아이디로 로그인하면 새 비밀번호와 연락처를 직접 입력하고 바로 이용할 수 있습니다">승인</button>`;
   } else {
-    // 특별회원으로 신청했거나 이미 특별회원인 줄에는 무슨 신청인지 표시를 붙인다
     const special = u.requestedSpecial || u.grade === "special";
-    const badge = special ? `<span class="badge req">특별</span> ` : "";
     req = u.approved
-      ? `${badge}<button type="button" class="mini" onclick="onApproveMember('${escM(u.uid)}', false)" title="승인을 취소합니다. 로그인할 수 없게 되고, 특별회원이면 일반회원으로 되돌아가 다시 신청 상태가 됩니다">승인취소</button>`
-      : `${badge}<button type="button" class="mini primary" onclick="onApproveMember('${escM(u.uid)}', true)" title="${special ? "특별회원으로 승인합니다. 회원광장을 이용할 수 있게 됩니다" : "가입을 승인합니다. 바로 로그인할 수 있게 됩니다"}">승인</button>`;
+      ? `<button type="button" class="mini" onclick="onApproveMember('${escM(u.uid)}', false)" title="승인을 취소합니다. 로그인할 수 없게 되고, 특별회원이면 일반회원으로 되돌아가 다시 신청 상태가 됩니다">승인취소</button>`
+      : `<button type="button" class="mini primary" onclick="onApproveMember('${escM(u.uid)}', true)" title="${special ? "특별회원으로 승인합니다. 회원광장을 이용할 수 있게 됩니다" : "가입을 승인합니다. 바로 로그인할 수 있게 됩니다"}">승인</button>`;
   }
 
   /* 상태: 이 사이트에 로그인 계정이 있는지만 나타낸다.
