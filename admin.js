@@ -184,13 +184,28 @@ function memberRows(q) {
   });
 }
 
+/* 승인 버튼이 떠 있는 줄 — 로그인 계정이 있고 아직 승인되지 않은 회원.
+   최고관리자 줄은 표에도 "승인됨"으로 나오고 Firestore 규칙(protected)이 막고 있어 뺀다.
+   승인대기 숫자와 일괄 승인 대상이 어긋나지 않도록 두 곳에서 이 함수를 같이 쓴다. */
+function pendingApprovalRows(rows) {
+  return rows.filter((m) => m.user && !m.user.approved && m.user.grade !== "admin" && !m.user.protected);
+}
+
 function renderRealMemberTable() {
   const q = document.getElementById("real-member-search").value;
   const rows = memberRows(q);
   const withAccount = rows.filter((m) => m.user).length;
-  const pending = rows.filter((m) => m.user && !m.user.approved).length;
+  const pendingRows = pendingApprovalRows(rows);
   document.getElementById("real-member-count").textContent =
-    `총 ${rows.length}명 · 로그인 계정 ${withAccount}명 · 승인대기 ${pending}명`;
+    `총 ${rows.length}명 · 로그인 계정 ${withAccount}명 · 승인대기 ${pendingRows.length}명`;
+
+  // 승인대기가 있을 때만 일괄 승인 버튼을 띄운다 (검색 중이면 지금 보이는 회원만 대상)
+  const bulkWrap = document.getElementById("approve-all-wrap");
+  if (bulkWrap) {
+    bulkWrap.innerHTML = pendingRows.length
+      ? `<button type="button" class="btn btn-outline btn-sm" id="approve-all-btn" onclick="onApproveAllPending()">승인대기 ${pendingRows.length}명 일괄 승인</button>`
+      : "";
+  }
 
   document.getElementById("real-member-table-wrap").innerHTML = `
     ${legacyIdNoticeHtml()}
@@ -423,7 +438,10 @@ async function renderAdmin() {
   document.getElementById("admin-app").innerHTML = `
     <div class="board-head">
       <h1>회원관리</h1>
-      <span class="pending-count" id="real-member-count">불러오는 중...</span>
+      <div class="admin-head-right">
+        <span class="pending-count" id="real-member-count">불러오는 중...</span>
+        <span id="approve-all-wrap"></span>
+      </div>
     </div>
     <p class="admin-note">janggyo.co.kr에서 가져온 실회원 명단과 이 사이트의 로그인 계정을 아이디로 합쳐 보여줍니다 (명단 기준일 2026-08-18).
     <strong>이메일·휴대폰번호·신청</strong>은 로그인 계정에 등록된 값이고, 계정이 없는 회원은 상태가 <strong>계정없음</strong>으로 표시됩니다.
@@ -446,6 +464,55 @@ async function onApprove(uid, approved) {
 
 async function onGrade(uid, grade) {
   await adminSetGrade(uid, grade);
+  renderAdmin();
+}
+
+/* 승인대기 회원을 한 번에 승인한다.
+   가입자가 몰린 뒤 한 명씩 누르던 일을 줄인다. 승인하면 바로 로그인할 수 있게 되므로,
+   누구를 승인하는지 확인창에 이름을 적어 보여 준다.
+   특별회원 신청은 구분소유자 확인이 필요한 별도 판단이라 여기서 함께 처리하지 않는다.
+   (계정만 승인되고 "신청" 열의 승인·거절 버튼은 그대로 남는다) */
+async function onApproveAllPending() {
+  const targets = pendingApprovalRows(memberRows(document.getElementById("real-member-search").value));
+  if (!targets.length) return;
+
+  const shown = targets.slice(0, 10).map((m) => `${(m.user && m.user.name) || m.name || ""}(${m.id})`).join(", ");
+  const more = targets.length > 10 ? ` 외 ${targets.length - 10}명` : "";
+  if (
+    !confirm(
+      `승인대기 ${targets.length}명을 모두 승인하시겠습니까?
+
+${shown}${more}
+
+` +
+        `승인하면 바로 로그인할 수 있게 됩니다. 특별회원 신청은 회원별로 따로 처리해 주세요.`
+    )
+  )
+    return;
+
+  const btn = document.getElementById("approve-all-btn");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "승인 중...";
+  }
+
+  // 한 명이 실패해도 나머지는 승인되도록 하나씩 처리하고, 실패한 아이디만 모아 알린다
+  let done = 0;
+  const failed = [];
+  for (const m of targets) {
+    try {
+      await adminApprove(m.user.uid, true);
+      done++;
+    } catch (e) {
+      failed.push(m.id);
+    }
+  }
+
+  showToast(
+    failed.length
+      ? `${done}명 승인, ${failed.length}명 실패 (${failed.join(", ")})`
+      : `${done}명을 승인했습니다.`
+  );
   renderAdmin();
 }
 
