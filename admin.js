@@ -252,11 +252,13 @@ function memberRowHtml(m, i) {
   const id = escM(m.id);
   const isAdminRow = !!(u && u.grade === "admin");
 
+  /* 최고관리자 줄도 다른 회원과 같은 선택상자 모양으로 둔다. 다만 등급은 바꿀 수 없다.
+     Firestore 규칙(protected)이 막고 있고, 통했더라도 관리사무소가 관리자 권한을 스스로
+     내려놓는 셈이 된다. 자리는 같게 두되 누를 수 없게 하고 이유를 말풍선으로 적는다. */
   const grade = isAdminRow
-    ? gradeLabel(u.grade) +
-      (u.protected
-        ? ` <span class="badge admin" title="Firestore 보안 규칙으로 보호되어 앱에서는 등급 변경·삭제가 불가능합니다">🛡</span>`
-        : "")
+    ? `<select class="grade-select" disabled title="최고관리자 계정은 등급을 바꿀 수 없습니다 (Firestore 보안 규칙으로 보호됨)">
+         <option selected>${gradeLabel(u.grade)}</option>
+       </select>`
     : u
       ? `<select class="grade-select" onchange="onGrade('${escM(u.uid)}', this.value)">
            <option value="normal" ${u.grade === "normal" ? "selected" : ""}>일반회원</option>
@@ -304,9 +306,10 @@ function memberRowHtml(m, i) {
     status = `<span class="badge wait">승인대기</span> <button type="button" class="mini primary" onclick="onApprove('${escM(u.uid)}', true)">승인</button>`;
   }
 
-  // 비고: 관리자가 적어 두는 메모 + 정리 버튼 (최고관리자 줄에는 버튼을 두지 않는다)
+  // 비고: 관리자가 적어 두는 메모 + 정리 버튼
+  // (최고관리자 줄은 삭제할 수 없으므로 버튼 자리만 같게 두고 누를 수 없게 한다)
   const removeBtn = isAdminRow
-    ? ""
+    ? `<button type="button" class="mini danger" disabled title="최고관리자 계정은 삭제할 수 없습니다 (Firestore 보안 규칙으로 보호됨)">계정삭제</button>`
     : u
       ? `<button type="button" class="mini danger" onclick="onDelete('${escM(u.uid)}')" title="사이트 로그인 계정을 삭제합니다">계정삭제</button>`
       : `<button type="button" class="mini danger" onclick="hideRealMember('${id}')" title="이 목록에서만 감춥니다">목록제거</button>`;

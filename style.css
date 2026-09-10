@@ -649,6 +649,13 @@ body.sidebar-open .sidebar-overlay {
   font-size: 13px;
 }
 
+/* 자리는 지키되 바꿀 수 없는 선택상자 (최고관리자 줄의 등급) */
+.grade-select[disabled] {
+  opacity: 0.55;
+  background: #f7f7f9;
+  color: #6b7280;
+}
+
 .join-date-input {
   width: 100px;
   padding: 5px 6px;
