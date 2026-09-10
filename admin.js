@@ -279,8 +279,8 @@ function memberRowHtml(m, i) {
     /* 로그인 계정이 아직 없는 명단 회원 — 관리사무소가 회원으로 확인했다는 표시를 남긴다.
        승인하면 상태가 "계정없음"에서 "승인됨"으로 바뀐다. */
     req = meta.approved
-      ? `<button type="button" class="mini" onclick="onMemberApprove('${id}', false)" title="승인 표시를 내립니다">승인취소</button>`
-      : `<button type="button" class="mini primary" onclick="onMemberApprove('${id}', true)" title="이 회원을 승인 처리합니다">승인</button>`;
+      ? `<button type="button" class="mini" onclick="onMemberApprove('${id}', false)" title="승인 표시를 내리고, 이 아이디로 가입할 때 다시 관리자 승인을 받도록 되돌립니다">승인취소</button>`
+      : `<button type="button" class="mini primary" onclick="onMemberApprove('${id}', true)" title="이 회원을 승인합니다. 본인 아이디로 로그인하면 새 비밀번호와 연락처를 직접 입력하고 바로 이용할 수 있습니다">승인</button>`;
   } else {
     req = "-";
   }
@@ -293,7 +293,11 @@ function memberRowHtml(m, i) {
       ? `<span class="badge ok" title="관리사무소가 승인한 회원입니다. 본인이 아이디로 가입하면 바로 로그인됩니다">승인됨</span>`
       : `<span class="badge">계정없음</span>`;
   } else if (isAdminRow) {
-    status = `<span class="badge ok">승인됨</span>`;
+    /* 최고관리자 줄도 다른 계정과 같은 모양으로 둔다. 다만 승인취소는 실제로 할 수 없다.
+       Firestore 규칙(protected)이 approved 변경을 막고 있고, 설령 통했더라도 관리자가
+       스스로 로그인 길을 끊는 셈이 되기 때문이다. 자리는 같게 두되 누를 수 없게 한다. */
+    status = `<span class="badge ok">승인됨</span>
+      <button type="button" class="mini" disabled title="최고관리자 계정은 승인을 취소할 수 없습니다 (Firestore 보안 규칙으로 보호됨)">취소</button>`;
   } else if (u.approved) {
     status = `<span class="badge ok">승인됨</span> <button type="button" class="mini" onclick="onApprove('${escM(u.uid)}', false)">취소</button>`;
   } else {
@@ -516,9 +520,32 @@ ${shown}${more}
   renderAdmin();
 }
 
-// 계정이 없는 명단 회원의 승인 표시 (서버에 저장되어 모든 관리자 화면에 반영된다)
-function onMemberApprove(id, approved) {
+/* 계정이 없는 명단 회원의 승인 표시 (서버에 저장되어 모든 관리자 화면에 반영된다).
+
+   승인은 "관리사무소가 확인한 회원"이라는 뜻이므로, 그 아이디를 구회원 명단(legacyMembers)에도
+   함께 올린다. 그래야 이 회원이 로그인 화면에 본인 아이디를 넣었을 때 "홈페이지가 새롭게
+   바뀌었습니다" 안내로 넘어가, 새 비밀번호와 연락처를 직접 입력하고 바로 로그인할 수 있다.
+   승인 표시(memberMeta)는 관리자만 읽을 수 있어 로그인 화면에서는 참고할 수 없기 때문에,
+   로그인 화면이 볼 수 있는 이 명단에 함께 적어 두어야 한다.
+   승인을 취소하면 명단에서도 내려, 가입하더라도 다시 관리자 승인을 거치게 한다. */
+async function onMemberApprove(id, approved) {
   setRealMemberMeta(id, { approved: approved });
+  renderRealMemberTable();
+
+  try {
+    if (approved) {
+      const m = REAL_MEMBERS.find((r) => r.id === id);
+      await db.collection(LEGACY_COL).doc(id).set({ unit: (m && m.unit) || "" });
+      LEGACY_IDS.add(id);
+      showToast(`${id} 님을 승인했습니다. 이 아이디로 로그인하면 새 비밀번호를 만들고 바로 이용할 수 있습니다.`);
+    } else {
+      await db.collection(LEGACY_COL).doc(id).delete();
+      LEGACY_IDS.delete(id);
+      showToast(`${id} 님의 승인을 취소했습니다. 이 아이디로 가입하면 다시 관리자 승인을 받아야 합니다.`);
+    }
+  } catch (e) {
+    showToast("구회원 아이디 등록을 바꾸지 못했습니다: " + e.message);
+  }
   renderRealMemberTable();
 }
 
