@@ -283,8 +283,16 @@ function memberRowHtml(m, i) {
     req = meta.approved
       ? `<button type="button" class="mini" onclick="onMemberApprove('${id}', false)" title="승인 표시를 내리고, 이 아이디로 가입할 때 다시 관리자 승인을 받도록 되돌립니다">승인취소</button>`
       : `<button type="button" class="mini primary" onclick="onMemberApprove('${id}', true)" title="이 회원을 승인합니다. 본인 아이디로 로그인하면 새 비밀번호와 연락처를 직접 입력하고 바로 이용할 수 있습니다">승인</button>`;
+  } else if (isAdminRow) {
+    /* 최고관리자는 이미 회원광장을 모두 이용할 수 있고(isSpecialMember는 admin을 포함한다),
+       Firestore 규칙(protected)이 등급 변경을 막고 있다. 자리는 같게 두되 누를 수 없게 한다. */
+    req = `<button type="button" class="mini primary" disabled title="최고관리자 계정은 등급을 바꿀 수 없습니다 (Firestore 보안 규칙으로 보호됨). 회원광장은 이미 모두 이용할 수 있습니다">특별승인</button>`;
+  } else if (u.grade === "special") {
+    req = "-"; // 이미 특별회원이라 승인할 것이 없다 (되돌리려면 왼쪽 등급에서 일반회원으로)
   } else {
-    req = "-";
+    /* 특별회원으로 신청하지 않았어도, 구분소유자로 확인된 회원은 여기서 바로 올린다.
+       왼쪽 등급 선택상자로도 같은 일을 할 수 있지만, 신청 승인과 같은 자리에서 처리하게 둔다. */
+    req = `<button type="button" class="mini primary" onclick="onApproveSpecial('${escM(u.uid)}', true)" title="이 회원을 특별회원으로 올립니다. 회원광장을 이용할 수 있게 됩니다">특별승인</button>`;
   }
 
   let status;

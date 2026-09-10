@@ -1245,6 +1245,7 @@ body.sidebar-open .sidebar-overlay {
 /* 자리는 지키되 누를 수 없는 버튼 (최고관리자 줄의 승인취소) */
 .act .mini[disabled] { opacity: 0.4; cursor: default; }
 .act .mini[disabled]:hover { background: #fff; }
+.act .mini.primary[disabled]:hover { background: #333; }
 .act .mini.primary { background: #333; color: #fff; border-color: #333; }
 .act .mini.primary:hover { opacity: 0.85; }
 .act .mini.danger { color: #c0392b; border-color: #e3b9b4; }
