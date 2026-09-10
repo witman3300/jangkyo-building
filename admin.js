@@ -191,19 +191,27 @@ function pendingApprovalRows(rows) {
   return rows.filter((m) => m.user && !m.user.approved && m.user.grade !== "admin" && !m.user.protected);
 }
 
+/* 아직 승인하지 않은 명단 회원 — 로그인 계정이 없고 승인 표시도 없는 줄.
+   승인해 두면 본인이 그 아이디로 로그인할 때 새 비밀번호를 만들고 바로 이용할 수 있다. */
+function unapprovedListedRows(rows) {
+  return rows.filter((m) => !m.user && !getRealMemberMeta(m.id).approved);
+}
+
 function renderRealMemberTable() {
   const q = document.getElementById("real-member-search").value;
   const rows = memberRows(q);
   const withAccount = rows.filter((m) => m.user).length;
   const pendingRows = pendingApprovalRows(rows);
+  const unapprovedRows = unapprovedListedRows(rows);
   document.getElementById("real-member-count").textContent =
-    `총 ${rows.length}명 · 로그인 계정 ${withAccount}명 · 승인대기 ${pendingRows.length}명`;
+    `총 ${rows.length}명 · 로그인 계정 ${withAccount}명 · 승인대기 ${pendingRows.length}명 · 미가입 미승인 ${unapprovedRows.length}명`;
 
-  // 승인대기가 있을 때만 일괄 승인 버튼을 띄운다 (검색 중이면 지금 보이는 회원만 대상)
+  // 승인할 것이 남아 있을 때만 일괄 승인 버튼을 띄운다 (검색 중이면 지금 보이는 회원만 대상)
   const bulkWrap = document.getElementById("approve-all-wrap");
+  const bulkCount = pendingRows.length + unapprovedRows.length;
   if (bulkWrap) {
-    bulkWrap.innerHTML = pendingRows.length
-      ? `<button type="button" class="btn btn-outline btn-sm" id="approve-all-btn" onclick="onApproveAllPending()">승인대기 ${pendingRows.length}명 일괄 승인</button>`
+    bulkWrap.innerHTML = bulkCount
+      ? `<button type="button" class="btn btn-outline btn-sm" id="approve-all-btn" onclick="onApproveAllPending()">미승인 ${bulkCount}명 일괄 승인</button>`
       : "";
   }
 
@@ -478,28 +486,29 @@ async function onGrade(uid, grade) {
   renderAdmin();
 }
 
-/* 승인대기 회원을 한 번에 승인한다.
-   가입자가 몰린 뒤 한 명씩 누르던 일을 줄인다. 승인하면 바로 로그인할 수 있게 되므로,
-   누구를 승인하는지 확인창에 이름을 적어 보여 준다.
-   특별회원 신청은 구분소유자 확인이 필요한 별도 판단이라 여기서 함께 처리하지 않는다.
-   (계정만 승인되고 "신청" 열의 승인·거절 버튼은 그대로 남는다) */
+/* 승인 안 된 회원을 한 번에 승인한다.
+   두 가지를 함께 처리한다.
+   - 로그인 계정이 있는 승인대기 회원: 바로 로그인할 수 있게 승인한다.
+   - 아직 가입하지 않은 명단 회원: 승인 표시를 남기고 구회원 아이디 명단에도 올린다.
+     그러면 본인이 그 아이디로 로그인할 때 "홈페이지가 새롭게 바뀌었습니다" 안내로 넘어가,
+     새 비밀번호와 연락처를 직접 입력하고 승인 절차 없이 바로 이용할 수 있다.
+   승인하면 바로 로그인할 수 있게 되므로, 몇 명을 어떻게 승인하는지 확인창에 적어 보여 준다.
+   특별회원 신청은 구분소유자 확인이 필요한 별도 판단이라 여기서 함께 처리하지 않는다. */
 async function onApproveAllPending() {
-  const targets = pendingApprovalRows(memberRows(document.getElementById("real-member-search").value));
-  if (!targets.length) return;
+  const rows = memberRows(document.getElementById("real-member-search").value);
+  const accounts = pendingApprovalRows(rows);
+  const listed = unapprovedListedRows(rows);
+  const total = accounts.length + listed.length;
+  if (!total) return;
 
-  const shown = targets.slice(0, 10).map((m) => `${(m.user && m.user.name) || m.name || ""}(${m.id})`).join(", ");
-  const more = targets.length > 10 ? ` 외 ${targets.length - 10}명` : "";
-  if (
-    !confirm(
-      `승인대기 ${targets.length}명을 모두 승인하시겠습니까?
-
-${shown}${more}
-
-` +
-        `승인하면 바로 로그인할 수 있게 됩니다. 특별회원 신청은 회원별로 따로 처리해 주세요.`
-    )
-  )
-    return;
+  const lines = [];
+  if (accounts.length) lines.push(`· 로그인 계정이 있는 ${accounts.length}명 — 바로 로그인할 수 있게 됩니다.`);
+  if (listed.length)
+    lines.push(
+      `· 아직 가입하지 않은 ${listed.length}명 — 본인 아이디로 로그인하면 새 비밀번호를 만들고 바로 이용할 수 있게 됩니다.`
+    );
+  const msg = `승인 안 된 ${total}명을 모두 승인하시겠습니까?\n\n` + lines.join("\n");
+  if (!confirm(msg)) return;
 
   const btn = document.getElementById("approve-all-btn");
   if (btn) {
@@ -507,10 +516,10 @@ ${shown}${more}
     btn.textContent = "승인 중...";
   }
 
-  // 한 명이 실패해도 나머지는 승인되도록 하나씩 처리하고, 실패한 아이디만 모아 알린다
+  // 1) 로그인 계정이 있는 회원 — 계정마다 한 건씩 고친다 (한 명이 실패해도 나머지는 승인된다)
   let done = 0;
   const failed = [];
-  for (const m of targets) {
+  for (const m of accounts) {
     try {
       await adminApprove(m.user.uid, true);
       done++;
@@ -519,41 +528,33 @@ ${shown}${more}
     }
   }
 
-  showToast(
-    failed.length
-      ? `${done}명 승인, ${failed.length}명 실패 (${failed.join(", ")})`
-      : `${done}명을 승인했습니다.`
-  );
-  renderAdmin();
-}
-
-/* 계정이 없는 명단 회원의 승인 표시 (서버에 저장되어 모든 관리자 화면에 반영된다).
-
-   승인은 "관리사무소가 확인한 회원"이라는 뜻이므로, 그 아이디를 구회원 명단(legacyMembers)에도
-   함께 올린다. 그래야 이 회원이 로그인 화면에 본인 아이디를 넣었을 때 "홈페이지가 새롭게
-   바뀌었습니다" 안내로 넘어가, 새 비밀번호와 연락처를 직접 입력하고 바로 로그인할 수 있다.
-   승인 표시(memberMeta)는 관리자만 읽을 수 있어 로그인 화면에서는 참고할 수 없기 때문에,
-   로그인 화면이 볼 수 있는 이 명단에 함께 적어 두어야 한다.
-   승인을 취소하면 명단에서도 내려, 가입하더라도 다시 관리자 승인을 거치게 한다. */
-async function onMemberApprove(id, approved) {
-  setRealMemberMeta(id, { approved: approved });
-  renderRealMemberTable();
-
+  /* 2) 명단 회원 — 200명씩 묶어 한 번에 올린다.
+        한 명당 승인 표시(memberMeta)와 아이디 등록(legacyMembers) 두 건을 쓰므로,
+        Firestore 배치 한도(500건)에 걸리지 않게 200명씩 끊는다. */
   try {
-    if (approved) {
-      const m = REAL_MEMBERS.find((r) => r.id === id);
-      await db.collection(LEGACY_COL).doc(id).set({ unit: (m && m.unit) || "" });
-      LEGACY_IDS.add(id);
-      showToast(`${id} 님을 승인했습니다. 이 아이디로 로그인하면 새 비밀번호를 만들고 바로 이용할 수 있습니다.`);
-    } else {
-      await db.collection(LEGACY_COL).doc(id).delete();
-      LEGACY_IDS.delete(id);
-      showToast(`${id} 님의 승인을 취소했습니다. 이 아이디로 가입하면 다시 관리자 승인을 받아야 합니다.`);
+    for (let i = 0; i < listed.length; i += 200) {
+      const chunk = listed.slice(i, i + 200);
+      const batch = db.batch();
+      chunk.forEach((m) => {
+        batch.set(memberMetaRef(m.id), { approved: true }, { merge: true });
+        batch.set(db.collection(LEGACY_COL).doc(m.id), { unit: m.unit || "" });
+      });
+      await batch.commit();
+      chunk.forEach((m) => {
+        META_MAP[m.id] = Object.assign({}, getRealMemberMeta(m.id), { approved: true });
+        LEGACY_IDS.add(m.id);
+      });
+      done += chunk.length;
+      if (btn) btn.textContent = `승인 중... ${done}/${total}`;
     }
   } catch (e) {
-    showToast("구회원 아이디 등록을 바꾸지 못했습니다: " + e.message);
+    showToast("명단 회원을 승인하지 못했습니다: " + e.message);
   }
-  renderRealMemberTable();
+
+  showToast(
+    failed.length ? `${done}명 승인, ${failed.length}명 실패 (${failed.join(", ")})` : `${done}명을 승인했습니다.`
+  );
+  renderAdmin();
 }
 
 /* 로그인 계정 삭제.
