@@ -242,7 +242,16 @@ function renderList() {
   const staticAll = staticEntries(cat, admin);
   const deletedStatic = staticAll.filter((e) => e.deleted);
   const staticRows = showDeletedStatic ? staticAll : staticAll.filter((e) => !e.deleted);
+  /* 목록 번호
+     공지사항은 정보마당·회원광장 사이에서 글을 옮기거나 지울 수 있어, 원본에 붙어 있던
+     번호를 그대로 쓰면 35, 34, 32... 처럼 중간이 빈다. 그래서 저장된 번호를 쓰지 않고
+     화면에 보이는 순서대로 맨 위부터 1, 2, 3, 4, 5... 로 그때그때 새로 매긴다.
+     고정글(📌)과 지운 원본 글(관리자가 펼쳐 봤을 때만 나온다)은 번호를 차지하지 않아,
+     관리자가 보는 번호와 회원이 보는 번호가 어긋나지 않는다.
+     그 밖의 게시판은 지금까지처럼 원본 번호를 쓰고, 새 글이 그 다음 번호를 받는다. */
+  const renumber = MOVE_CATS.includes(cat);
   const baseNo = staticRows.reduce((m, e) => Math.max(m, e.post.no || 0), 0);
+  let rowNo = 1;
 
   // 지금 보고 있는 게시판의 반대쪽으로 보내는 버튼 하나만 둔다
   const otherCat = MOVE_CATS.find((c) => c !== cat);
@@ -304,7 +313,7 @@ function renderList() {
 
   const staticRow = (e) =>
     rowHtml({
-      num: e.post.no,
+      num: renumber ? (e.deleted ? "-" : rowNo++) : e.post.no,
       title: e.post.title,
       author: "관리자",
       date: e.post.date,
@@ -328,7 +337,7 @@ function renderList() {
     let n = baseNo + normal.length;
     rows =
       pinned.map((p) => localRow(p, "📌", true)).join("") +
-      normal.map((p) => localRow(p, n--, false)).join("") +
+      normal.map((p) => localRow(p, renumber ? rowNo++ : n--, false)).join("") +
       staticRows.map(staticRow).join("");
   }
 
