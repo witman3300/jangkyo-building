@@ -633,7 +633,9 @@ function uploadAttachment(postId, index, file, onProgress) {
 
   return new Promise((resolve, reject) => {
     let settled = false;
-    let lastBytes = -1;
+    // 0으로 두는 게 중요하다. -1로 두면 "0바이트 올라감" 알림조차 움직임으로 쳐서
+    // 멈춤 시계가 되감기고, 실제로는 한 바이트도 못 올라갔는데 기다리는 시간이 배로 늘어난다.
+    let lastBytes = 0;
     let movedAt = Date.now();
 
     const done = (fn) => (arg) => {
@@ -651,9 +653,13 @@ function uploadAttachment(postId, index, file, onProgress) {
           try {
             task.cancel();
           } catch (_) {}
+          // 한 바이트도 못 올라갔다면 회선이 느린 게 아니라 첨부 보관함에 아예 닿지 못한 것이다.
+          // (Storage가 준비되지 않았거나 주소가 틀리면 SDK가 조용히 재시도만 되풀이한다)
           reject(
             new Error(
-              `"${file.name}" 올리기가 ${Math.round(UPLOAD_STALL_MS / 1000)}초째 멈춰 있어 중단했습니다. 인터넷 연결을 확인한 뒤 다시 등록해 주세요.`
+              lastBytes === 0
+                ? `"${file.name}" 을(를) 보관할 서버에 닿지 못했습니다. 잠시 뒤 다시 해 보시고, 계속 안 되면 관리사무소에 알려 주세요.`
+                : `"${file.name}" 올리기가 ${Math.round(UPLOAD_STALL_MS / 1000)}초째 멈춰 있어 중단했습니다. 인터넷 연결을 확인한 뒤 다시 등록해 주세요.`
             )
           );
         })();
