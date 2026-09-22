@@ -553,15 +553,25 @@ function safeStorageName(name) {
   return (stem || "file") + ext;
 }
 
-// Storage가 돌려주는 오류 코드를 회원이 읽을 수 있는 말로 바꾼다
-function uploadErrorMessage(err, file) {
+/* 한 바이트도 못 보낸 채 끝났을 때의 안내.
+   회선이 느린 것과 보관함에 아예 닿지 못한 것은 회원이 할 일이 다르다 —
+   앞은 기다리거나 다시 걸면 되고, 뒤는 관리사무소가 서버를 손봐야 한다. */
+function cannotReachStorageMessage(file) {
+  return `"${file.name}" 을(를) 보관할 서버에 닿지 못했습니다. 잠시 뒤 다시 해 보시고, 계속 안 되면 관리사무소에 알려 주세요.`;
+}
+
+// Storage가 돌려주는 오류 코드를 회원이 읽을 수 있는 말로 바꾼다.
+// sentBytes는 그때까지 실제로 올라간 양으로, 0이면 보관함에 닿지 못한 쪽이다.
+function uploadErrorMessage(err, file, sentBytes) {
   const code = (err && err.code) || "";
   if (code === "storage/unauthorized")
     return `"${file.name}" 을(를) 올릴 권한이 없습니다. 로그아웃되었을 수 있으니 다시 로그인해 주세요.`;
   if (code === "storage/quota-exceeded")
     return "첨부파일 보관 용량이 가득 찼습니다. 관리사무소에 알려 주세요.";
   if (code === "storage/retry-limit-exceeded")
-    return `"${file.name}" 올리기가 거듭 실패했습니다. 인터넷 연결을 확인한 뒤 다시 등록해 주세요.`;
+    return sentBytes
+      ? `"${file.name}" 올리기가 거듭 실패했습니다. 인터넷 연결을 확인한 뒤 다시 등록해 주세요.`
+      : cannotReachStorageMessage(file);
   if (code === "storage/canceled") return "첨부 올리기를 중단했습니다.";
   return `"${file.name}" 을(를) 올리지 못했습니다: ${(err && err.message) || code}`;
 }
@@ -658,7 +668,7 @@ function uploadAttachment(postId, index, file, onProgress) {
           reject(
             new Error(
               lastBytes === 0
-                ? `"${file.name}" 을(를) 보관할 서버에 닿지 못했습니다. 잠시 뒤 다시 해 보시고, 계속 안 되면 관리사무소에 알려 주세요.`
+                ? cannotReachStorageMessage(file)
                 : `"${file.name}" 올리기가 ${Math.round(UPLOAD_STALL_MS / 1000)}초째 멈춰 있어 중단했습니다. 인터넷 연결을 확인한 뒤 다시 등록해 주세요.`
             )
           );
@@ -675,7 +685,7 @@ function uploadAttachment(postId, index, file, onProgress) {
         }
         if (onProgress) onProgress(snap.bytesTransferred, snap.totalBytes || file.size);
       },
-      done((err) => reject(new Error(uploadErrorMessage(err, file)))),
+      done((err) => reject(new Error(uploadErrorMessage(err, file, lastBytes)))),
       () => {
         task.snapshot.ref
           .getDownloadURL()
@@ -690,7 +700,7 @@ function uploadAttachment(postId, index, file, onProgress) {
               })
             )
           )
-          .catch(done((err) => reject(new Error(uploadErrorMessage(err, file)))));
+          .catch(done((err) => reject(new Error(uploadErrorMessage(err, file, lastBytes)))));
       }
     );
   });
