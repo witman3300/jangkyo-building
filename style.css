@@ -778,6 +778,73 @@ body.sidebar-open .sidebar-overlay {
   font-size: 13px;
 }
 
+.file-list .remove:disabled {
+  color: #cccccc;
+  cursor: default;
+}
+
+.file-list .fname {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-list .fsize {
+  color: #aaaaaa;
+  flex-shrink: 0;
+}
+
+/* 올리는 동안 진행률을 보여 준다 — 이게 없으면 큰 파일을 올릴 때 화면이 멈춘 것처럼 보인다 */
+.file-list .fbar {
+  display: none;
+  flex: 1;
+  min-width: 60px;
+  height: 6px;
+  border-radius: 3px;
+  background: #eeeeee;
+  overflow: hidden;
+}
+
+.file-list .fbar i {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: #223066;
+  transition: width .2s linear;
+}
+
+.file-list .fpct {
+  display: none;
+  flex-shrink: 0;
+  width: 40px;
+  text-align: right;
+  font-size: 12px;
+  color: #777777;
+  font-variant-numeric: tabular-nums;
+}
+
+.file-list li.uploading .fbar,
+.file-list li.uploading .fpct {
+  display: block;
+}
+
+.file-list li.uploading .remove {
+  display: none;
+}
+
+.file-list li.done .fbar i {
+  background: #2e7d32;
+}
+
+.upload-status {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #555555;
+  text-align: center;
+  min-height: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
 .btn-row {
   display: flex;
   gap: 8px;

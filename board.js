@@ -436,6 +436,8 @@ async function migrateLegacyPosts() {
 /* ===== 작성 보기 ===== */
 function renderWrite() {
   pendingFiles = [];
+  uploadAborted = false;
+  activeUploads = new Set();
   const session = typeof getSession === "function" ? getSession() : null;
   document.getElementById("app").innerHTML = `
     <div class="board-head"><h1>${CATEGORIES[getCat()]} · 글쓰기</h1></div>
@@ -452,7 +454,7 @@ function renderWrite() {
         <div class="label">자료첨부</div>
         <div class="field">
           <input type="file" id="f-files" multiple onchange="onPickFiles(event)" />
-          <span class="file-hint">여러 개 선택 가능 · 파일당 최대 ${MAX_FILE_MB}MB</span>
+          <span class="file-hint">여러 개 선택 가능 · 파일당 최대 ${MAX_FILE_MB}MB <b id="file-total"></b></span>
           <ul class="file-list" id="file-list"></ul>
         </div>
       </div>
@@ -466,28 +468,60 @@ function renderWrite() {
             <div class="field"><label class="pin-check"><input type="checkbox" id="f-pinned" /> 이 글을 목록 상단에 고정(공지)</label></div>
           </div>`
         : ""}
+      <p class="upload-status" id="f-status"></p>
       <div class="btn-row">
         <button type="submit" class="btn btn-primary btn-sm" id="f-submit">등록</button>
         <a href="#list" class="btn btn-outline btn-sm">취소</a>
+        <button type="button" class="btn btn-outline btn-sm" id="f-abort" style="display:none" onclick="abortUpload()">올리기 중단</button>
       </div>
     </form>`;
 }
+
+/* ===== 첨부 대기 목록 ===== */
+
+// 지금 Storage에 올라가는 중인 작업들. 중단 버튼과 실패 뒷정리에 쓴다.
+let activeUploads = new Set();
+let uploadAborted = false;
+
+const UPLOAD_STALL_MS = 45000; // 이만큼 한 바이트도 안 올라가면 멈춘 것으로 보고 끊는다
+const UPLOAD_LANES = 3; // 한 번에 겹쳐 올리는 개수
 
 function renderFileList() {
   const ul = document.getElementById("file-list");
   if (!ul) return;
   ul.innerHTML = pendingFiles
-    .map((f, i) => `<li>📎 ${esc(f.name)} <span style="color:#aaa">(${fmtSize(f.size)})</span>
-      <button type="button" class="remove" onclick="removeFile(${i})">삭제</button></li>`)
+    .map(
+      (f, i) => `<li data-i="${i}">
+        <span class="fname">📎 ${esc(f.name)}</span>
+        <span class="fsize">(${fmtSize(f.size)})</span>
+        <button type="button" class="remove" onclick="removeFile(${i})">삭제</button>
+        <span class="fbar"><i></i></span>
+        <span class="fpct"></span>
+      </li>`
+    )
     .join("");
+  const total = document.getElementById("file-total");
+  if (total) {
+    const bytes = pendingFiles.reduce((s, f) => s + f.size, 0);
+    total.textContent = pendingFiles.length
+      ? `· 담은 파일 ${pendingFiles.length}개 ${fmtSize(bytes)}`
+      : "";
+  }
 }
 
 function onPickFiles(e) {
   Array.from(e.target.files).forEach((file) => {
-    if (file.size > MAX_FILE_MB * 1024 * 1024) {
-      showToast(`"${file.name}" 은(는) ${MAX_FILE_MB}MB를 초과하여 제외됩니다.`);
+    // Storage 규칙이 20MB 미만만 받으므로 딱 20MB인 파일도 걸러야 한다
+    if (file.size >= MAX_FILE_MB * 1024 * 1024) {
+      showToast(`"${file.name}" 은(는) ${MAX_FILE_MB}MB를 넘어 제외됩니다.`);
       return;
     }
+    if (!file.size) {
+      showToast(`"${file.name}" 은(는) 빈 파일이라 제외됩니다.`);
+      return;
+    }
+    // 같은 파일을 두 번 고르면 같은 자료가 두 번 올라가 시간만 배로 든다
+    if (pendingFiles.some((p) => p.name === file.name && p.size === file.size)) return;
     pendingFiles.push(file);
   });
   renderFileList();
@@ -495,33 +529,221 @@ function onPickFiles(e) {
 }
 
 function removeFile(i) {
+  if (activeUploads.size) return; // 올리는 중에는 목록을 건드리지 않는다
   pendingFiles.splice(i, 1);
   renderFileList();
 }
 
-// 첨부 1개를 Storage에 올리고, 문서에 저장할 정보(주소 포함)를 돌려준다.
-async function uploadAttachment(postId, index, file) {
-  const path = `board/${getCat()}/${postId}/${index}_${file.name}`;
-  const snap = await fbStorage.ref(path).put(file, { contentType: file.type || "application/octet-stream" });
-  return {
-    name: file.name,
-    type: file.type || "",
-    size: file.size,
-    path: path,
-    url: await snap.ref.getDownloadURL(),
+/* Storage 경로에 쓰면 안 되는 글자를 걸러 낸다.
+   이름에 #, ?, %, / 같은 글자가 섞여 있으면 올라가더라도 내려받기 주소가 어긋나
+   "올렸는데 파일이 안 열린다"가 된다. 원래 이름은 게시글 문서에 그대로 저장하고,
+   내려받을 때 쓰도록 Content-Disposition에도 따로 적어 두므로 보이는 이름은 그대로다. */
+function safeStorageName(name) {
+  // 제어문자는 코드값으로 걸러 낸다
+  const clean = Array.from(String(name || "file"))
+    .filter((ch) => ch.charCodeAt(0) > 31 && ch.charCodeAt(0) !== 127)
+    .join("")
+    .replace(/[\\/#?%*:|"'<>\[\]{}]/g, "_") // 경로·주소를 깨뜨리는 글자
+    .replace(/\s+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^[._]+/, "");
+  const dot = clean.lastIndexOf(".");
+  const ext = dot > 0 ? clean.slice(dot, dot + 12) : "";
+  const stem = (dot > 0 ? clean.slice(0, dot) : clean).slice(0, 60);
+  return (stem || "file") + ext;
+}
+
+// Storage가 돌려주는 오류 코드를 회원이 읽을 수 있는 말로 바꾼다
+function uploadErrorMessage(err, file) {
+  const code = (err && err.code) || "";
+  if (code === "storage/unauthorized")
+    return `"${file.name}" 을(를) 올릴 권한이 없습니다. 로그아웃되었을 수 있으니 다시 로그인해 주세요.`;
+  if (code === "storage/quota-exceeded")
+    return "첨부파일 보관 용량이 가득 찼습니다. 관리사무소에 알려 주세요.";
+  if (code === "storage/retry-limit-exceeded")
+    return `"${file.name}" 올리기가 거듭 실패했습니다. 인터넷 연결을 확인한 뒤 다시 등록해 주세요.`;
+  if (code === "storage/canceled") return "첨부 올리기를 중단했습니다.";
+  return `"${file.name}" 을(를) 올리지 못했습니다: ${(err && err.message) || code}`;
+}
+
+// 목록의 한 줄에 진행률 막대를 그린다
+function setFileProgress(i, loaded, total) {
+  const li = document.querySelector(`#file-list li[data-i="${i}"]`);
+  if (!li) return;
+  const pct = total ? Math.min(100, Math.round((loaded / total) * 100)) : 0;
+  li.classList.add("uploading");
+  const bar = li.querySelector(".fbar i");
+  if (bar) bar.style.width = pct + "%";
+  const txt = li.querySelector(".fpct");
+  if (txt) txt.textContent = pct + "%";
+  if (pct >= 100) li.classList.add("done");
+}
+
+// 진행률 막대를 처음 상태로 되돌린다 (등록에 실패해 다시 시도할 때)
+function resetFileProgress() {
+  document.querySelectorAll("#file-list li").forEach((li) => {
+    li.classList.remove("uploading", "done");
+    const bar = li.querySelector(".fbar i");
+    if (bar) bar.style.width = "0%";
+    const txt = li.querySelector(".fpct");
+    if (txt) txt.textContent = "";
+  });
+}
+
+// 남은 시간 어림 — 화면이 멈춘 게 아니라 올라가는 중임을 알려 준다
+function remainText(sent, total, startedAt) {
+  const sec = (Date.now() - startedAt) / 1000;
+  if (sec < 2 || sent <= 0) return "";
+  const left = Math.ceil((total - sent) / (sent / sec));
+  if (!isFinite(left) || left <= 0) return "";
+  return left >= 60 ? `약 ${Math.ceil(left / 60)}분 남음` : `약 ${left}초 남음`;
+}
+
+function cancelActiveUploads() {
+  activeUploads.forEach((t) => {
+    try {
+      t.cancel();
+    } catch (_) {}
+  });
+}
+
+// "올리기 중단" 버튼
+function abortUpload() {
+  uploadAborted = true;
+  cancelActiveUploads();
+}
+
+function warnLeaving(e) {
+  e.preventDefault();
+  e.returnValue = "";
+  return "";
+}
+
+/* 첨부 1개를 Storage에 올리고, 문서에 저장할 정보(주소 포함)를 돌려준다.
+   올라가는 동안 진행률을 알리고, 한동안 한 바이트도 못 올라가면 끊는다.
+   예전에는 그냥 기다리기만 해서, 연결이 끊기면 아무 표시 없이 10분을 매달려 있었다. */
+function uploadAttachment(postId, index, file, onProgress) {
+  const path = `board/${getCat()}/${postId}/${index}_${safeStorageName(file.name)}`;
+  const task = fbStorage.ref(path).put(file, {
+    contentType: file.type || "application/octet-stream",
+    // 경로에서 걸러 낸 글자가 있어도 내려받을 때는 원래 이름으로 저장되게 한다
+    contentDisposition: "attachment; filename*=UTF-8''" + encodeURIComponent(file.name),
+  });
+  activeUploads.add(task);
+
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    let lastBytes = -1;
+    let movedAt = Date.now();
+
+    const done = (fn) => (arg) => {
+      if (settled) return;
+      settled = true;
+      clearInterval(watch);
+      activeUploads.delete(task);
+      fn(arg);
+    };
+
+    const watch = setInterval(() => {
+      if (settled) return;
+      if (Date.now() - movedAt > UPLOAD_STALL_MS) {
+        done(() => {
+          try {
+            task.cancel();
+          } catch (_) {}
+          reject(
+            new Error(
+              `"${file.name}" 올리기가 ${Math.round(UPLOAD_STALL_MS / 1000)}초째 멈춰 있어 중단했습니다. 인터넷 연결을 확인한 뒤 다시 등록해 주세요.`
+            )
+          );
+        })();
+      }
+    }, 2000);
+
+    task.on(
+      "state_changed",
+      (snap) => {
+        if (snap.bytesTransferred !== lastBytes) {
+          lastBytes = snap.bytesTransferred;
+          movedAt = Date.now(); // 한 바이트라도 움직였으면 멈춤 시계를 되감는다
+        }
+        if (onProgress) onProgress(snap.bytesTransferred, snap.totalBytes || file.size);
+      },
+      done((err) => reject(new Error(uploadErrorMessage(err, file)))),
+      () => {
+        task.snapshot.ref
+          .getDownloadURL()
+          .then(
+            done((url) =>
+              resolve({
+                name: file.name,
+                type: file.type || "",
+                size: file.size,
+                path: path,
+                url: url,
+              })
+            )
+          )
+          .catch(done((err) => reject(new Error(uploadErrorMessage(err, file)))));
+      }
+    );
+  });
+}
+
+/* 첨부 여러 개를 조금씩 겹쳐 올린다.
+   하나씩 차례로 올리면 개수만큼 기다려야 해서, 파일이 몇 개만 되어도 한참 멈춘 듯 보였다.
+   올라간 것은 out에 채워 넣는다 — 중간에 실패했을 때 지우려면 무엇이 올라갔는지 알아야 한다. */
+async function uploadAllAttachments(postId, files, out, onProgress) {
+  const sent = new Array(files.length).fill(0);
+  const totalOf = () => sent.reduce((a, b) => a + b, 0);
+  let next = 0;
+  let failure = null;
+
+  const worker = async () => {
+    while (!failure && !uploadAborted) {
+      const i = next++;
+      if (i >= files.length) return;
+      try {
+        out[i] = await uploadAttachment(postId, i, files[i], (loaded, total) => {
+          sent[i] = loaded;
+          setFileProgress(i, loaded, total);
+          onProgress(totalOf());
+        });
+        sent[i] = files[i].size;
+        setFileProgress(i, files[i].size, files[i].size);
+        onProgress(totalOf());
+      } catch (e) {
+        if (!failure) {
+          failure = e;
+          cancelActiveUploads(); // 어차피 등록이 안 되므로 나머지도 붙잡아 두지 않는다
+        }
+        return;
+      }
+    }
   };
+
+  await Promise.all(Array.from({ length: Math.min(UPLOAD_LANES, files.length) }, worker));
+  if (uploadAborted) throw new Error("첨부 올리기를 중단했습니다.");
+  if (failure) throw failure;
 }
 
 async function submitPost(e) {
   e.preventDefault();
+  if (activeUploads.size) return; // 이미 올리는 중이면 등록을 두 번 받지 않는다
+
   const title = document.getElementById("f-title").value.trim();
   const author = document.getElementById("f-author").value.trim();
   const content = document.getElementById("f-content").value.trim();
   if (!title || !author || !content) return;
 
   const btn = document.getElementById("f-submit");
+  const abortBtn = document.getElementById("f-abort");
+  const status = document.getElementById("f-status");
+  const fileInput = document.getElementById("f-files");
   btn.disabled = true;
   btn.textContent = "등록 중...";
+  if (fileInput) fileInput.disabled = true;
+  document.querySelectorAll("#file-list .remove").forEach((b) => (b.disabled = true));
 
   const now = new Date();
   const date = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -529,23 +751,55 @@ async function submitPost(e) {
   const session = typeof getSession === "function" ? getSession() : null;
   const ref = postsRef().doc(); // 첨부 경로에 쓰려고 문서 ID를 먼저 받아 둔다
 
+  const files = pendingFiles.slice();
+  const uploaded = new Array(files.length);
+  const totalBytes = files.reduce((s, f) => s + f.size, 0);
+  uploadAborted = false;
+
+  if (files.length) {
+    if (abortBtn) abortBtn.style.display = "";
+    window.addEventListener("beforeunload", warnLeaving);
+    // 기본값(10분)이면 연결이 끊겨도 한참 동안 아무 반응이 없다
+    if (fbStorage.setMaxUploadRetryTime) fbStorage.setMaxUploadRetryTime(60000);
+  }
+
   try {
-    const files = [];
-    for (let i = 0; i < pendingFiles.length; i++) {
-      btn.textContent = `첨부 올리는 중 ${i + 1}/${pendingFiles.length}...`;
-      files.push(await uploadAttachment(ref.id, i, pendingFiles[i]));
+    if (files.length) {
+      const startedAt = Date.now();
+      await uploadAllAttachments(ref.id, files, uploaded, (bytes) => {
+        const pct = totalBytes ? Math.round((bytes / totalBytes) * 100) : 0;
+        btn.textContent = `첨부 올리는 중 ${pct}%`;
+        if (status)
+          status.textContent =
+            `${fmtSize(bytes)} / ${fmtSize(totalBytes)} 올리는 중… ${remainText(bytes, totalBytes, startedAt)}`.trim();
+      });
+      if (status) status.textContent = "첨부 올리기 완료 · 글 저장 중…";
+      btn.textContent = "저장 중...";
     }
+
     await ref.set({
       cat: getCat(),
       title, author, content, date,
       authorUid: (session && session.uid) || "",
-      files: files,
+      files: uploaded.filter(Boolean),
       pinned: !!(pinEl && pinEl.checked),
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
+    window.removeEventListener("beforeunload", warnLeaving);
+    pendingFiles = [];
     location.hash = "#view/" + ref.id;
   } catch (err) {
-    showToast("등록하지 못했습니다: " + err.message);
+    // 글은 저장되지 않았으므로, 이미 올라간 첨부는 Storage에 남지 않게 지운다
+    for (const f of uploaded) {
+      if (f && f.path) await fbStorage.ref(f.path).delete().catch(() => {});
+    }
+    window.removeEventListener("beforeunload", warnLeaving);
+    showToast(err.message || "등록하지 못했습니다.");
+    if (status) status.textContent = "";
+    if (abortBtn) abortBtn.style.display = "none";
+    if (fileInput) fileInput.disabled = false;
+    document.querySelectorAll("#file-list .remove").forEach((b) => (b.disabled = false));
+    resetFileProgress();
     btn.disabled = false;
     btn.textContent = "등록";
   }
@@ -740,6 +994,8 @@ const PROTECTED_CATS = ["info", "data", "report", "minutes", "fee"];
 
 /* ===== 해시 라우터 ===== */
 function route() {
+  // 글쓰기 화면을 떠나면 올리던 첨부도 멈춘다 — 보이지 않는 곳에서 계속 올라가지 않게
+  if ((location.hash || "#list") !== "#write" && activeUploads.size) abortUpload();
   highlightSidebar();
   // 보호 카테고리는 특별회원만 접근 가능
   if (PROTECTED_CATS.includes(getCat()) && typeof isSpecial === "function" && !isSpecial()) {
