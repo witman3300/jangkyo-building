@@ -895,16 +895,15 @@ function downloadAttachments(id) {
   files.forEach(saveAttachment);
 }
 
-/* 파일 하나를 새 탭으로 연다.
-   올릴 때 "내려받기용"으로 표시해 둔 첨부(contentDisposition)는 탭이 뜨자마자 저장이 시작되고
-   탭은 스스로 닫힌다. 그 표시가 없던 예전 첨부는 새 탭에 그대로 열려 거기서 저장하면 된다.
-   어느 쪽이든 보던 글에서 화면이 넘어가지 않는다 — 같은 탭에 걸면 옛 첨부에서 글을 잃는다. */
+/* 파일 하나를 내려받는다.
+   새 탭(target="_blank")으로 열면 안 된다. 브라우저는 누름 한 번에 새 탭 하나만 허용해서,
+   첨부가 둘이면 두 번째가 조용히 막힌다 — 실제로 2개짜리 회의록에서 한 장만 받아졌다.
+   첨부는 올릴 때 "내려받기용"으로 표시해 두므로(contentDisposition) 같은 탭에 걸어도
+   저장만 시작되고 보던 글은 그대로 남는다. */
 function saveAttachment(f) {
   const a = document.createElement("a");
   a.href = f.url;
   a.download = f.name || ""; // 다른 출처면 무시되지만, 올릴 때 원래 이름을 함께 넣어 두었다
-  a.target = "_blank";
-  a.rel = "noopener";
   document.body.appendChild(a);
   a.click();
   a.remove();
