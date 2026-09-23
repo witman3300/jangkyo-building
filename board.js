@@ -857,7 +857,15 @@ function renderView(id) {
   // 자료가 붙어 있을 때만 내려받기를 권한다 (첨부 목록을 감춘 대신 여기서 받는다)
   const downBtn = attachFiles.length
     ? `<button type="button" class="btn btn-outline btn-sm" onclick="downloadAttachments('${p.id}')"
-        title="이 글에 붙은 자료 ${attachFiles.length}개를 내려받습니다">다운로드</button>`
+        title="이 글에 붙은 자료 ${attachFiles.length}개를 내려받습니다">다운로드${
+          attachFiles.length > 1 ? ` ${attachFiles.length}` : ""}</button>`
+    : "";
+  // 자료가 여럿이면 고를 자리를 미리 깔아 두고 접어 둔다 (버튼을 누르면 펴진다)
+  const pickHtml = attachFiles.length > 1
+    ? `<div class="attach-pick" id="attach-pick" hidden>${attachFiles
+        .map((f, i) => `<button type="button" onclick="saveAttachmentAt('${p.id}',${i})">${esc(f.name)}${
+          f.size ? ` <span>(${fmtSize(f.size)})</span>` : ""}</button>`)
+        .join("")}</div>`
     : "";
   const printBtn = `<button type="button" class="btn btn-outline btn-sm" onclick="window.print()"
       title="이 글의 본문을 인쇄합니다">인쇄</button>`;
@@ -877,27 +885,45 @@ function renderView(id) {
       ${printBtn}
       ${pinBtn}
       ${delBtn}
-    </div>`;
+    </div>
+    ${pickHtml}`;
 }
 
 /* ===== 자료 내려받기 =====
-   첨부 목록을 화면에 늘어놓지 않는 대신, 버튼 하나로 이 글에 붙은 자료를 모두 받는다.
-   기다리지 않고 한 번에 다 부르는 것이 중요하다 — 사이를 두면 버튼을 누른 손길이 끊긴 뒤라
-   브라우저가 뒤엣것을 막아 버린다. */
+   첨부 목록을 늘 펼쳐 두지 않고, 버튼을 누른 사람에게만 보여 준다.
+
+   한 번 눌러 여러 개를 한꺼번에 부르는 길은 막혀 있다. 브라우저는 "저절로 시작된
+   내려받기"를 하나까지만 허용해서, 둘째부터는 아무 말 없이 사라진다 — 실제로
+   2개짜리 회의록에서 한 장만 받아졌고, 받은 사람은 그게 전부인 줄 알 수밖에 없었다.
+   (보관함에서 직접 읽어다 묶는 길도 막혀 있다 — 다른 출처라 fetch가 거절당한다.)
+   그래서 여럿일 때는 고르게 한다. 하나씩 누르면 그 누름이 저마다 허락이 되어
+   빠짐없이 받아진다. */
 function downloadAttachments(id) {
-  const p = loadPosts().find((x) => x.id === id);
-  const files = ((p && p.files) || []).filter((f) => f && f.url);
+  const files = attachmentsOf(id);
   if (!files.length) {
     showToast("내려받을 자료가 없습니다.");
     return;
   }
-  if (files.length > 1) showToast(`자료 ${files.length}개를 내려받습니다.`);
-  files.forEach(saveAttachment);
+  if (files.length === 1) {
+    saveAttachment(files[0]);
+    return;
+  }
+  const pick = document.getElementById("attach-pick");
+  if (pick) pick.hidden = !pick.hidden;
+}
+
+function saveAttachmentAt(id, index) {
+  const f = attachmentsOf(id)[index];
+  if (f) saveAttachment(f);
+}
+
+function attachmentsOf(id) {
+  const p = loadPosts().find((x) => x.id === id);
+  return ((p && p.files) || []).filter((f) => f && f.url);
 }
 
 /* 파일 하나를 내려받는다.
-   새 탭(target="_blank")으로 열면 안 된다. 브라우저는 누름 한 번에 새 탭 하나만 허용해서,
-   첨부가 둘이면 두 번째가 조용히 막힌다 — 실제로 2개짜리 회의록에서 한 장만 받아졌다.
+   새 탭(target="_blank")으로 열면 안 된다 — 브라우저는 누름 한 번에 새 탭 하나만 허용한다.
    첨부는 올릴 때 "내려받기용"으로 표시해 두므로(contentDisposition) 같은 탭에 걸어도
    저장만 시작되고 보던 글은 그대로 남는다. */
 function saveAttachment(f) {
