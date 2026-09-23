@@ -876,28 +876,6 @@ body.sidebar-open .sidebar-overlay {
   gap: 16px;
 }
 
-.view-attach {
-  border-bottom: 1px solid #eeeeee;
-  padding: 14px 8px;
-  font-size: 14px;
-  background: #fafafa;
-}
-
-.view-attach strong {
-  color: #555555;
-  margin-right: 10px;
-}
-
-.view-attach a {
-  color: #4f7cff;
-  text-decoration: none;
-  margin-right: 14px;
-}
-
-.view-attach a:hover {
-  text-decoration: underline;
-}
-
 .view-body {
   padding: 24px 8px;
   min-height: 160px;
@@ -2434,4 +2412,51 @@ body.sidebar-open .sidebar-overlay {
   outline: 2px dashed #c9a84c;
   outline-offset: 8px;
   border-radius: 6px;
+}
+
+/* ===== 인쇄 =====
+   종이에는 본문만 남긴다. 머리말·메뉴·슬라이드·푸터·버튼은 읽을 때만 쓸모가 있고,
+   인쇄하면 첫 장을 통째로 잡아먹어 정작 글이 둘째 장부터 시작한다. */
+@media print {
+  .header,
+  .footer,
+  .about-sub,
+  .btn-row,
+  #toast-container {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  /* 각 페이지가 인라인 <style>에서 .about-wrap을 grid로 다시 잡는다.
+     그대로 두면 왼쪽 메뉴를 숨긴 자리(230px 칸)에 본문이 끼여 인쇄된다. */
+  .about-wrap {
+    display: block !important;
+    max-width: none !important;
+    padding: 0 !important;
+    gap: 0 !important;
+  }
+
+  .about-body {
+    width: auto;
+  }
+
+  .view-head {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .view-body {
+    border-bottom: none;
+  }
+
+  /* 스캔 이미지는 한 장씩 통째로 — 가운데가 잘려 두 장에 걸치지 않게 한다 */
+  .view-images img {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: none;
+  }
 }

@@ -833,11 +833,8 @@ function renderView(id) {
     location.hash = "#list";
     return;
   }
-  const attach = (p.files && p.files.length)
-    ? `<div class="view-attach"><strong>📎 첨부파일</strong>${p.files
-        .map((f) => `<a href="${f.url}" target="_blank" rel="noopener">${esc(f.name)} (${fmtSize(f.size)})</a>`)
-        .join("")}</div>`
-    : "";
+  // 첨부 목록은 화면에 펼쳐 보이지 않는다 — 아래 "다운로드" 버튼이 그 자리를 대신한다
+  const attachFiles = (p.files || []).filter((f) => f && f.url);
 
   // 결산보고서·회의록처럼 스캔 이미지를 올린 경우 본문 아래에 그대로 펼쳐 보여준다
   const images = (p.files || []).filter((f) => (f.type || "").indexOf("image/") === 0);
@@ -857,6 +854,13 @@ function renderView(id) {
   const delBtn = admin || mine
     ? `<button type="button" class="btn btn-primary btn-sm" onclick="deletePost('${p.id}')">삭제</button>`
     : "";
+  // 자료가 붙어 있을 때만 내려받기를 권한다 (첨부 목록을 감춘 대신 여기서 받는다)
+  const downBtn = attachFiles.length
+    ? `<button type="button" class="btn btn-outline btn-sm" onclick="downloadAttachments('${p.id}')"
+        title="이 글에 붙은 자료 ${attachFiles.length}개를 내려받습니다">다운로드</button>`
+    : "";
+  const printBtn = `<button type="button" class="btn btn-outline btn-sm" onclick="window.print()"
+      title="이 글의 본문을 인쇄합니다">인쇄</button>`;
   const pinTag = p.pinned ? `<span class="pin-flag">📌 공지</span> ` : "";
 
   document.getElementById("app").innerHTML = `
@@ -865,14 +869,45 @@ function renderView(id) {
       <h2>${pinTag}${esc(p.title)}</h2>
       <div class="view-meta"><span>작성자 ${esc(p.author)}</span><span>${p.date}</span></div>
     </div>
-    ${attach}
     <div class="view-body">${esc(p.content)}</div>
     ${imagesHtml}
     <div class="btn-row">
       <a href="#list" class="btn btn-outline btn-sm">목록</a>
+      ${downBtn}
+      ${printBtn}
       ${pinBtn}
       ${delBtn}
     </div>`;
+}
+
+/* ===== 자료 내려받기 =====
+   첨부 목록을 화면에 늘어놓지 않는 대신, 버튼 하나로 이 글에 붙은 자료를 모두 받는다.
+   기다리지 않고 한 번에 다 부르는 것이 중요하다 — 사이를 두면 버튼을 누른 손길이 끊긴 뒤라
+   브라우저가 뒤엣것을 막아 버린다. */
+function downloadAttachments(id) {
+  const p = loadPosts().find((x) => x.id === id);
+  const files = ((p && p.files) || []).filter((f) => f && f.url);
+  if (!files.length) {
+    showToast("내려받을 자료가 없습니다.");
+    return;
+  }
+  if (files.length > 1) showToast(`자료 ${files.length}개를 내려받습니다.`);
+  files.forEach(saveAttachment);
+}
+
+/* 파일 하나를 새 탭으로 연다.
+   올릴 때 "내려받기용"으로 표시해 둔 첨부(contentDisposition)는 탭이 뜨자마자 저장이 시작되고
+   탭은 스스로 닫힌다. 그 표시가 없던 예전 첨부는 새 탭에 그대로 열려 거기서 저장하면 된다.
+   어느 쪽이든 보던 글에서 화면이 넘어가지 않는다 — 같은 탭에 걸면 옛 첨부에서 글을 잃는다. */
+function saveAttachment(f) {
+  const a = document.createElement("a");
+  a.href = f.url;
+  a.download = f.name || ""; // 다른 출처면 무시되지만, 올릴 때 원래 이름을 함께 넣어 두었다
+  a.target = "_blank";
+  a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 }
 
 /* 두 공지사항 게시판 사이에서 글을 옮긴다 (관리자만).
