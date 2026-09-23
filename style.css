@@ -2414,40 +2414,6 @@ body.sidebar-open .sidebar-overlay {
   border-radius: 6px;
 }
 
-/* 자료가 여럿일 때 "다운로드"를 누르면 펴지는 고르는 자리 */
-.attach-pick {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 12px;
-  padding: 14px 8px;
-  background: #fafafa;
-  border: 1px solid #eeeeee;
-  border-radius: 8px;
-}
-
-.attach-pick button {
-  border: 1px solid #d7dce5;
-  background: #ffffff;
-  border-radius: 6px;
-  padding: 8px 14px;
-  font-size: 14px;
-  color: #33415c;
-  cursor: pointer;
-  transition: 0.15s;
-}
-
-.attach-pick button:hover {
-  border-color: #4f7cff;
-  color: #4f7cff;
-}
-
-.attach-pick span {
-  color: #9aa3b2;
-  font-size: 13px;
-}
-
 /* ===== 인쇄 =====
    종이에는 본문만 남긴다. 머리말·메뉴·슬라이드·푸터·버튼은 읽을 때만 쓸모가 있고,
    인쇄하면 첫 장을 통째로 잡아먹어 정작 글이 둘째 장부터 시작한다. */
@@ -2456,7 +2422,6 @@ body.sidebar-open .sidebar-overlay {
   .footer,
   .about-sub,
   .btn-row,
-  .attach-pick,
   #toast-container {
     display: none !important;
   }
