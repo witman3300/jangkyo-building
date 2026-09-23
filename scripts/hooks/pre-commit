@@ -1,0 +1,21 @@
+#!/bin/sh
+# 배포되는 파일이 바뀌면 sw.js의 캐시 이름을 저절로 갈아 준다.
+#
+# 캐시 이름이 바뀌면 sw.js 자체가 달라지므로, 브라우저가 새 서비스워커로 알아보고
+# 갈아 끼운 뒤 낡은 캐시를 지운다. 손으로 v번호를 올리는 일을 잊어도 헌 화면이
+# 남지 않는다 — 잊기 쉬운 일이라 실제로 배포해 놓고 옛 화면을 본 적이 있다.
+#
+# 이 훅을 쓰려면 한 번만: git config core.hooksPath scripts/hooks
+
+# sw.js 말고 다른 배포 파일이 담겨 있을 때만 갈아 준다.
+# sw.js만 고치는 중이라면 직접 적은 값을 덮어쓰지 않는다.
+changed=$(git diff --cached --name-only --diff-filter=ACMR \
+  | grep -v '^scripts/' \
+  | grep -v '^sw\.js$')
+[ -z "$changed" ] && exit 0
+
+stamp=$(date -u +%Y%m%d-%H%M%S)
+sed -i -E "s/^const CACHE_NAME = \"janggyo-[^\"]*\";/const CACHE_NAME = \"janggyo-$stamp\";/" sw.js || exit 0
+git add sw.js
+
+echo "sw.js 캐시 이름을 janggyo-$stamp 으로 갈았습니다."
