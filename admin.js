@@ -293,7 +293,9 @@ function memberRowHtml(m, i) {
   const status = u
     ? `<span class="badge ok" title="이 사이트에 로그인 계정이 있습니다">계정있음</span>` +
       (u.approved ? "" : ` <span class="badge wait" title="아직 승인 전이라 로그인할 수 없습니다">승인대기</span>`)
-    : `<span class="badge" title="실회원 명단에는 있으나 아직 이 사이트에 가입하지 않았습니다">계정없음</span>`;
+    : meta.approved
+      ? `<span class="badge ok" title="승인된 회원입니다. 본인 아이디로 처음 로그인할 때 새 비밀번호를 만들고 바로 이용할 수 있습니다">계정있음</span>`
+      : `<span class="badge" title="실회원 명단에는 있으나 아직 이 사이트에 가입하지 않았습니다">계정없음</span>`;
 
   // 비고: 관리자가 적어 두는 메모 + 계정삭제
   const removeBtn = u
@@ -475,6 +477,33 @@ async function onApproveMember(uid, accept) {
     showToast("처리하지 못했습니다: " + e.message);
     renderAdmin();
   }
+}
+
+/* 아직 가입하지 않은 명단 회원의 승인 ↔ 승인취소.
+   승인하면 승인 표시를 남기고 구회원 아이디 명단에도 올려, 본인이 그 아이디로 로그인할 때
+   새 비밀번호와 연락처를 입력하고 승인 절차 없이 바로 회원으로 이용할 수 있게 한다 (일괄 승인과 같은 처리).
+   승인취소는 둘 다 내려, 그 아이디로 가입할 때 다시 관리자 승인을 받게 한다. */
+async function onMemberApprove(id, approved) {
+  const m = REAL_MEMBERS.find((x) => x.id === id) || {};
+  const msg = approved
+    ? `'${id}' 회원을 승인하시겠습니까?\n본인 아이디로 로그인하면 새 비밀번호를 만들고 바로 회원으로 이용할 수 있습니다.`
+    : `'${id}' 회원의 승인을 취소하시겠습니까?\n이 아이디로 가입할 때 다시 관리자 승인을 받아야 합니다.`;
+  if (!confirm(msg)) return;
+
+  try {
+    const batch = db.batch();
+    batch.set(memberMetaRef(id), { approved: approved }, { merge: true });
+    if (approved) batch.set(db.collection(LEGACY_COL).doc(id), { unit: m.unit || "" });
+    else batch.delete(db.collection(LEGACY_COL).doc(id));
+    await batch.commit();
+    META_MAP[id] = Object.assign({}, getRealMemberMeta(id), { approved: approved });
+    if (approved) LEGACY_IDS.add(id);
+    else LEGACY_IDS.delete(id);
+    showToast(approved ? "승인했습니다." : "승인을 취소했습니다.");
+  } catch (e) {
+    showToast("처리하지 못했습니다: " + e.message);
+  }
+  renderRealMemberTable();
 }
 
 async function onGrade(uid, grade) {
