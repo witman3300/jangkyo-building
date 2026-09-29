@@ -434,6 +434,12 @@ async function migrateLegacyPosts() {
 }
 
 /* ===== 작성 보기 ===== */
+// 관리비 부과내역, 그리고 관리자가 쓰는 글은 파일만 올리는 경우가 많아
+// 본문을 비워도 등록되게 한다 (그때는 첨부가 있어야 함)
+function contentOptional() {
+  return getCat() === "fee" || (typeof isAdmin === "function" && isAdmin());
+}
+
 function renderWrite() {
   pendingFiles = [];
   uploadAborted = false;
@@ -460,7 +466,9 @@ function renderWrite() {
       </div>
       <div class="write-row">
         <div class="label">내용</div>
-        <div class="field"><textarea id="f-content" placeholder="내용을 입력하세요" required></textarea></div>
+        <div class="field">${contentOptional()
+          ? `<textarea id="f-content" placeholder="내용을 입력하세요 (첨부만 올릴 때는 비워 두어도 됩니다)"></textarea>`
+          : `<textarea id="f-content" placeholder="내용을 입력하세요" required></textarea>`}</div>
       </div>
       ${(typeof isAdmin === "function" && isAdmin())
         ? `<div class="write-row">
@@ -750,7 +758,14 @@ async function submitPost(e) {
   const title = document.getElementById("f-title").value.trim();
   const author = document.getElementById("f-author").value.trim();
   const content = document.getElementById("f-content").value.trim();
-  if (!title || !author || !content) return;
+  if (!title || !author) return;
+  if (!content) {
+    if (!contentOptional()) return;
+    if (!pendingFiles.length) {
+      showToast("내용을 쓰거나 파일을 첨부해 주세요.");
+      return;
+    }
+  }
 
   const btn = document.getElementById("f-submit");
   const abortBtn = document.getElementById("f-abort");
@@ -862,7 +877,7 @@ function renderView(id) {
       <h2>${pinTag}${esc(p.title)}</h2>
       <div class="view-meta"><span>작성자 ${esc(p.author)}</span><span>${p.date}</span></div>
     </div>
-    <div class="view-body">${esc(p.content)}</div>
+    ${p.content ? `<div class="view-body">${esc(p.content)}</div>` : ""}
     ${imagesHtml}
     <div class="btn-row">
       <a href="#list" class="btn btn-outline btn-sm">목록</a>

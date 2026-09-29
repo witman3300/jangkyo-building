@@ -2,7 +2,7 @@
 // CACHE_NAME은 sw.js 자체가 바뀌었다고 브라우저에 알리는 표시다. 이 값이 달라지면
 // 브라우저가 새 서비스워커로 알아보고 갈아 끼운 뒤, activate에서 낡은 캐시를 지운다.
 // 손으로 고치지 않는다 — scripts/hooks/pre-commit이 배포 파일이 바뀔 때마다 찍어 준다.
-const CACHE_NAME = "janggyo-20260923-142130";
+const CACHE_NAME = "janggyo-20260929-023844";
 const PRECACHE = [
   "about.html",
   "style.css",
