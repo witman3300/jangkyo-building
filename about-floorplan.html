@@ -62,10 +62,13 @@
     .plan-viewer__lens-btn.is-on{background:#223066;border-color:#223066;color:#fff}
     .plan-lens{position:fixed;display:none;border-radius:50%;border:3px solid #223066;box-shadow:0 6px 24px rgba(0,0,0,.3);background-color:#fff;background-repeat:no-repeat;pointer-events:none;z-index:999}
     .plan-viewer__hint{font-size:12.5px;color:#8a92a0;text-align:right;padding:6px 16px 0}
-    .plan-lightbox{position:fixed;inset:0;background:rgba(20,24,34,.88);z-index:1000;display:none;align-items:center;justify-content:center;padding:40px;cursor:zoom-out}
+    .plan-lightbox{position:fixed;inset:0;background:rgba(20,24,34,.88);z-index:1000;display:none;padding:40px;overflow:auto;cursor:zoom-out}
     .plan-lightbox.is-open{display:flex}
-    .plan-lightbox__img{max-width:100%;max-height:100%;box-shadow:0 10px 40px rgba(0,0,0,.4);background:#fff}
-    .plan-lightbox__close{position:absolute;top:18px;right:26px;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:22px;line-height:1;cursor:pointer}
+    /* margin:auto — 가운데 두되, 확대해서 화면보다 커지면 왼쪽·위가 잘리지 않고 스크롤된다 */
+    .plan-lightbox__img{margin:auto;flex-shrink:0;max-width:none;box-shadow:0 10px 40px rgba(0,0,0,.4);background:#fff;cursor:zoom-in}
+    .plan-lightbox.is-zoomed .plan-lightbox__img{cursor:zoom-out}
+    .plan-lightbox__hint{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);color:#fff;font-size:13px;background:rgba(0,0,0,.45);padding:6px 14px;border-radius:20px;pointer-events:none;white-space:nowrap}
+    .plan-lightbox__close{position:fixed;top:18px;right:26px;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:22px;line-height:1;cursor:pointer}
     .plan-lightbox__close:hover{background:rgba(255,255,255,.22)}
     .org-chart{display:flex;flex-direction:column;align-items:center;gap:0}
     .org-node{background:#223066;color:#fff;padding:11px 22px;border-radius:8px;font-size:14px;font-weight:600;margin:0 auto}
@@ -218,6 +221,7 @@
   <div class="plan-lightbox" id="planLightbox">
     <button type="button" class="plan-lightbox__close" id="planLightboxClose" aria-label="닫기">&times;</button>
     <img class="plan-lightbox__img" id="planLightboxImg" alt="">
+    <div class="plan-lightbox__hint" id="planLightboxHint">도면을 누르면 더 크게 · 바깥을 누르면 닫힘</div>
   </div>
 
   <!-- 하단 푸터 -->
@@ -255,6 +259,48 @@
       function hideLens(){ lens.style.display = 'none'; }
       var bound = new WeakSet(); // 이미 동작을 붙인 본문 (요소가 갈아 끼워지면 새로 붙인다)
 
+      /* 크게 보기
+         예전에는 원본 크기를 넘지 않게(max-width:100%) 띄워서, 원본이 작은 전체 요약도는
+         눌러도 거의 커지지 않았다. 이제는 원본이 작아도 화면을 가득 채우게 키워 띄우고,
+         도면을 한 번 더 누르면 누른 자리를 중심으로 2.5배 더 키운다(스크롤로 둘러본다). */
+      var LIGHTBOX_ZOOM = 2.5;
+      var lightboxFitW = 0;
+      var lightboxZoomed = false;
+
+      function fitLightbox(){
+        var pad = 80; // .plan-lightbox padding 40px * 2
+        var w = lightboxImg.naturalWidth, h = lightboxImg.naturalHeight;
+        if (!w || !h) return;
+        lightboxFitW = Math.min((window.innerWidth - pad) / w, (window.innerHeight - pad) / h) * w;
+        lightboxZoomed = false;
+        lightbox.classList.remove('is-zoomed');
+        lightboxImg.style.width = lightboxFitW + 'px';
+        lightbox.scrollLeft = lightbox.scrollTop = 0;
+      }
+      lightboxImg.addEventListener('load', fitLightbox);
+
+      lightboxImg.addEventListener('click', function(e){
+        e.stopPropagation(); // 도면을 누른 것은 닫기가 아니다
+        var r = lightboxImg.getBoundingClientRect();
+        var fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
+        lightboxZoomed = !lightboxZoomed;
+        lightbox.classList.toggle('is-zoomed', lightboxZoomed);
+        lightboxImg.style.width = (lightboxFitW * (lightboxZoomed ? LIGHTBOX_ZOOM : 1)) + 'px';
+        if (lightboxZoomed){
+          // 누른 자리가 화면 가운데 오도록 스크롤한다
+          var nr = lightboxImg.getBoundingClientRect();
+          lightbox.scrollLeft += nr.left + fx * nr.width - window.innerWidth / 2;
+          lightbox.scrollTop += nr.top + fy * nr.height - window.innerHeight / 2;
+        }
+      });
+
+      function openLightbox(src, alt){
+        lightboxImg.alt = alt;
+        lightbox.classList.add('is-open');
+        document.body.style.overflow = 'hidden';
+        if (lightboxImg.src !== src) lightboxImg.src = src; // 처음 여는 그림이면 load에서 맞춘다
+        else fitLightbox();
+      }
       function closeLightbox(){
         lightbox.classList.remove('is-open');
         document.body.style.overflow = '';
@@ -263,6 +309,9 @@
       lightboxClose.addEventListener('click', closeLightbox);
       document.addEventListener('keydown', function(e){
         if (e.key === 'Escape') closeLightbox();
+      });
+      window.addEventListener('resize', function(){
+        if (lightbox.classList.contains('is-open')) fitLightbox();
       });
 
       function init(){
@@ -367,10 +416,7 @@
         // 도면 클릭 시 크게 보기 (돋보기를 켠 동안은 열지 않는다)
         img.addEventListener('click', function(){
           if (lensOn) return;
-          lightboxImg.src = img.src;
-          lightboxImg.alt = img.alt;
-          lightbox.classList.add('is-open');
-          document.body.style.overflow = 'hidden';
+          openLightbox(img.src, img.alt);
         });
       }
 
