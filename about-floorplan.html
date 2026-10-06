@@ -298,7 +298,8 @@
         lightboxImg.alt = alt;
         lightbox.classList.add('is-open');
         document.body.style.overflow = 'hidden';
-        if (lightboxImg.src !== src) lightboxImg.src = src; // 처음 여는 그림이면 load에서 맞춘다
+        // 처음 여는 그림이면 load에서 맞춘다 (img.src는 전체 주소라 같은 꼴로 바꿔 비교한다)
+        if (lightboxImg.src !== new URL(src, location.href).href) lightboxImg.src = src;
         else fitLightbox();
       }
       function closeLightbox(){
@@ -313,6 +314,34 @@
       window.addEventListener('resize', function(){
         if (lightbox.classList.contains('is-open')) fitLightbox();
       });
+
+      /* 전체 층별 요약도(floorplan-full.gif, 711×1192)는 2열 4줄로 층별 그림이 놓여 있다.
+         맨 위 안내 문구 줄(높이 약 40px) 아래를 4줄로 나누고, 가운데에서 좌우를 나눈다.
+         2층은 따로 그린 평면도가 없어 null — 그 칸은 요약도를 그대로 크게 띄운다.
+         9~14층·15~20층은 "20~11층 평면도", 21~26층 오피스텔은 "26~23층 평면도"가 가장 가깝다. */
+      var SUMMARY_SRC = 'images/floorplan-full.gif';
+      var SUMMARY_TOP = 40 / 1192;
+      var SUMMARY_CELLS = [
+        ['images/floorplan-mall-b1.png', 'images/floorplan-1f.png'],   // 상가 · 1층
+        [null, 'images/floorplan-7f.png'],                              // 2층 · 7층 식당가
+        ['images/floorplan-8f.png', 'images/floorplan-11-20f.png'],    // 8층 식당가 · 사무실(9~14층)
+        ['images/floorplan-11-20f.png', 'images/floorplan-23-26f.png'] // 사무실(15~20층) · 오피스텔(21~26층)
+      ];
+
+      function summaryPlanAt(img, clientX, clientY){
+        if (img.getAttribute('src') !== SUMMARY_SRC) return null;
+        var r = img.getBoundingClientRect();
+        var fx = (clientX - r.left) / r.width;
+        var fy = ((clientY - r.top) / r.height - SUMMARY_TOP) / (1 - SUMMARY_TOP);
+        if (fx < 0 || fx >= 1 || fy < 0 || fy >= 1) return null;
+        return SUMMARY_CELLS[Math.floor(fy * 4)][fx < 0.5 ? 0 : 1];
+      }
+
+      // 평면도 이름은 보기 선택 목록에 적힌 이름을 그대로 쓴다
+      function planLabel(src){
+        var opt = document.querySelector('#planSelect option[value="' + src + '"]');
+        return opt ? opt.textContent : '장교빌딩 평면도';
+      }
 
       function init(){
         var range = document.getElementById('planZoomRange');
@@ -413,10 +442,13 @@
         img.addEventListener('touchend', hideLens);
         frame.addEventListener('scroll', hideLens);
 
-        // 도면 클릭 시 크게 보기 (돋보기를 켠 동안은 열지 않는다)
-        img.addEventListener('click', function(){
+        // 도면 클릭 시 크게 보기 (돋보기를 켠 동안은 열지 않는다).
+        // 전체 층별 요약도에서는 누른 칸의 층 평면도를 바로 띄운다.
+        img.addEventListener('click', function(e){
           if (lensOn) return;
-          openLightbox(img.src, img.alt);
+          var plan = summaryPlanAt(img, e.clientX, e.clientY);
+          if (plan) openLightbox(plan, planLabel(plan));
+          else openLightbox(img.src, img.alt);
         });
       }
 
