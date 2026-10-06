@@ -57,6 +57,10 @@
     .plan-viewer__reset:hover{color:#223066}
     .plan-viewer__frame{overflow:auto;max-height:640px;padding:18px;display:flex;justify-content:center}
     .plan-viewer__img{width:100%;height:auto;display:block;flex-shrink:0;transition:width .15s ease;cursor:zoom-in}
+    .plan-viewer__lens-btn{font-size:12.5px;font-weight:600;color:#33415a;background:#fff;border:1px solid #cdd4e0;border-radius:6px;padding:5px 10px;cursor:pointer;white-space:nowrap;font-family:inherit}
+    .plan-viewer__lens-btn:hover{background:#f4f6fb}
+    .plan-viewer__lens-btn.is-on{background:#223066;border-color:#223066;color:#fff}
+    .plan-lens{position:fixed;display:none;border-radius:50%;border:3px solid #223066;box-shadow:0 6px 24px rgba(0,0,0,.3);background-color:#fff;background-repeat:no-repeat;pointer-events:none;z-index:999}
     .plan-viewer__hint{font-size:12.5px;color:#8a92a0;text-align:right;padding:6px 16px 0}
     .plan-lightbox{position:fixed;inset:0;background:rgba(20,24,34,.88);z-index:1000;display:none;align-items:center;justify-content:center;padding:40px;cursor:zoom-out}
     .plan-lightbox.is-open{display:flex}
@@ -232,72 +236,146 @@
   <script src="auth.js"></script>
   <script src="home-slider.js"></script>
   <script>
+    /* 도면 크기 조절 · 돋보기 · 크게 보기
+       관리자가 "내용 수정"으로 이 페이지를 저장하면 auth.js가 본문을 저장본으로 통째로 갈아 끼운다.
+       그러면 처음에 붙여 둔 동작이 옛 요소에 남아, 슬라이더를 움직여도 도면 크기가 그대로였다.
+       그래서 본문이 준비되거나 바뀔 때마다(contentready) 지금 있는 요소에 다시 붙인다. */
     (function(){
-      var range = document.getElementById('planZoomRange');
-      var pct = document.getElementById('planZoomPct');
-      var img = document.getElementById('planImg');
-      var frame = document.querySelector('.plan-viewer__frame');
-      var zoomIn = document.getElementById('planZoomIn');
-      var zoomOut = document.getElementById('planZoomOut');
-      var reset = document.getElementById('planZoomReset');
-      var select = document.getElementById('planSelect');
-      var min = Number(range.min), max = Number(range.max), step = Number(range.step);
-      var baseWidthPx = 0; // 100% 줌 = 박스 안에 전체 도면이 다 보이는 크기
-
-      function computeBaseWidth(){
-        var padding = 36; // .plan-viewer__frame 좌우 padding 18px * 2
-        var frameW = frame.clientWidth - padding;
-        var frameH = 640 - padding;
-        var naturalW = img.naturalWidth || frameW;
-        var naturalH = img.naturalHeight || frameH;
-        var scale = Math.min(frameW / naturalW, frameH / naturalH, 1);
-        baseWidthPx = naturalW * scale;
-      }
-
-      function applyZoom(v){
-        v = Math.min(max, Math.max(min, v));
-        range.value = v;
-        pct.textContent = v + '%';
-        img.style.width = (baseWidthPx * v / 100) + 'px';
-      }
-      range.addEventListener('input', function(){ applyZoom(Number(range.value)); });
-      zoomIn.addEventListener('click', function(){ applyZoom(Number(range.value) + step); });
-      zoomOut.addEventListener('click', function(){ applyZoom(Number(range.value) - step); });
-      reset.addEventListener('click', function(){ applyZoom(100); });
-      select.addEventListener('change', function(){
-        img.src = select.value;
-        img.alt = select.options[select.selectedIndex].text;
-      });
-      img.addEventListener('load', function(){
-        computeBaseWidth();
-        applyZoom(100);
-      });
-      if (img.complete && img.naturalWidth){
-        computeBaseWidth();
-        applyZoom(100);
-      }
-
-      // 도면 클릭 시 라이트박스로 확대
+      var LENS_SIZE = 180; // 돋보기 지름(px)
+      var LENS_ZOOM = 3;   // 화면에 보이는 도면 대비 배율
       var lightbox = document.getElementById('planLightbox');
       var lightboxImg = document.getElementById('planLightboxImg');
       var lightboxClose = document.getElementById('planLightboxClose');
 
-      function openLightbox(){
-        lightboxImg.src = img.src;
-        lightboxImg.alt = img.alt;
-        lightbox.classList.add('is-open');
-        document.body.style.overflow = 'hidden';
-      }
+      // 돋보기 렌즈는 본문 밖(body)에 하나만 둔다 — 관리자 저장본에 섞여 들어가지 않게
+      var lens = document.createElement('div');
+      lens.className = 'plan-lens';
+      lens.style.width = lens.style.height = LENS_SIZE + 'px';
+      document.body.appendChild(lens);
+      function hideLens(){ lens.style.display = 'none'; }
+      var bound = new WeakSet(); // 이미 동작을 붙인 본문 (요소가 갈아 끼워지면 새로 붙인다)
+
       function closeLightbox(){
         lightbox.classList.remove('is-open');
         document.body.style.overflow = '';
       }
-      img.addEventListener('click', openLightbox);
       lightbox.addEventListener('click', closeLightbox);
       lightboxClose.addEventListener('click', closeLightbox);
       document.addEventListener('keydown', function(e){
         if (e.key === 'Escape') closeLightbox();
       });
+
+      function init(){
+        var range = document.getElementById('planZoomRange');
+        var pct = document.getElementById('planZoomPct');
+        var img = document.getElementById('planImg');
+        var frame = document.querySelector('.plan-viewer__frame');
+        var zoomIn = document.getElementById('planZoomIn');
+        var zoomOut = document.getElementById('planZoomOut');
+        var reset = document.getElementById('planZoomReset');
+        var select = document.getElementById('planSelect');
+        if (!range || !img || !frame || !reset) return;
+        // 저장본이 없으면 contentready가 와도 요소가 그대로다 — 두 번 붙이면 + 한 번에 두 칸씩 움직인다
+        if (bound.has(range)) return;
+        bound.add(range);
+        var min = Number(range.min), max = Number(range.max), step = Number(range.step);
+        var baseWidthPx = 0; // 100% 줌 = 박스 안에 전체 도면이 다 보이는 크기
+        var lensOn = false;
+
+        function computeBaseWidth(){
+          var padding = 36; // .plan-viewer__frame 좌우 padding 18px * 2
+          var frameW = frame.clientWidth - padding;
+          var frameH = 640 - padding;
+          var naturalW = img.naturalWidth || frameW;
+          var naturalH = img.naturalHeight || frameH;
+          var scale = Math.min(frameW / naturalW, frameH / naturalH, 1);
+          baseWidthPx = naturalW * scale;
+        }
+
+        function applyZoom(v){
+          v = Math.min(max, Math.max(min, v));
+          range.value = v;
+          pct.textContent = v + '%';
+          img.style.width = (baseWidthPx * v / 100) + 'px';
+        }
+        range.addEventListener('input', function(){ applyZoom(Number(range.value)); });
+        zoomIn.addEventListener('click', function(){ applyZoom(Number(range.value) + step); });
+        zoomOut.addEventListener('click', function(){ applyZoom(Number(range.value) - step); });
+        reset.addEventListener('click', function(){ applyZoom(100); });
+        select.addEventListener('change', function(){
+          img.src = select.value;
+          img.alt = select.options[select.selectedIndex].text;
+        });
+        img.addEventListener('load', function(){
+          computeBaseWidth();
+          applyZoom(100);
+        });
+        // 저장본에 굳어 있던 폭(style="width: …")은 여기서 지금 화면에 맞게 다시 잡힌다
+        if (img.complete && img.naturalWidth){
+          computeBaseWidth();
+          applyZoom(Number(range.value) || 100);
+        }
+
+        // 돋보기 켜기/끄기 — 저장본에 예전 버튼이 남아 있으면 지우고 새로 단다
+        document.querySelectorAll('.plan-viewer__lens-btn').forEach(function(el){ el.remove(); });
+        var lensBtn = document.createElement('button');
+        lensBtn.type = 'button';
+        lensBtn.className = 'plan-viewer__lens-btn';
+        lensBtn.setAttribute('contenteditable', 'false');
+        lensBtn.textContent = '🔍 돋보기';
+        lensBtn.title = '켜고 도면 위에 올리면 그 부분을 크게 보여 줍니다';
+        reset.parentNode.insertBefore(lensBtn, reset);
+
+        function setLens(on){
+          lensOn = on;
+          lensBtn.classList.toggle('is-on', on);
+          lensBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+          img.style.cursor = on ? 'crosshair' : '';
+          if (!on) hideLens();
+        }
+        lensBtn.addEventListener('click', function(){ setLens(!lensOn); });
+        setLens(false);
+
+        function moveLens(clientX, clientY){
+          var r = img.getBoundingClientRect();
+          var x = clientX - r.left, y = clientY - r.top;
+          if (x < 0 || y < 0 || x > r.width || y > r.height){ hideLens(); return; }
+          lens.style.display = 'block';
+          lens.style.left = (clientX - LENS_SIZE / 2) + 'px';
+          lens.style.top = (clientY - LENS_SIZE / 2) + 'px';
+          lens.style.backgroundImage = 'url("' + img.src + '")';
+          lens.style.backgroundSize = (r.width * LENS_ZOOM) + 'px ' + (r.height * LENS_ZOOM) + 'px';
+          lens.style.backgroundPosition =
+            (LENS_SIZE / 2 - x * LENS_ZOOM) + 'px ' + (LENS_SIZE / 2 - y * LENS_ZOOM) + 'px';
+        }
+        img.addEventListener('mousemove', function(e){ if (lensOn) moveLens(e.clientX, e.clientY); });
+        img.addEventListener('mouseleave', hideLens);
+        // 휴대폰: 돋보기를 켠 동안은 끌어도 화면이 밀리지 않고 렌즈가 손가락을 따라온다.
+        // 손가락에 가리지 않도록 렌즈는 짚은 곳 위쪽에 띄우고, 확대하는 자리는 짚은 곳 그대로다.
+        function onTouch(e){
+          if (!lensOn) return;
+          e.preventDefault();
+          var t = e.touches[0];
+          moveLens(t.clientX, t.clientY);
+          lens.style.top = (t.clientY - LENS_SIZE / 2 - 90) + 'px';
+        }
+        img.addEventListener('touchstart', onTouch, { passive: false });
+        img.addEventListener('touchmove', onTouch, { passive: false });
+        img.addEventListener('touchend', hideLens);
+        frame.addEventListener('scroll', hideLens);
+
+        // 도면 클릭 시 크게 보기 (돋보기를 켠 동안은 열지 않는다)
+        img.addEventListener('click', function(){
+          if (lensOn) return;
+          lightboxImg.src = img.src;
+          lightboxImg.alt = img.alt;
+          lightbox.classList.add('is-open');
+          document.body.style.overflow = 'hidden';
+        });
+      }
+
+      init();
+      document.addEventListener('contentready', function(){ hideLens(); init(); });
     })();
   </script>
 </body>
