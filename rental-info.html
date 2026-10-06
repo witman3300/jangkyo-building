@@ -45,6 +45,7 @@
     .cta{display:inline-block;margin-top:6px;background:#223066;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 22px;border-radius:8px}
     .cta:hover{background:#2c3f80}
     .vacancy-add-btn{margin-left:auto}
+    .vacancy-sort-btn{margin-left:6px}
     .vacancy-add-form{display:none;grid-template-columns:repeat(4,1fr);gap:12px 14px;align-items:end;background:#f9fafc;border:1px solid #e6e8ef;border-radius:8px;padding:16px;margin-bottom:16px}
     .vacancy-add-form.show{display:grid}
     .vacancy-add-form .form-group{margin-bottom:0}
@@ -180,7 +181,7 @@
       // 대비해 이전에 만든 폼·버튼·삭제 열을 먼저 지운다 (중복 방지)
       section.querySelectorAll('.vacancy-add-form').forEach(function (el) { el.remove(); });
       section.querySelectorAll('.vacancy-del-col').forEach(function (el) { el.remove(); });
-      document.querySelectorAll('.vacancy-add-btn').forEach(function (el) { el.remove(); });
+      document.querySelectorAll('.vacancy-add-btn, .vacancy-sort-btn').forEach(function (el) { el.remove(); });
 
       // 관리자에게만 뜨는 content-edit-toolbar(저장/취소가 있는 줄)의 맨 오른쪽에 버튼을 붙인다
       var toolbar = document.querySelector('.content-edit-toolbar');
@@ -191,6 +192,13 @@
       addBtn.className = 'btn btn-outline btn-sm vacancy-add-btn';
       addBtn.textContent = '+ 공실 추가';
       toolbar.appendChild(addBtn);
+
+      var sortBtn = document.createElement('button');
+      sortBtn.type = 'button';
+      sortBtn.className = 'btn btn-outline btn-sm vacancy-sort-btn';
+      sortBtn.textContent = '↓ 내림차순 정리';
+      sortBtn.title = '호실 번호가 큰 것부터 차례로 줄 세웁니다 (지상층 먼저, 지하는 그 아래)';
+      toolbar.appendChild(sortBtn);
 
       var form = document.createElement('form');
       form.className = 'vacancy-add-form';
@@ -253,6 +261,28 @@
         if (window.saveContentEdit) window.saveContentEdit();
         addRowControls();
       }
+
+      /* 호실 정렬 기준: 지상층이 지하보다 위, 같은 쪽끼리는 번호가 큰 것이 위.
+         "지하 155·156·162호"처럼 여러 호실을 묶은 칸은 맨 앞 번호로 본다. */
+      function roomKey(tr) {
+        var room = tr.children[0] ? tr.children[0].textContent : '';
+        var m = room.match(/\d+/);
+        return { under: room.indexOf('지하') !== -1, no: m ? Number(m[0]) : 0 };
+      }
+
+      sortBtn.addEventListener('click', function () {
+        var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+        if (rows.length < 2) return;
+        if (!confirm('공실 현황을 호실 번호 내림차순으로 정리할까요?')) return;
+        rows.sort(function (a, b) {
+          var ka = roomKey(a), kb = roomKey(b);
+          if (ka.under !== kb.under) return ka.under ? 1 : -1;
+          return kb.no - ka.no;
+        });
+        rows.forEach(function (tr) { tbody.appendChild(tr); });
+        saveVacancyContent();
+        showToast('내림차순으로 정리했습니다.');
+      });
 
       addBtn.addEventListener('click', function () {
         form.classList.add('show');
