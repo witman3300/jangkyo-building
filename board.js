@@ -185,7 +185,8 @@ function staticEntries(cat, withDeleted) {
 
 // 다른 PC에서 글이 등록·삭제되면 화면을 다시 그린다. 단, 글을 쓰는 중에는 폼을 지우지 않는다.
 function onPostsChanged() {
-  if ((location.hash || "#list") === "#write") return;
+  const h = location.hash || "#list";
+  if (h === "#write" || h.startsWith("#edit/")) return;
   route();
 }
 
@@ -867,6 +868,10 @@ function renderView(id) {
   const delBtn = admin || mine
     ? `<button type="button" class="btn btn-primary btn-sm" onclick="deletePost('${p.id}')">삭제</button>`
     : "";
+  // 본문 수정은 관리자만 (서버 규칙은 글쓴이에게도 열려 있지만 화면에서는 관리자에게만 준다)
+  const editBtn = admin
+    ? `<a href="#edit/${p.id}" class="btn btn-outline btn-sm">수정</a>`
+    : "";
   const printBtn = `<button type="button" class="btn btn-outline btn-sm" onclick="window.print()"
       title="이 글의 본문을 인쇄합니다">인쇄</button>`;
   const pinTag = p.pinned ? `<span class="pin-flag">📌 공지</span> ` : "";
@@ -882,9 +887,67 @@ function renderView(id) {
     <div class="btn-row">
       <a href="#list" class="btn btn-outline btn-sm">목록</a>
       ${printBtn}
+      ${editBtn}
       ${pinBtn}
       ${delBtn}
     </div>`;
+}
+
+/* ===== 수정 보기 (관리자 전용) =====
+   이미 올라간 글의 제목과 본문을 고친다. 첨부·작성자·작성일은 그대로 둔다. */
+function renderEdit(id) {
+  const p = loadPosts().find((x) => x.id === id);
+  if (!p) {
+    if (!postsLoaded) {
+      document.getElementById("app").innerHTML = `<p class="board-empty">불러오는 중...</p>`;
+      return;
+    }
+    location.hash = "#list";
+    return;
+  }
+  const hasFiles = !!(p.files && p.files.length);
+  document.getElementById("app").innerHTML = `
+    <div class="board-head"><h1>${CATEGORIES[p.cat || getCat()]} · 글 수정</h1></div>
+    <form class="write-form" onsubmit="saveEdit(event, '${p.id}')">
+      <div class="write-row">
+        <div class="label">제목</div>
+        <div class="field"><input type="text" id="f-title" value="${esc(p.title || "")}" required /></div>
+      </div>
+      <div class="write-row">
+        <div class="label">내용</div>
+        <div class="field"><textarea id="f-content" placeholder="${hasFiles ? "내용을 입력하세요 (첨부가 있어 비워 두어도 됩니다)" : "내용을 입력하세요"}"${hasFiles ? "" : " required"}>${esc(p.content || "")}</textarea></div>
+      </div>
+      <div class="btn-row">
+        <button type="submit" class="btn btn-primary btn-sm" id="f-submit">저장</button>
+        <a href="#view/${p.id}" class="btn btn-outline btn-sm">취소</a>
+      </div>
+    </form>`;
+}
+
+async function saveEdit(e, id) {
+  e.preventDefault();
+  if (!(typeof isAdmin === "function" && isAdmin())) return;
+  const p = loadPosts().find((x) => x.id === id);
+  if (!p) return;
+  const title = document.getElementById("f-title").value.trim();
+  const content = document.getElementById("f-content").value.trim();
+  if (!title) return;
+  if (!content && !(p.files && p.files.length)) {
+    showToast("내용을 입력해 주세요.");
+    return;
+  }
+  const btn = document.getElementById("f-submit");
+  btn.disabled = true;
+  btn.textContent = "저장 중...";
+  try {
+    await postsRef().doc(id).update({ title, content });
+    showToast("수정했습니다.");
+    location.hash = "#view/" + id;
+  } catch (err) {
+    showToast("수정하지 못했습니다: " + err.message);
+    btn.disabled = false;
+    btn.textContent = "저장";
+  }
 }
 
 /* 두 공지사항 게시판 사이에서 글을 옮긴다 (관리자만).
@@ -1037,6 +1100,13 @@ function route() {
       return renderList();
     }
     return renderWrite();
+  }
+  if (hash.startsWith("#edit/")) {
+    if (!(typeof isAdmin === "function" && isAdmin())) {
+      location.hash = "#view/" + hash.slice(6);
+      return;
+    }
+    return renderEdit(hash.slice(6));
   }
   if (hash.startsWith("#view/")) return renderView(hash.slice(6));
   return renderList();
