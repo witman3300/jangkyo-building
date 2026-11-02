@@ -165,18 +165,49 @@
   <script src="auth.js"></script>
   <script>
   (function () {
-    // 파일을 페이지 본문에 담아 Firestore에 저장하므로(문서당 1MB) 600KB로 제한한다
-    var MAX_SIZE = 600 * 1024;
+    // 파일 본체는 Firebase Storage에 올리고 본문에는 내려받기 주소만 남긴다.
+    // 예전처럼 본문에 통째로 담으면 페이지당 1MB 제한에 걸려 600KB까지만 올릴 수 있었다.
+    // 한도는 storage.rules의 업로드 제한(20MB 미만)에 맞춘다.
+    var MAX_MB = 20;
+    var MAX_SIZE = MAX_MB * 1024 * 1024;
 
     function extLabel(filename) {
       var m = filename.match(/\.([a-zA-Z0-9]+)$/);
       return m ? m[1].toUpperCase() : 'FILE';
     }
 
-    function readAsDataURL(file, cb) {
-      var reader = new FileReader();
-      reader.onload = function () { cb(reader.result); };
-      reader.readAsDataURL(file);
+    // 경로를 깨뜨리는 글자를 걸러 낸 Storage용 파일 이름 (board.js의 safeStorageName과 같은 규칙)
+    function safeStorageName(name) {
+      var clean = Array.from(String(name || 'file'))
+        .filter(function (ch) { return ch.charCodeAt(0) > 31 && ch.charCodeAt(0) !== 127; })
+        .join('')
+        .replace(/[\\/#?%*:|"'<>\[\]{}]/g, '_')
+        .replace(/\s+/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^[._]+/, '');
+      var dot = clean.lastIndexOf('.');
+      var ext = dot > 0 ? clean.slice(dot, dot + 12) : '';
+      var stem = (dot > 0 ? clean.slice(0, dot) : clean).slice(0, 60);
+      return (stem || 'file') + ext;
+    }
+
+    // 파일을 Storage에 올리고 { url, path }를 돌려준다. 진행률은 onProgress(0~100)로 알린다.
+    function uploadFile(file, onProgress) {
+      var path = 'board/infodata/page-' + Date.now() + '/' + safeStorageName(file.name);
+      var task = fbStorage.ref(path).put(file, {
+        contentType: file.type || 'application/octet-stream',
+        // 다른 도메인 주소라 download 속성이 안 먹으므로, 원래 이름으로 저장되게 여기 적어 둔다
+        contentDisposition: "attachment; filename*=UTF-8''" + encodeURIComponent(file.name)
+      });
+      return new Promise(function (resolve, reject) {
+        task.on('state_changed', function (snap) {
+          if (onProgress && snap.totalBytes) onProgress(Math.round(snap.bytesTransferred / snap.totalBytes * 100));
+        }, reject, function () {
+          task.snapshot.ref.getDownloadURL().then(function (url) {
+            resolve({ url: url, path: path });
+          }, reject);
+        });
+      });
     }
 
     // 본문이 바뀌면 auth.js가 Firestore에 저장한다 (모든 방문자·모든 기기에 공통 반영)
@@ -192,8 +223,11 @@
       del.textContent = '삭제';
       del.addEventListener('click', function () {
         if (!confirm('"' + name + '" 자료를 목록에서 지우시겠습니까?')) return;
+        var path = li.getAttribute('data-path');
         li.remove();
         saveDataContent();
+        // Storage에 올린 파일도 지운다 (예전 방식으로 본문에 담긴 자료는 path가 없다)
+        if (path && window.fbStorage) fbStorage.ref(path).delete().catch(function () {});
       });
       li.appendChild(del);
     }
@@ -228,7 +262,7 @@
       form.className = 'data-add-form';
       form.innerHTML =
         '<div><label>자료 이름</label><input type="text" class="da-name" placeholder="예: 2026년 관리비 예산안" required /></div>' +
-        '<div><label>파일 <span class="size-hint">600KB 이하 · 올리면 바로 내려받을 수 있습니다</span></label><input type="file" class="da-file" required /></div>' +
+        '<div><label>파일 <span class="size-hint">' + MAX_MB + 'MB 미만 · 올리면 바로 내려받을 수 있습니다</span></label><input type="file" class="da-file" required /></div>' +
         '<div class="data-add-actions">' +
           '<button type="submit" class="btn btn-primary btn-sm">등록</button>' +
           '<button type="button" class="btn btn-outline btn-sm da-cancel">취소</button>' +
@@ -250,15 +284,24 @@
         var name = form.querySelector('.da-name').value.trim();
         var file = form.querySelector('.da-file').files[0];
         if (!name || !file) return;
-        if (file.size > MAX_SIZE) { showToast('600KB 이하 파일만 올릴 수 있습니다.'); return; }
+        if (file.size >= MAX_SIZE) { showToast(MAX_MB + 'MB 미만 파일만 올릴 수 있습니다.'); return; }
+        if (!file.size) { showToast('빈 파일은 올릴 수 없습니다.'); return; }
 
-        readAsDataURL(file, function (dataUrl) {
+        var submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = '올리는 중 0%';
+
+        uploadFile(file, function (pct) {
+          submitBtn.textContent = '올리는 중 ' + pct + '%';
+        }).then(function (up) {
+          var fileUrl = up.url;
           var li = document.createElement('li');
           li.className = 'with-dl uploaded';
+          li.setAttribute('data-path', up.path);
 
           var title = document.createElement('a');
           title.className = 'doc-title';
-          title.href = dataUrl;
+          title.href = fileUrl;
           title.setAttribute('download', file.name);
           title.appendChild(document.createTextNode(name + ' '));
           var go = document.createElement('span');
@@ -268,7 +311,7 @@
 
           var dl = document.createElement('a');
           dl.className = 'dl-btn';
-          dl.href = dataUrl;
+          dl.href = fileUrl;
           dl.setAttribute('download', file.name);
           dl.textContent = '다운로드';
 
@@ -281,6 +324,14 @@
           form.reset();
           form.classList.remove('show');
           showToast('자료를 등록했습니다.');
+        }).catch(function (err) {
+          var code = (err && err.code) || '';
+          showToast(code === 'storage/unauthorized'
+            ? '올릴 권한이 없습니다. 다시 로그인해 주세요.'
+            : '자료를 올리지 못했습니다: ' + ((err && err.message) || code));
+        }).then(function () {
+          submitBtn.disabled = false;
+          submitBtn.textContent = '등록';
         });
       });
     }
