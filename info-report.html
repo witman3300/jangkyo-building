@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>결산보고서 | 장교빌딩</title>
+  <link rel="canonical" href="https://janggyo.co.kr/info-report.html" />
+  <link rel="icon" href="icons/favicon-32.png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="description" content="장교빌딩 관리단의 연도별 결산보고서(재무제표)를 제공합니다." />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="결산보고서 | 장교빌딩" />
+  <meta property="og:description" content="장교빌딩 관리단의 연도별 결산보고서(재무제표)를 제공합니다." />
+  <meta property="og:url" content="https://janggyo.co.kr/info-report.html" />
+  <meta property="og:site_name" content="장교빌딩" />
+  <meta property="og:locale" content="ko_KR" />
+  <meta property="og:image" content="https://janggyo.co.kr/images/og-image.jpg" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .about-wrap{max-width:1100px;margin:0 auto;padding:28px 20px 50px;display:grid;grid-template-columns:230px 1fr;gap:28px;flex:1;width:100%}
+    .about-sub{align-self:start}
+    .about-sub .sub-head{background:#223066;color:#fff;font-size:16px;font-weight:700;padding:15px 18px;border-radius:8px 8px 0 0;letter-spacing:-.3px}
+    .about-sub ul{list-style:none;border:1px solid #e6e8ef;border-top:none;border-radius:0 0 8px 8px;overflow:hidden}
+    .about-sub li a{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;color:#41506a;text-decoration:none;font-size:15px;border-bottom:1px solid #eef0f4;transition:.15s;cursor:pointer}
+    .about-sub li:last-child a{border-bottom:none}
+    .about-sub li a::after{content:"›";color:#b9c0cf;font-size:17px}
+    .about-sub li a:hover{background:#f4f6fb;color:#1a2744;padding-left:22px}
+    .about-sub li a.active{background:#f4f1ea;color:#1a2744;font-weight:700;border-left:3px solid #c9a84c}
+    .about-sub li a.active::after{color:#c9a84c}
+    .about-aside{margin-top:16px;border:1px solid #e6e8ef;border-radius:8px;padding:18px;background:#fafbfc}
+    .about-aside h4{font-size:14px;color:#1a2744;margin-bottom:6px;font-weight:700}
+    .about-aside p{font-size:12.5px;color:#7a8290;line-height:1.7}
+    .about-body{min-width:0}
+    .about-body h1{font-size:27px;color:#1a2744;margin-bottom:6px;letter-spacing:-.5px}
+    .about-body .lead{color:#7a8290;font-size:15px;margin-bottom:26px}
+    .about-sec{margin-bottom:40px;scroll-margin-top:80px}
+    .about-sec h2{font-size:20px;color:#223066;font-weight:700;padding-bottom:10px;border-bottom:2px solid #223066;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+    .about-sec h2 .no{background:#c9a84c;color:#fff;font-size:13px;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+    .about-sec p{color:#48505e;font-size:15px;line-height:1.85;margin-bottom:12px}
+    .link-list{list-style:none;border-top:2px solid #223066}
+    .link-list li a{display:flex;justify-content:space-between;align-items:center;padding:14px 6px;border-bottom:1px solid #eef0f4;color:#41506a;text-decoration:none;font-size:15px}
+    .link-list li a:hover{color:#223066;background:#fafbfc}
+    .link-list .go{color:#c9a84c;font-size:13px;font-weight:700}
+    .link-list li.with-dl{display:flex;align-items:center;gap:10px;border-bottom:1px solid #eef0f4}
+    .link-list li.with-dl a.doc-title{flex:1;border-bottom:none}
+    .link-list li.with-dl .dl-btn{flex-shrink:0;background:#223066;color:#fff;font-size:12.5px;font-weight:700;padding:8px 16px;border-radius:6px;text-decoration:none;white-space:nowrap}
+    .link-list li.with-dl .dl-btn:hover{background:#2c3f80}
+    /* 관리자 전용 자료 올리기 틀 */
+    .data-add-btn{margin-left:auto}
+    .data-add-form{display:none;grid-template-columns:1fr 1fr;gap:12px 14px;align-items:end;background:#f9fafc;border:1px solid #e6e8ef;border-radius:8px;padding:16px;margin-bottom:16px}
+    .data-add-form.show{display:grid}
+    .data-add-form label{display:block;font-size:13.5px;font-weight:700;color:#33415a;margin-bottom:6px}
+    .data-add-form input{width:100%;padding:11px 13px;border:1px solid #dddddd;border-radius:8px;font-size:14.5px;font-family:inherit}
+    .data-add-form .size-hint{font-size:12px;color:#8a94a6;font-weight:400;margin-left:6px}
+    .data-add-actions{grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end}
+    .data-delete-btn{flex-shrink:0;background:#fff;border:1px solid #f0c9c9;border-radius:6px;font-size:12px;padding:6px 10px;color:#c0392b;cursor:pointer;white-space:nowrap}
+    .data-delete-btn:hover{background:#fdf0f0;border-color:#e0a0a0}
+    @media (max-width:768px){.data-add-form{grid-template-columns:1fr}}
+    .cta{display:inline-block;margin-top:8px;background:#223066;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 22px;border-radius:8px}
+    .cta:hover{background:#2c3f80}
+    .faq-item{border:1px solid #e6e8ef;border-radius:8px;margin-bottom:10px;overflow:hidden}
+    .faq-q{padding:15px 18px;font-weight:700;font-size:15.5px;color:#33415a;cursor:pointer;display:flex;justify-content:space-between;gap:12px}
+    .faq-q .mk{color:#c9a84c;font-size:19px}
+    .faq-item.open .mk{transform:rotate(45deg)}
+    .faq-a{display:none;padding:0 18px 16px;color:#5a6472;font-size:14.5px;line-height:1.75}
+    .faq-item.open .faq-a{display:block}
+    @media (max-width:768px){.about-wrap{grid-template-columns:1fr;gap:18px;padding:20px 14px 36px}.about-sub{order:-1}}
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="headbar">
+      <div class="headbar-logo">
+        <img src="images/janggyo_logo.png" alt="장교빌딩" class="logobar-icon">
+        <div class="logobar-text">
+          <a href="index.html" class="brand">장교빌딩</a>
+          <span class="brand-sub">JANGGYO BUILDING</span>
+        </div>
+      </div>
+      <nav class="navbar">
+        <ul class="menu">
+          <li><a href="about.html"><span class="gnb-prefix">장교빌딩&nbsp;</span>소개</a></li>
+          <li><a href="tenant-info.html">입주안내</a></li>
+          <li><a href="rental-info.html">임대안내</a></li>
+          <li><a href="info-notice.html" class="active">정보마당</a></li>
+          <li><a href="board.html">회원광장</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="topbar">
+      <div class="topbar-inner">
+        <a href="index.html">홈으로</a><span class="divider">|</span>
+        <span id="auth-status"><a href="login.html">로그인</a></span>
+        <span class="divider">|</span><a href="sitemap.html">사이트맵</a>
+      </div>
+    </div>
+    <!-- 상단 이미지 슬라이드 (8장, 자동 전환) -->
+    <div class="hero-slider" id="heroSlider">
+      <div class="hero-slider-track">
+        <div class="hero-slide"><img src="images/hero-01.jpg" alt="장교빌딩 외관 전경" /></div>
+        <div class="hero-slide"><img src="images/hero-02.jpg" alt="장교빌딩 외관 와이드 전경" /></div>
+        <div class="hero-slide"><img src="images/hero-06.jpg" alt="장교빌딩 로비 안내판" /></div>
+        <div class="hero-slide"><img src="images/hero-03.jpg" alt="장교빌딩 고층에서 바라본 도심 전망" /></div>
+        <div class="hero-slide"><img src="images/hero-04.jpg" alt="장교빌딩 옥외 조형물과 정원" /></div>
+        <div class="hero-slide"><img src="images/hero-05.jpg" alt="장교빌딩 광장 캐노피" /></div>
+        <div class="hero-slide"><img src="images/hero-08.jpg" alt="장교빌딩 지하주차장" /></div>
+        <div class="hero-slide"><img src="images/hero-07.jpg" alt="장교빌딩 지하철 연결통로" /></div>
+      </div>
+      <div class="hero-slider-dots">
+        <button type="button" class="hero-dot is-active" data-index="0" aria-label="1번째 사진 보기"></button>
+        <button type="button" class="hero-dot" data-index="1" aria-label="2번째 사진 보기"></button>
+        <button type="button" class="hero-dot" data-index="2" aria-label="3번째 사진 보기"></button>
+        <button type="button" class="hero-dot" data-index="3" aria-label="4번째 사진 보기"></button>
+        <button type="button" class="hero-dot" data-index="4" aria-label="5번째 사진 보기"></button>
+        <button type="button" class="hero-dot" data-index="5" aria-label="6번째 사진 보기"></button>
+        <button type="button" class="hero-dot" data-index="6" aria-label="7번째 사진 보기"></button>
+        <button type="button" class="hero-dot" data-index="7" aria-label="8번째 사진 보기"></button>
+      </div>
+    </div>
+  </header>
+
+  <div class="about-wrap">
+    <aside class="about-sub">
+      <div class="sub-head">정보마당</div>
+      <ul>
+        <li><a href="info-notice.html">공지사항</a></li>
+        <li><a href="info.html">자료실</a></li>
+        <li><a href="info-report.html" class="active">결산보고서</a></li>
+        <li><a href="info-forms.html">서식 다운로드</a></li>
+        <li><a href="info-faq.html">자주 묻는 질문</a></li>
+      </ul>
+      <div class="about-aside"><h4>관리사무소</h4><p>TEL. 02-778-4611~3<br>평일 09:00 ~ 18:00</p></div>
+    </aside>
+
+    <main class="about-body">
+      <h1>결산보고서</h1>
+      <p class="lead">장교빌딩 관리단의 연도별 결산보고서(재무제표)를 제공합니다.</p>
+
+      <section class="about-sec" id="report">
+        <h2><span class="no">1</span> 결산보고서</h2>
+        <p>제목을 누르면 본문을 바로 볼 수 있고, 다운로드 버튼으로 원본 파일을 받을 수 있습니다.</p>
+        <ul class="link-list">
+          <li class="with-dl">
+            <a href="info-doc-view.html?doc=report2025" class="doc-title">2025년도 장교공영주식회사 재무제표 <span class="go">보기 ›</span></a>
+            <a href="files/report/4/report.pdf" download="2025년도 장교공영주식회사 재무제표.pdf" class="dl-btn">다운로드</a>
+          </li>
+        </ul>
+      </section>
+
+    </main>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <p class="footer-addr">(우) 04541 서울특별시 중구 삼일대로 363, 1505호 (장교동, 장교빌딩)</p>
+      <p class="footer-contact"><span>TEL. 02-778-4611~3</span><span>FAX. 02-775-9663</span><span>MAIL. jangkyo1505@naver.com</span></p>
+      <p class="footer-copy">COPYRIGHT(C) 2010 JANGGYO BLDG. ALL RIGHT RESERVED.</p>
+    </div>
+  </footer>
+
+  <script src="auth.js"></script>
+  <script src="info-upload.js"></script>
+  <script>
+    setupInfoUpload({ sectionId: "report", cat: "inforeport", list: "report", placeholder: "예: 2026년도 장교공영주식회사 재무제표" });
+  </script>
+  <script src="home-slider.js"></script>
+</body>
+</html>

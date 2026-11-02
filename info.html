@@ -7,10 +7,10 @@
   <link rel="canonical" href="https://janggyo.co.kr/info.html" />
   <link rel="icon" href="icons/favicon-32.png" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
-  <meta name="description" content="장교빌딩 관리규약·관리규정·결산보고서 등 문서 자료를 제공합니다." />
+  <meta name="description" content="장교빌딩 관리규약·관리규정 등 문서 자료를 제공합니다." />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="자료실 | 장교빌딩" />
-  <meta property="og:description" content="장교빌딩 관리규약·관리규정·결산보고서 등 문서 자료를 제공합니다." />
+  <meta property="og:description" content="장교빌딩 관리규약·관리규정 등 문서 자료를 제공합니다." />
   <meta property="og:url" content="https://janggyo.co.kr/info.html" />
   <meta property="og:site_name" content="장교빌딩" />
   <meta property="og:locale" content="ko_KR" />
@@ -125,6 +125,7 @@
       <ul>
         <li><a href="info-notice.html">공지사항</a></li>
         <li><a href="info.html" class="active">자료실</a></li>
+        <li><a href="info-report.html">결산보고서</a></li>
         <li><a href="info-forms.html">서식 다운로드</a></li>
         <li><a href="info-faq.html">자주 묻는 질문</a></li>
       </ul>
@@ -133,21 +134,24 @@
 
     <main class="about-body">
       <h1>자료실</h1>
-      <p class="lead">관리규약·관리규정·결산보고서 등 문서 자료를 제공합니다.</p>
+      <p class="lead">관리규약·관리규정 등 문서 자료를 제공합니다.</p>
 
       <section class="about-sec" id="data">
         <h2><span class="no">1</span> 자료실</h2>
-        <p>관리규약·관리규정·결산보고서 등 문서 자료입니다. (회원 열람)</p>
+        <p>관리규약·관리규정 등 문서 자료입니다. (회원 열람)</p>
         <ul class="link-list">
-          <li class="with-dl">
+          <li class="with-dl pinned">
             <a href="info-doc-view.html?doc=agreement" class="doc-title">관리규약 <span class="go">보기 ›</span></a>
             <a href="files/관리규약.hwp" download class="dl-btn">다운로드</a>
           </li>
-          <li class="with-dl">
+          <li class="with-dl pinned">
             <a href="info-doc-view.html?doc=rules" class="doc-title">관리규정 <span class="go">보기 ›</span></a>
             <a href="files/관리규정.hwp" download class="dl-btn">다운로드</a>
           </li>
-          <li><a href="board.html?cat=report">결산보고서 <span class="go">열람 ›</span></a></li>
+          <li class="with-dl uploaded">
+            <a href="info-doc-view.html?list=data&amp;title=%EC%9E%A5%EA%B5%90%EB%B9%8C%EB%94%A9%20%EB%B0%9C%EC%A0%84%EB%B0%A9%ED%96%A5%EC%97%90%20%EA%B4%80%ED%95%9C%20%EC%95%88%EB%82%B4%EC%99%80%20%EC%9D%98%EA%B2%AC%EC%B2%AD%EC%B7%A8&amp;name=%EC%9E%A5%EA%B5%90%EB%B9%8C%EB%94%A9%20%EB%B0%9C%EC%A0%84%EB%B0%A9%ED%96%A5%EC%97%90%20%EA%B4%80%ED%95%9C%20%EC%95%88%EB%82%B4%EC%99%80%20%EC%9D%98%EA%B2%AC%EC%B2%AD%EC%B7%A8.pdf&amp;src=files/data/development-plan-notice.pdf" class="doc-title">장교빌딩 발전방향에 관한 안내와 의견청취 <span class="go">보기 ›</span></a>
+            <a href="files/data/development-plan-notice.pdf" download="장교빌딩 발전방향에 관한 안내와 의견청취.pdf" class="dl-btn">다운로드</a>
+          </li>
         </ul>
       </section>
 
@@ -163,182 +167,9 @@
   </footer>
 
   <script src="auth.js"></script>
+  <script src="info-upload.js"></script>
   <script>
-  (function () {
-    // 파일 본체는 Firebase Storage에 올리고 본문에는 내려받기 주소만 남긴다.
-    // 예전처럼 본문에 통째로 담으면 페이지당 1MB 제한에 걸려 600KB까지만 올릴 수 있었다.
-    // 한도는 storage.rules의 업로드 제한(20MB 미만)에 맞춘다.
-    var MAX_MB = 20;
-    var MAX_SIZE = MAX_MB * 1024 * 1024;
-
-    function extLabel(filename) {
-      var m = filename.match(/\.([a-zA-Z0-9]+)$/);
-      return m ? m[1].toUpperCase() : 'FILE';
-    }
-
-    // 경로를 깨뜨리는 글자를 걸러 낸 Storage용 파일 이름 (board.js의 safeStorageName과 같은 규칙)
-    function safeStorageName(name) {
-      var clean = Array.from(String(name || 'file'))
-        .filter(function (ch) { return ch.charCodeAt(0) > 31 && ch.charCodeAt(0) !== 127; })
-        .join('')
-        .replace(/[\\/#?%*:|"'<>\[\]{}]/g, '_')
-        .replace(/\s+/g, '_')
-        .replace(/_+/g, '_')
-        .replace(/^[._]+/, '');
-      var dot = clean.lastIndexOf('.');
-      var ext = dot > 0 ? clean.slice(dot, dot + 12) : '';
-      var stem = (dot > 0 ? clean.slice(0, dot) : clean).slice(0, 60);
-      return (stem || 'file') + ext;
-    }
-
-    // 파일을 Storage에 올리고 { url, path }를 돌려준다. 진행률은 onProgress(0~100)로 알린다.
-    function uploadFile(file, onProgress) {
-      var path = 'board/infodata/page-' + Date.now() + '/' + safeStorageName(file.name);
-      var task = fbStorage.ref(path).put(file, {
-        contentType: file.type || 'application/octet-stream',
-        // 다른 도메인 주소라 download 속성이 안 먹으므로, 원래 이름으로 저장되게 여기 적어 둔다
-        contentDisposition: "attachment; filename*=UTF-8''" + encodeURIComponent(file.name)
-      });
-      return new Promise(function (resolve, reject) {
-        task.on('state_changed', function (snap) {
-          if (onProgress && snap.totalBytes) onProgress(Math.round(snap.bytesTransferred / snap.totalBytes * 100));
-        }, reject, function () {
-          task.snapshot.ref.getDownloadURL().then(function (url) {
-            resolve({ url: url, path: path });
-          }, reject);
-        });
-      });
-    }
-
-    // 본문이 바뀌면 auth.js가 Firestore에 저장한다 (모든 방문자·모든 기기에 공통 반영)
-    function saveDataContent() {
-      if (window.saveContentEdit) window.saveContentEdit();
-    }
-
-    // 관리자에게만 보이는 삭제 버튼
-    function attachDelete(li, name) {
-      var del = document.createElement('button');
-      del.type = 'button';
-      del.className = 'data-delete-btn';
-      del.textContent = '삭제';
-      del.addEventListener('click', function () {
-        if (!confirm('"' + name + '" 자료를 목록에서 지우시겠습니까?')) return;
-        var path = li.getAttribute('data-path');
-        li.remove();
-        saveDataContent();
-        // Storage에 올린 파일도 지운다 (예전 방식으로 본문에 담긴 자료는 path가 없다)
-        if (path && window.fbStorage) fbStorage.ref(path).delete().catch(function () {});
-      });
-      li.appendChild(del);
-    }
-
-    /* 관리자에게만 "글쓰기" 버튼과 자료 올리기 틀을 붙인다.
-       올린 파일은 목록에 바로 다운로드 링크로 들어간다. */
-    function init() {
-      var section = document.getElementById('data');
-      var list = section && section.querySelector('.link-list');
-      if (!list) return;
-
-      // 저장된 본문에 예전 폼·버튼이 섞여 들어왔거나 init이 다시 불릴 때를 대비해 먼저 지운다
-      section.querySelectorAll('.data-add-form').forEach(function (el) { el.remove(); });
-      document.querySelectorAll('.data-add-btn').forEach(function (el) { el.remove(); });
-
-      var toolbar = document.querySelector('.content-edit-toolbar');
-      if (!toolbar) return; // 관리자가 아니면 여기서 끝
-
-      // 올린 자료에는 삭제 버튼을 붙여 둔다 (원래 있던 관리규약·관리규정은 건드리지 않는다)
-      list.querySelectorAll('.data-delete-btn').forEach(function (el) { el.remove(); });
-      list.querySelectorAll('li.uploaded').forEach(function (li) {
-        attachDelete(li, li.querySelector('a') ? li.querySelector('a').textContent.trim() : '자료');
-      });
-
-      var addBtn = document.createElement('button');
-      addBtn.type = 'button';
-      addBtn.className = 'btn btn-primary btn-sm data-add-btn';
-      addBtn.textContent = '글쓰기';
-      toolbar.appendChild(addBtn);
-
-      var form = document.createElement('form');
-      form.className = 'data-add-form';
-      form.innerHTML =
-        '<div><label>자료 이름</label><input type="text" class="da-name" placeholder="예: 2026년 관리비 예산안" required /></div>' +
-        '<div><label>파일 <span class="size-hint">' + MAX_MB + 'MB 미만 · 올리면 바로 내려받을 수 있습니다</span></label><input type="file" class="da-file" required /></div>' +
-        '<div class="data-add-actions">' +
-          '<button type="submit" class="btn btn-primary btn-sm">등록</button>' +
-          '<button type="button" class="btn btn-outline btn-sm da-cancel">취소</button>' +
-        '</div>';
-      list.parentNode.insertBefore(form, list);
-
-      addBtn.addEventListener('click', function () {
-        form.classList.add('show');
-        form.querySelector('.da-name').focus();
-      });
-
-      form.querySelector('.da-cancel').addEventListener('click', function () {
-        form.reset();
-        form.classList.remove('show');
-      });
-
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        var name = form.querySelector('.da-name').value.trim();
-        var file = form.querySelector('.da-file').files[0];
-        if (!name || !file) return;
-        if (file.size >= MAX_SIZE) { showToast(MAX_MB + 'MB 미만 파일만 올릴 수 있습니다.'); return; }
-        if (!file.size) { showToast('빈 파일은 올릴 수 없습니다.'); return; }
-
-        var submitBtn = form.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.textContent = '올리는 중 0%';
-
-        uploadFile(file, function (pct) {
-          submitBtn.textContent = '올리는 중 ' + pct + '%';
-        }).then(function (up) {
-          var fileUrl = up.url;
-          var li = document.createElement('li');
-          li.className = 'with-dl uploaded';
-          li.setAttribute('data-path', up.path);
-
-          var title = document.createElement('a');
-          title.className = 'doc-title';
-          title.href = fileUrl;
-          title.setAttribute('download', file.name);
-          title.appendChild(document.createTextNode(name + ' '));
-          var go = document.createElement('span');
-          go.className = 'go';
-          go.textContent = extLabel(file.name);
-          title.appendChild(go);
-
-          var dl = document.createElement('a');
-          dl.className = 'dl-btn';
-          dl.href = fileUrl;
-          dl.setAttribute('download', file.name);
-          dl.textContent = '다운로드';
-
-          li.appendChild(title);
-          li.appendChild(dl);
-          attachDelete(li, name);
-          list.appendChild(li);
-
-          saveDataContent();
-          form.reset();
-          form.classList.remove('show');
-          showToast('자료를 등록했습니다.');
-        }).catch(function (err) {
-          var code = (err && err.code) || '';
-          showToast(code === 'storage/unauthorized'
-            ? '올릴 권한이 없습니다. 다시 로그인해 주세요.'
-            : '자료를 올리지 못했습니다: ' + ((err && err.message) || code));
-        }).then(function () {
-          submitBtn.disabled = false;
-          submitBtn.textContent = '등록';
-        });
-      });
-    }
-
-    // auth.js가 저장된 본문을 불러오고 관리자 툴바를 만든 뒤 발생시키는 이벤트
-    document.addEventListener('contentready', init);
-  })();
+    setupInfoUpload({ sectionId: "data", cat: "infodata", list: "data", placeholder: "예: 2026년 관리비 예산안" });
   </script>
   <script src="home-slider.js"></script>
 </body>
